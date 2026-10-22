@@ -88,7 +88,9 @@ boru/
 │   └── package.json
 ├── iniciar_sistema.bat          # Inicializa backend e frontend no Windows
 └── package.json                 # Workspaces e comandos da raiz
-``
+```
+
+
 
 O frontend é servido pelo Vite durante o desenvolvimento. A landing page usa HTML e JavaScript próprios, enquanto as telas do portal, painel, checkout e agendamento são rotas React. O backend expõe a API REST e persiste os dados no SQLite.
 
