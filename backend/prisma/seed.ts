@@ -32,7 +32,86 @@ async function main() {
       senha: 'boru123',
       cargo: 'PROFESSOR',
       telefone: '6992384491',
-      prajied: 'Prajied Azul Escuro e Preto'
+      modalidade: 'Muay Thai',
+      graduacao: 'Prajied Azul Escuro e Preto',
+      prajied: 'Prajied Azul Escuro e Preto',
+      tempoPratica: '12 anos de treino e dedicação',
+      tempoDocencia: '7 anos ministrando aulas',
+      tempoAula: '60 min',
+      horariosAula: 'Seg, Qua e Sex (16h, 19h e 20h) | Ter e Qui (15h, 19h e 20h)',
+      cargaHorariaSemanal: '18 horas/semana'
+    }
+  });
+
+  await prisma.usuario.create({
+    data: {
+      nome: 'Carlos "Gracie" Silva',
+      email: 'carlos.bjj@boru.com',
+      senha: 'boru123',
+      cargo: 'PROFESSOR',
+      telefone: '69991234567',
+      modalidade: 'Jiu-Jitsu',
+      graduacao: 'Faixa Preta 2º Grau',
+      prajied: 'Faixa Preta 2º Grau',
+      tempoPratica: '15 anos no tatame / Campeão Estadual',
+      tempoDocencia: '8 anos lecionando Jiu-Jitsu',
+      tempoAula: '90 min',
+      horariosAula: 'Ter e Qui (19h30 às 21h00) | Sábado (10h00)',
+      cargaHorariaSemanal: '6 horas/semana'
+    }
+  });
+
+  await prisma.usuario.create({
+    data: {
+      nome: 'Marcos "Demolidor" Santos',
+      email: 'marcos.boxe@boru.com',
+      senha: 'boru123',
+      cargo: 'PROFESSOR',
+      telefone: '69992345678',
+      modalidade: 'Boxe',
+      graduacao: 'Sem faixa (Graduação por cartel e tempo)',
+      prajied: 'Sem faixa',
+      tempoPratica: '10 anos de prática (Cartel: 14V - 2D)',
+      tempoDocencia: '5 anos treinando atletas e amadores',
+      tempoAula: '60 min',
+      horariosAula: 'Seg, Qua e Sex (07h00 e 18h00)',
+      cargaHorariaSemanal: '6 horas/semana'
+    }
+  });
+
+  await prisma.usuario.create({
+    data: {
+      nome: 'Anderson "Spider" Costa',
+      email: 'anderson.mma@boru.com',
+      senha: 'boru123',
+      cargo: 'PROFESSOR',
+      telefone: '69993456789',
+      modalidade: 'MMA',
+      graduacao: 'Sem faixa (Graduação por experiência e cartel)',
+      prajied: 'Sem faixa',
+      tempoPratica: '8 anos de prática (Ex-atleta profissional)',
+      tempoDocencia: '4 anos formando lutadores',
+      tempoAula: '90 min',
+      horariosAula: 'Seg e Qua (20h30 às 22h00) | Sex (Sparring 20h)',
+      cargaHorariaSemanal: '5 horas/semana'
+    }
+  });
+
+  await prisma.usuario.create({
+    data: {
+      nome: 'Mestre Jin-Woo Park',
+      email: 'jin.tkd@boru.com',
+      senha: 'boru123',
+      cargo: 'PROFESSOR',
+      telefone: '69994567890',
+      modalidade: 'Taekwondo',
+      graduacao: 'Faixa Preta 4º Dan',
+      prajied: 'Faixa Preta 4º Dan',
+      tempoPratica: '18 anos de dedicação / Mestre Formado',
+      tempoDocencia: '11 anos ministrando aulas e graduando faixas',
+      tempoAula: '60 min',
+      horariosAula: 'Ter e Qui (17h00 - Kids / 18h00 - Adultos)',
+      cargaHorariaSemanal: '4 horas/semana'
     }
   });
 

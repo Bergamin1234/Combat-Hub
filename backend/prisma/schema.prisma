@@ -11,15 +11,22 @@ datasource db {
 // USUÁRIOS DO SISTEMA (ADMINISTRADOR & PROFESSORES)
 // ==========================================
 model Usuario {
-  id        String   @id @default(uuid())
-  nome      String
-  email     String   @unique
-  senha     String
-  cargo     String   @default("PROFESSOR") // Valores: "ADMIN" ou "PROFESSOR"
-  telefone  String?
-  prajied   String?  @default("Prajied Azul Escuro e Preto")
-  ativo     Boolean  @default(true)
-  criadoEm  DateTime @default(now())
+  id                  String   @id @default(uuid())
+  nome                String
+  email               String   @unique
+  senha               String
+  cargo               String   @default("PROFESSOR") // Valores: "ADMIN" ou "PROFESSOR"
+  telefone            String?
+  modalidade          String   @default("Muay Thai") // "Muay Thai", "Jiu-Jitsu", "Boxe", "MMA", "Taekwondo"
+  graduacao           String?  @default("Prajied Azul Escuro e Preto") // Faixa / Prajied
+  tempoPratica        String?  // Tempo de prática/treino (Ex: "10 anos de prática")
+  tempoDocencia       String?  // Tempo lecionando / dando aulas (Ex: "6 anos ministrando aulas")
+  tempoAula           String?  @default("60 min") // Duração padrão da aula (Ex: "60 min", "90 min")
+  horariosAula        String?  // Horários / Grade de aulas (Ex: "Seg, Qua e Sex - 19:00")
+  cargaHorariaSemanal String?  // Carga horária semanal (Ex: "6h semanais")
+  prajied             String?  @default("Prajied Azul Escuro e Preto") // Mantido para compatibilidade
+  ativo               Boolean  @default(true)
+  criadoEm            DateTime @default(now())
 }
 
 // ==========================================
@@ -34,7 +41,9 @@ model Aluno {
   senha          String?       // Senha de acesso
   primeiroAcesso Boolean       @default(true) // Obriga a redefinir no 1º acesso
   plano          String?       // Valores: DIARIA, 2x na semana, 3x na semana, Todos os Horários
-  prajied        String        @default("Branco") // Graduação do Muay Thai
+  modalidade     String?       @default("Muay Thai") // Muay Thai, Jiu-Jitsu, Boxe, MMA, Taekwondo
+  graduacao      String?       @default("Branco") // Faixa ou Prajied ou Nível
+  prajied        String        @default("Branco") // Graduação do Muay Thai (retrocompatibilidade)
   criadoEm       DateTime      @default(now())
   
   mensalidades   Mensalidade[]

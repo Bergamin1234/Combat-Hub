@@ -76,6 +76,13 @@ app.post('/api/auth/login', async (req, res) => {
         email: usuario.email,
         cargo: usuario.cargo,
         telefone: usuario.telefone,
+        modalidade: usuario.modalidade || 'Muay Thai',
+        graduacao: usuario.graduacao || usuario.prajied,
+        tempoPratica: usuario.tempoPratica,
+        tempoDocencia: usuario.tempoDocencia,
+        tempoAula: usuario.tempoAula || '60 min',
+        horariosAula: usuario.horariosAula,
+        cargaHorariaSemanal: usuario.cargaHorariaSemanal,
         prajied: usuario.prajied
       }
     });
@@ -103,7 +110,21 @@ app.get('/api/admin/professores', async (req, res) => {
 
 // Criar novo professor (Função exclusiva do Administrador)
 app.post('/api/admin/professores', async (req, res) => {
-  const { nome, email, senha, cargo, telefone, prajied } = req.body;
+  const { 
+    nome, 
+    email, 
+    senha, 
+    cargo, 
+    telefone, 
+    modalidade, 
+    graduacao, 
+    tempoPratica, 
+    tempoDocencia, 
+    tempoAula, 
+    horariosAula, 
+    cargaHorariaSemanal, 
+    prajied 
+  } = req.body;
 
   if (!nome || !email || !senha) {
     return res.status(400).json({ erro: 'Nome, E-mail e Senha são obrigatórios.' });
@@ -120,6 +141,9 @@ app.post('/api/admin/professores', async (req, res) => {
       return res.status(400).json({ erro: 'Já existe um usuário cadastrado com este e-mail.' });
     }
 
+    const modalidadeFinal = modalidade || 'Muay Thai';
+    const graduacaoFinal = graduacao || prajied || 'Prajied Azul Escuro e Preto';
+
     const novo = await prisma.usuario.create({
       data: {
         nome: nome.trim(),
@@ -127,7 +151,14 @@ app.post('/api/admin/professores', async (req, res) => {
         senha: senha.trim(),
         cargo: cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR',
         telefone: telefone ? telefone.trim() : null,
-        prajied: prajied || 'Prajied Azul Claro',
+        modalidade: modalidadeFinal,
+        graduacao: graduacaoFinal,
+        tempoPratica: tempoPratica ? tempoPratica.trim() : null,
+        tempoDocencia: tempoDocencia ? tempoDocencia.trim() : null,
+        tempoAula: tempoAula || '60 min',
+        horariosAula: horariosAula ? horariosAula.trim() : null,
+        cargaHorariaSemanal: cargaHorariaSemanal ? cargaHorariaSemanal.trim() : null,
+        prajied: graduacaoFinal, // retrocompatibilidade
         ativo: true
       }
     });
@@ -142,15 +173,42 @@ app.post('/api/admin/professores', async (req, res) => {
 // Atualizar dados de um professor
 app.patch('/api/admin/professores/:id', async (req, res) => {
   const { id } = req.params;
-  const { nome, telefone, prajied, cargo, senha } = req.body;
+  const { 
+    nome, 
+    telefone, 
+    prajied, 
+    cargo, 
+    senha,
+    modalidade,
+    graduacao,
+    tempoPratica,
+    tempoDocencia,
+    tempoAula,
+    horariosAula,
+    cargaHorariaSemanal,
+    ativo
+  } = req.body;
 
   try {
     const dataUpdate: any = {};
     if (nome) dataUpdate.nome = nome.trim();
     if (telefone !== undefined) dataUpdate.telefone = telefone;
-    if (prajied) dataUpdate.prajied = prajied;
     if (cargo) dataUpdate.cargo = cargo;
     if (senha) dataUpdate.senha = senha.trim();
+    if (modalidade) dataUpdate.modalidade = modalidade;
+    if (graduacao) {
+      dataUpdate.graduacao = graduacao;
+      dataUpdate.prajied = graduacao;
+    } else if (prajied) {
+      dataUpdate.prajied = prajied;
+      dataUpdate.graduacao = prajied;
+    }
+    if (tempoPratica !== undefined) dataUpdate.tempoPratica = tempoPratica;
+    if (tempoDocencia !== undefined) dataUpdate.tempoDocencia = tempoDocencia;
+    if (tempoAula !== undefined) dataUpdate.tempoAula = tempoAula;
+    if (horariosAula !== undefined) dataUpdate.horariosAula = horariosAula;
+    if (cargaHorariaSemanal !== undefined) dataUpdate.cargaHorariaSemanal = cargaHorariaSemanal;
+    if (ativo !== undefined) dataUpdate.ativo = ativo;
 
     const atualizado = await prisma.usuario.update({
       where: { id },

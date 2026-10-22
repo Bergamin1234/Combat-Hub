@@ -3,6 +3,73 @@ import { Link } from 'react-router-dom';
 import NoticeCard from '../components/NoticeCard';
 import { adminApi, publicApi } from '../services/api';
 
+const graduacoesPorModalidade: Record<string, string[]> = {
+  'Muay Thai': [
+    'Prajied Branco',
+    'Prajied Branco e Amarelo',
+    'Prajied Amarelo',
+    'Prajied Amarelo e Branco Ponta',
+    'Prajied Laranja',
+    'Prajied Verde',
+    'Prajied Azul Claro',
+    'Prajied Azul Escuro',
+    'Prajied Azul Escuro e Preto',
+    'Prajied Marrom',
+    'Prajied Vermelho',
+    'Prajied Vermelho e Preto',
+    'Prajied Preto'
+  ],
+  'Jiu-Jitsu': [
+    'Faixa Branca',
+    'Faixa Azul',
+    'Faixa Roxa',
+    'Faixa Marrom',
+    'Faixa Preta 1º Grau',
+    'Faixa Preta 2º Grau',
+    'Faixa Preta 3º Grau',
+    'Faixa Coral (Vermelha e Preta)',
+    'Faixa Vermelha'
+  ],
+  'Taekwondo': [
+    'Faixa Branca',
+    'Faixa Amarela',
+    'Faixa Verde',
+    'Faixa Azul',
+    'Faixa Vermelha',
+    'Faixa Ponta Preta',
+    'Faixa Preta 1º Dan',
+    'Faixa Preta 2º Dan',
+    'Faixa Preta 3º Dan',
+    'Faixa Preta 4º Dan',
+    'Faixa Preta 5º Dan'
+  ],
+  'Boxe': [
+    'Sem faixa (Graduação por experiência e cartel)',
+    '1 a 3 anos de prática',
+    '3 a 5 anos de prática',
+    '5 a 10 anos de prática',
+    'Mais de 10 anos / Veterano',
+    'Ex-Atleta Profissional'
+  ],
+  'MMA': [
+    'Sem faixa (Graduação por experiência e cartel)',
+    '1 a 3 anos de prática',
+    '3 a 5 anos de prática',
+    '5 a 10 anos de prática',
+    'Mais de 10 anos / Veterano',
+    'Ex-Atleta Profissional'
+  ]
+};
+
+const temposDeAula = ['45 min', '60 min', '75 min', '90 min', '120 min'];
+const opcoesTempoDocencia = [
+  'Iniciando docência (menos de 1 ano)',
+  '1 a 3 anos dando aulas',
+  '3 a 5 anos dando aulas',
+  '5 a 10 anos lecionando',
+  'Mais de 10 anos como professor / Mestre'
+];
+
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [usuarioLogado, setUsuarioLogado] = useState<any>(null);
@@ -36,8 +103,18 @@ export default function AdminDashboard() {
     senha: '',
     cargo: 'PROFESSOR',
     telefone: '',
-    prajied: 'Prajied Azul Claro'
+    modalidade: 'Muay Thai',
+    graduacao: 'Prajied Azul Escuro e Preto',
+    tempoPratica: '',
+    tempoDocencia: '3 a 5 anos dando aulas',
+    tempoAula: '60 min',
+    horariosAula: '',
+    cargaHorariaSemanal: ''
   });
+
+  // Modal Editar Professor
+  const [showModalEditarProf, setShowModalEditarProf] = useState(false);
+  const [professorParaEditar, setProfessorParaEditar] = useState<any>(null);
 
   // Modal Novo Aviso no Mural
   const [showModalAviso, setShowModalAviso] = useState(false);
@@ -154,10 +231,72 @@ export default function AdminDashboard() {
       await adminApi.createTeacher(novoProfessor);
       alert(`Professor ${novoProfessor.nome} cadastrado com sucesso!`);
       setShowModalProf(false);
-      setNovoProfessor({ nome: '', email: '', senha: '', cargo: 'PROFESSOR', telefone: '', prajied: 'Prajied Azul Claro' });
+      setNovoProfessor({
+        nome: '',
+        email: '',
+        senha: '',
+        cargo: 'PROFESSOR',
+        telefone: '',
+        modalidade: 'Muay Thai',
+        graduacao: 'Prajied Azul Escuro e Preto',
+        tempoPratica: '',
+        tempoDocencia: '3 a 5 anos dando aulas',
+        tempoAula: '60 min',
+        horariosAula: '',
+        cargaHorariaSemanal: ''
+      });
       carregarDashboard();
     } catch (error: any) {
       alert(error.response?.data?.erro || 'Erro ao criar professor.');
+    }
+  };
+
+  const abrirModalEdicaoProf = (prof: any) => {
+    const mod = prof.modalidade || 'Muay Thai';
+    setProfessorParaEditar({
+      id: prof.id,
+      nome: prof.nome,
+      email: prof.email,
+      telefone: prof.telefone || '',
+      cargo: prof.cargo || 'PROFESSOR',
+      modalidade: mod,
+      graduacao: prof.graduacao || prof.prajied || (graduacoesPorModalidade[mod]?.[0] || ''),
+      tempoPratica: prof.tempoPratica || '',
+      tempoDocencia: prof.tempoDocencia || '',
+      tempoAula: prof.tempoAula || '60 min',
+      horariosAula: prof.horariosAula || '',
+      cargaHorariaSemanal: prof.cargaHorariaSemanal || '',
+      senha: ''
+    });
+    setShowModalEditarProf(true);
+  };
+
+  const salvarEdicaoProfessor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!professorParaEditar) return;
+    try {
+      const payload: any = {
+        nome: professorParaEditar.nome,
+        telefone: professorParaEditar.telefone,
+        cargo: professorParaEditar.cargo,
+        modalidade: professorParaEditar.modalidade,
+        graduacao: professorParaEditar.graduacao,
+        tempoPratica: professorParaEditar.tempoPratica,
+        tempoDocencia: professorParaEditar.tempoDocencia,
+        tempoAula: professorParaEditar.tempoAula,
+        horariosAula: professorParaEditar.horariosAula,
+        cargaHorariaSemanal: professorParaEditar.cargaHorariaSemanal
+      };
+      if (professorParaEditar.senha && professorParaEditar.senha.trim().length > 0) {
+        payload.senha = professorParaEditar.senha.trim();
+      }
+      await adminApi.updateTeacher(professorParaEditar.id, payload);
+      alert('Dados do professor atualizados com sucesso!');
+      setShowModalEditarProf(false);
+      setProfessorParaEditar(null);
+      carregarDashboard();
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao atualizar dados do professor.');
     }
   };
 
@@ -916,11 +1055,11 @@ export default function AdminDashboard() {
             <div className="p-4 border-b border-zinc-800 flex justify-between items-center flex-wrap gap-2">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-white">Professores e Membros da Equipe</h2>
-                <p className="text-xs text-zinc-400">Área restrita de gestão de acessos e instrutores do CT.</p>
+                <p className="text-xs text-zinc-400">Gestão completa de instrutores, modalidades marciais, graduações e tempo de aula/docência.</p>
               </div>
               <button 
                 onClick={() => setShowModalProf(true)}
-                className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition flex items-center gap-1.5"
+                className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-900/30"
               >
                 <span>➕ Cadastrar Professor</span>
               </button>
@@ -930,38 +1069,97 @@ export default function AdminDashboard() {
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider border-b border-zinc-800">
                   <tr>
-                    <th className="p-3 sm:p-4">Nome</th>
-                    <th className="p-3 sm:p-4">E-mail / Login</th>
-                    <th className="p-3 sm:p-4">Graduação</th>
+                    <th className="p-3 sm:p-4">Professor / Contato</th>
+                    <th className="p-3 sm:p-4">Modalidade</th>
+                    <th className="p-3 sm:p-4">Graduação / Prática</th>
+                    <th className="p-3 sm:p-4">Tempo de Aulas (Docência)</th>
+                    <th className="p-3 sm:p-4">Grade & Duração de Aula</th>
                     <th className="p-3 sm:p-4">Cargo</th>
-                    <th className="p-3 sm:p-4 text-right">Ação</th>
+                    <th className="p-3 sm:p-4 text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/60">
                   {professores.map(prof => (
                     <tr key={prof.id} className="hover:bg-zinc-800/30 transition">
                       <td className="p-3 sm:p-4 font-bold text-white">
-                        {prof.nome}
-                        <span className="block text-[11px] text-zinc-400 font-normal">{prof.telefone || 'Sem contato'}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-black text-xs text-amber-400">
+                            {prof.nome.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span>{prof.nome}</span>
+                            <span className="block text-[11px] text-zinc-400 font-normal">{prof.email}</span>
+                            <span className="block text-[10px] text-zinc-500 font-normal">{prof.telefone || 'Sem telefone'}</span>
+                          </div>
+                        </div>
                       </td>
-                      <td className="p-3 sm:p-4 text-zinc-300">{prof.email}</td>
-                      <td className="p-3 sm:p-4 text-zinc-300 font-semibold">{prof.prajied || 'Prajied Oficial'}</td>
+                      <td className="p-3 sm:p-4">
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase border ${
+                          prof.modalidade === 'Jiu-Jitsu' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' :
+                          prof.modalidade === 'Boxe' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30' :
+                          prof.modalidade === 'MMA' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                          prof.modalidade === 'Taekwondo' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' :
+                          'bg-red-500/10 text-red-400 border-red-500/30'
+                        }`}>
+                          {prof.modalidade || 'Muay Thai'}
+                        </span>
+                      </td>
+                      <td className="p-3 sm:p-4 text-zinc-200">
+                        <div className="font-semibold text-xs text-white">
+                          {prof.graduacao || prof.prajied || 'Sem faixa'}
+                        </div>
+                        {prof.tempoPratica && (
+                          <div className="text-[11px] text-zinc-400 mt-0.5">
+                            🥋 Treino: {prof.tempoPratica}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-3 sm:p-4">
+                        <div className="text-xs font-bold text-amber-300">
+                          {prof.tempoDocencia || 'Tempo de docência não informado'}
+                        </div>
+                        {prof.cargaHorariaSemanal && (
+                          <div className="text-[11px] text-zinc-400 mt-0.5">
+                            ⏱️ {prof.cargaHorariaSemanal}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-3 sm:p-4">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-700/80">
+                          <span>⏱️ {prof.tempoAula || '60 min'}</span>
+                        </div>
+                        {prof.horariosAula && (
+                          <div className="text-[11px] text-zinc-400 mt-1 max-w-[200px] leading-tight line-clamp-2" title={prof.horariosAula}>
+                            📅 {prof.horariosAula}
+                          </div>
+                        )}
+                      </td>
                       <td className="p-3 sm:p-4">
                         <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                          prof.cargo === 'ADMIN' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'
+                          prof.cargo === 'ADMIN' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                         }`}>
                           {prof.cargo}
                         </span>
                       </td>
                       <td className="p-3 sm:p-4 text-right">
-                        {prof.id !== usuarioLogado?.id && (
-                          <button 
-                            onClick={() => removerProfessor(prof.id, prof.nome)}
-                            className="text-xs text-red-500 hover:text-red-400 font-bold transition"
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => abrirModalEdicaoProf(prof)}
+                            className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition border border-zinc-700 flex items-center gap-1"
+                            title="Editar Dados do Professor"
                           >
-                            Excluir
+                            <span>✏️</span> Editar
                           </button>
-                        )}
+                          {prof.id !== usuarioLogado?.id && (
+                            <button 
+                              onClick={() => removerProfessor(prof.id, prof.nome)}
+                              className="px-2.5 py-1 rounded bg-red-950/40 hover:bg-red-900/60 text-red-400 text-xs font-semibold transition border border-red-800/40"
+                              title="Excluir Professor"
+                            >
+                              Excluir
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1108,44 +1306,328 @@ export default function AdminDashboard() {
 
       {/* MODAL NOVO PROFESSOR (EXCLUSIVO ADMIN) */}
       {showModalProf && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
-          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-4 z-[99999] overflow-y-auto">
+          <div className="bg-[#141416] border border-zinc-800 p-5 sm:p-6 rounded-2xl w-full max-w-xl shadow-2xl my-6">
             <h3 className="text-xl font-bold text-amber-400 mb-1">Cadastrar Professor / Usuário</h3>
-            <p className="text-zinc-400 text-xs mb-4">Adicione um novo instrutor com permissão de lançar chamadas e graduar alunos.</p>
+            <p className="text-zinc-400 text-xs mb-4">Adicione um novo instrutor com permissão de lançar chamadas, gerenciar horários e graduar alunos.</p>
+            
             <form onSubmit={criarProfessor} className="space-y-3">
               <div>
                 <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome Completo</label>
-                <input required type="text" value={novoProfessor.nome} onChange={(e) => setNovoProfessor({...novoProfessor, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+                <input required type="text" value={novoProfessor.nome} onChange={(e) => setNovoProfessor({...novoProfessor, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Felipe Borü" />
               </div>
-              <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail para Login</label>
-                <input required type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha</label>
-                  <input required type="password" value={novoProfessor.senha} onChange={(e) => setNovoProfessor({...novoProfessor, senha: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Mínimo 6" />
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail para Login</label>
+                  <input required type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="professor@boru.com" />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
+                  <input type="text" value={novoProfessor.telefone} onChange={(e) => setNovoProfessor({...novoProfessor, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="(69) 99999-9999" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha de Acesso</label>
+                  <input required type="password" value={novoProfessor.senha} onChange={(e) => setNovoProfessor({...novoProfessor, senha: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Mínimo 6 caracteres" />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo no Sistema</label>
                   <select value={novoProfessor.cargo} onChange={(e) => setNovoProfessor({...novoProfessor, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
                     <option value="PROFESSOR">Professor / Instrutor</option>
                     <option value="ADMIN">Administrador Geral</option>
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">Graduação (Prajied)</label>
-                <select value={novoProfessor.prajied} onChange={(e) => setNovoProfessor({...novoProfessor, prajied: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                  <option value="Prajied Azul Claro">Prajied Azul Claro</option>
-                  <option value="Prajied Azul Escuro">Prajied Azul Escuro</option>
-                  <option value="Prajied Azul Escuro e Preto">Prajied Azul Escuro e Preto</option>
-                  <option value="Prajied Preto">Prajied Preto</option>
-                </select>
+
+              {/* SELEÇÃO DA ARTE MARCIAL E DURAÇÃO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-zinc-800">
+                <div>
+                  <label className="block text-amber-400 text-xs font-bold mb-1">Arte Marcial / Modalidade</label>
+                  <select 
+                    value={novoProfessor.modalidade} 
+                    onChange={(e) => {
+                      const mod = e.target.value;
+                      const primeiraGrad = graduacoesPorModalidade[mod]?.[0] || '';
+                      setNovoProfessor({
+                        ...novoProfessor,
+                        modalidade: mod,
+                        graduacao: primeiraGrad,
+                        tempoPratica: (mod === 'Boxe' || mod === 'MMA') ? primeiraGrad : ''
+                      });
+                    }} 
+                    className="w-full bg-[#1A1A1E] border border-amber-500/50 rounded-lg p-2.5 text-sm text-white font-bold"
+                  >
+                    <option value="Muay Thai">🥊 Muay Thai</option>
+                    <option value="Jiu-Jitsu">🥋 Jiu-Jitsu</option>
+                    <option value="Boxe">🥊 Boxe</option>
+                    <option value="MMA">🤼 MMA</option>
+                    <option value="Taekwondo">🥋 Taekwondo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-300 text-xs font-semibold mb-1">Duração de Cada Aula</label>
+                  <select 
+                    value={novoProfessor.tempoAula} 
+                    onChange={(e) => setNovoProfessor({...novoProfessor, tempoAula: e.target.value})} 
+                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white font-medium"
+                  >
+                    {temposDeAula.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="flex justify-end gap-2 pt-3">
+
+              {/* GRADUAÇÃO DINÂMICA OU TEMPO DE PRÁTICA */}
+              <div>
+                <label className="block text-zinc-300 text-xs font-semibold mb-1">
+                  {novoProfessor.modalidade === 'Boxe' || novoProfessor.modalidade === 'MMA'
+                    ? `Tempo de Prática / Experiência (${novoProfessor.modalidade})`
+                    : `Graduação de Faixa / Prajied (${novoProfessor.modalidade})`}
+                </label>
+                
+                <select 
+                  value={novoProfessor.graduacao} 
+                  onChange={(e) => setNovoProfessor({
+                    ...novoProfessor, 
+                    graduacao: e.target.value,
+                    tempoPratica: (novoProfessor.modalidade === 'Boxe' || novoProfessor.modalidade === 'MMA') ? e.target.value : novoProfessor.tempoPratica
+                  })} 
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white font-medium"
+                >
+                  {(graduacoesPorModalidade[novoProfessor.modalidade] || []).map(g => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+
+                {(novoProfessor.modalidade === 'Boxe' || novoProfessor.modalidade === 'MMA') && (
+                  <div className="mt-2">
+                    <input 
+                      type="text" 
+                      value={novoProfessor.tempoPratica} 
+                      onChange={(e) => setNovoProfessor({...novoProfessor, tempoPratica: e.target.value, graduacao: e.target.value})} 
+                      placeholder="Ou digite o cartel / experiência (Ex: 8 anos de ringue, 12 lutas profissionais)"
+                      className="w-full bg-[#1A1A1E] border border-zinc-700/80 rounded-lg p-2 text-xs text-zinc-300 placeholder-zinc-500"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* TEMPO QUE O PROFESSOR TEM DE AULAS (DOCÊNCIA) E CARGA HORÁRIA */}
+              <div className="pt-2 border-t border-zinc-800 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-amber-300 text-xs font-bold mb-1">
+                      Tempo de Aulas / Docência
+                    </label>
+                    <select
+                      value={novoProfessor.tempoDocencia}
+                      onChange={(e) => setNovoProfessor({...novoProfessor, tempoDocencia: e.target.value})}
+                      className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white"
+                    >
+                      {opcoesTempoDocencia.map(op => (
+                        <option key={op} value={op}>{op}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-zinc-400 text-xs font-semibold mb-1">
+                      Carga Horária Semanal
+                    </label>
+                    <input 
+                      type="text" 
+                      value={novoProfessor.cargaHorariaSemanal} 
+                      onChange={(e) => setNovoProfessor({...novoProfessor, cargaHorariaSemanal: e.target.value})} 
+                      placeholder="Ex: 8 horas/semana, 12h/sem"
+                      className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">
+                    Grade de Horários das Aulas do Professor no CT
+                  </label>
+                  <input 
+                    type="text" 
+                    value={novoProfessor.horariosAula} 
+                    onChange={(e) => setNovoProfessor({...novoProfessor, horariosAula: e.target.value})} 
+                    placeholder="Ex: Seg, Qua e Sex (18h e 19h30) | Ter e Qui (07h)"
+                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
                 <button type="button" onClick={() => setShowModalProf(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold">Criar Professor</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR PROFESSOR (EXCLUSIVO ADMIN) */}
+      {showModalEditarProf && professorParaEditar && (
+        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-4 z-[99999] overflow-y-auto">
+          <div className="bg-[#141416] border border-zinc-800 p-5 sm:p-6 rounded-2xl w-full max-w-xl shadow-2xl my-6">
+            <h3 className="text-xl font-bold text-white mb-1">Editar Dados do Professor</h3>
+            <p className="text-zinc-400 text-xs mb-4">Altere modalidade, faixa, tempo de aulas/docência e horários de {professorParaEditar.nome}.</p>
+            
+            <form onSubmit={salvarEdicaoProfessor} className="space-y-3">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome Completo</label>
+                <input required type="text" value={professorParaEditar.nome} onChange={(e) => setProfessorParaEditar({...professorParaEditar, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
+                  <input type="text" value={professorParaEditar.telefone} onChange={(e) => setProfessorParaEditar({...professorParaEditar, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
+                  <select value={professorParaEditar.cargo} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                    <option value="PROFESSOR">Professor / Instrutor</option>
+                    <option value="ADMIN">Administrador Geral</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-zinc-800">
+                <div>
+                  <label className="block text-amber-400 text-xs font-bold mb-1">Arte Marcial / Modalidade</label>
+                  <select 
+                    value={professorParaEditar.modalidade} 
+                    onChange={(e) => {
+                      const mod = e.target.value;
+                      const primeiraGrad = graduacoesPorModalidade[mod]?.[0] || '';
+                      setProfessorParaEditar({
+                        ...professorParaEditar,
+                        modalidade: mod,
+                        graduacao: primeiraGrad,
+                        tempoPratica: (mod === 'Boxe' || mod === 'MMA') ? primeiraGrad : ''
+                      });
+                    }} 
+                    className="w-full bg-[#1A1A1E] border border-amber-500/50 rounded-lg p-2.5 text-sm text-white font-bold"
+                  >
+                    <option value="Muay Thai">🥊 Muay Thai</option>
+                    <option value="Jiu-Jitsu">🥋 Jiu-Jitsu</option>
+                    <option value="Boxe">🥊 Boxe</option>
+                    <option value="MMA">🤼 MMA</option>
+                    <option value="Taekwondo">🥋 Taekwondo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Duração de Cada Aula</label>
+                  <select 
+                    value={professorParaEditar.tempoAula || '60 min'} 
+                    onChange={(e) => setProfessorParaEditar({...professorParaEditar, tempoAula: e.target.value})} 
+                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white"
+                  >
+                    {temposDeAula.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 text-xs font-semibold mb-1">
+                  {professorParaEditar.modalidade === 'Boxe' || professorParaEditar.modalidade === 'MMA'
+                    ? `Tempo de Prática / Experiência (${professorParaEditar.modalidade})`
+                    : `Graduação de Faixa / Prajied (${professorParaEditar.modalidade})`}
+                </label>
+                
+                <select 
+                  value={professorParaEditar.graduacao} 
+                  onChange={(e) => setProfessorParaEditar({
+                    ...professorParaEditar, 
+                    graduacao: e.target.value,
+                    tempoPratica: (professorParaEditar.modalidade === 'Boxe' || professorParaEditar.modalidade === 'MMA') ? e.target.value : professorParaEditar.tempoPratica
+                  })} 
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white font-medium"
+                >
+                  {(graduacoesPorModalidade[professorParaEditar.modalidade] || []).map(g => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+
+                {(professorParaEditar.modalidade === 'Boxe' || professorParaEditar.modalidade === 'MMA') && (
+                  <div className="mt-2">
+                    <input 
+                      type="text" 
+                      value={professorParaEditar.tempoPratica || ''} 
+                      onChange={(e) => setProfessorParaEditar({...professorParaEditar, tempoPratica: e.target.value, graduacao: e.target.value})} 
+                      placeholder="Ou digite o cartel / tempo personalizado"
+                      className="w-full bg-[#1A1A1E] border border-zinc-700/80 rounded-lg p-2 text-xs text-zinc-300 placeholder-zinc-500"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* TEMPO QUE O PROFESSOR TEM DE AULAS (DOCÊNCIA) E CARGA HORÁRIA */}
+              <div className="pt-2 border-t border-zinc-800 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-amber-300 text-xs font-bold mb-1">
+                      Tempo de Aulas / Docência
+                    </label>
+                    <input
+                      type="text"
+                      value={professorParaEditar.tempoDocencia || ''}
+                      onChange={(e) => setProfessorParaEditar({...professorParaEditar, tempoDocencia: e.target.value})}
+                      placeholder="Ex: 6 anos ministrando aulas"
+                      className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-400 text-xs font-semibold mb-1">
+                      Carga Horária Semanal
+                    </label>
+                    <input 
+                      type="text" 
+                      value={professorParaEditar.cargaHorariaSemanal || ''} 
+                      onChange={(e) => setProfessorParaEditar({...professorParaEditar, cargaHorariaSemanal: e.target.value})} 
+                      placeholder="Ex: 8 horas/semana"
+                      className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">
+                    Grade de Horários das Aulas do Professor no CT
+                  </label>
+                  <input 
+                    type="text" 
+                    value={professorParaEditar.horariosAula || ''} 
+                    onChange={(e) => setProfessorParaEditar({...professorParaEditar, horariosAula: e.target.value})} 
+                    placeholder="Ex: Seg, Qua e Sex (18h e 19h30)"
+                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Nova Senha (deixe em branco se não desejar alterar)</label>
+                <input 
+                  type="password" 
+                  value={professorParaEditar.senha || ''} 
+                  onChange={(e) => setProfessorParaEditar({...professorParaEditar, senha: e.target.value})} 
+                  placeholder="Deixe em branco para manter a senha atual"
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
+                <button type="button" onClick={() => setShowModalEditarProf(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold">Salvar Alterações</button>
               </div>
             </form>
           </div>
