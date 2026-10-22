@@ -69,7 +69,7 @@ O sistema possui controle de acesso baseado em funções (RBAC) com distinção 
 
 ## Arquitetura e estrutura
 
-``
+```text
 boru/
 ├── backend/
 │   ├── prisma/
