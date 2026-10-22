@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { publicApi } from '../services/api';
 
 export default function AgendarAula() {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function AgendarAula() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('http://localhost:3001/api/agendamentos', {
+      await publicApi.createAppointment({
         ...formData,
         data: diaSelecionado // Usando o dia da semana como "data" para a aula experimental
       });
