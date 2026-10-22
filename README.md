@@ -42,7 +42,7 @@ O **Borü Centro de Combate** foi desenvolvido para unir uma presença online mo
 - **Autenticação:** Acesso por CPF e senha com fluxo para primeiro acesso.
 - **Recuperação de Senha ("Esqueci a Senha"):** Recuperação simples via CPF com senha provisória e redefinição obrigatória.
 - **Graduação Oficial de Muay Thai (Prajied):** Sistema dinâmico com identificação visual por cores (Branco, Ponta Vermelha, Vermelho, etc.), atualizado pelo professor.
-- **Sensei IA (Google Gemini):** Chatbot inteligente com IA para orientações sobre treinos, regras e preparação física.
+- **Sensei IA (Google Gemini):** Chatbot inteligente com IA para orientações sobre treinos, regras e preparação física. (Não disponível por Enquanto)
 - **Check-in & Histórico de Treinos:** Registro e acompanhamento de frequência nas aulas.
 - **Módulo Financeiro:** Visualização de vencimento da mensalidade e checkout com suporte a Cartão de Crédito e PIX.
 
