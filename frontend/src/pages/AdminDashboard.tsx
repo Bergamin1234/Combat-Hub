@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3001/api';
+import NoticeCard from '../components/NoticeCard';
+import { adminApi, publicApi } from '../services/api';
 
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -89,11 +88,11 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const [dashRes, agendRes, presencasRes, avisosRes, produtosRes] = await Promise.all([
-        axios.get(`${API_URL}/admin/dashboard`),
-        axios.get(`${API_URL}/admin/agendamentos`),
-        axios.get(`${API_URL}/admin/presencas`),
-        axios.get(`${API_URL}/avisos`),
-        axios.get(`${API_URL}/produtos`)
+        adminApi.getDashboard(),
+        adminApi.getAppointments(),
+        adminApi.getAttendance(),
+        publicApi.getNotices(),
+        publicApi.getProducts()
       ]);
       setMetricas(dashRes.data.metricas);
       setAlunos(dashRes.data.alunos);
@@ -103,7 +102,7 @@ export default function AdminDashboard() {
       setProdutos(produtosRes.data);
 
       if (usuarioLogado?.cargo === 'ADMIN') {
-        const profsRes = await axios.get(`${API_URL}/admin/professores`);
+        const profsRes = await adminApi.getTeachers();
         setProfessores(profsRes.data);
       }
     } catch (error) {
@@ -117,7 +116,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     setLoginLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await adminApi.login({
         emailOuUsuario: loginInput,
         senha: password
       });
@@ -136,7 +135,7 @@ export default function AdminDashboard() {
       const payload = cargo === 'ADMIN'
         ? { emailOuUsuario: 'admin@boru.com', senha: 'admin123' }
         : { emailOuUsuario: 'felipe@boru.com', senha: 'boru123' };
-      const response = await axios.post(`${API_URL}/auth/login`, payload);
+      const response = await adminApi.login(payload);
       setUsuarioLogado(response.data.usuario);
       setIsLoggedIn(true);
     } catch (error: any) {
@@ -152,7 +151,7 @@ export default function AdminDashboard() {
   const criarProfessor = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/admin/professores`, novoProfessor);
+      await adminApi.createTeacher(novoProfessor);
       alert(`Professor ${novoProfessor.nome} cadastrado com sucesso!`);
       setShowModalProf(false);
       setNovoProfessor({ nome: '', email: '', senha: '', cargo: 'PROFESSOR', telefone: '', prajied: 'Prajied Azul Claro' });
@@ -165,7 +164,7 @@ export default function AdminDashboard() {
   const removerProfessor = async (id: string, nome: string) => {
     if (confirm(`Tem certeza que deseja remover o professor(a) ${nome}?`)) {
       try {
-        await axios.delete(`${API_URL}/admin/professores/${id}`);
+        await adminApi.deleteTeacher(id);
         alert('Professor removido.');
         carregarDashboard();
       } catch (error) {
@@ -180,7 +179,7 @@ export default function AdminDashboard() {
   const criarAviso = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/admin/avisos`, {
+      await adminApi.createNotice({
         ...novoAviso,
         autorNome: usuarioLogado?.nome || 'Felipe Borü',
         autorCargo: usuarioLogado?.cargo === 'ADMIN' ? 'Administrador' : 'Professor'
@@ -197,7 +196,7 @@ export default function AdminDashboard() {
   const removerAviso = async (id: string) => {
     if (confirm('Deseja excluir este comunicado do mural?')) {
       try {
-        await axios.delete(`${API_URL}/admin/avisos/${id}`);
+        await adminApi.deleteNotice(id);
         carregarDashboard();
       } catch (error) {
         alert('Erro ao excluir aviso.');
@@ -211,7 +210,7 @@ export default function AdminDashboard() {
   const criarProduto = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/admin/produtos`, novoProduto);
+      await adminApi.createProduct(novoProduto);
       alert('Produto adicionado ao catálogo da loja!');
       setShowModalProduto(false);
       setNovoProduto({ nome: '', categoria: 'PROTETOR_BUCAL', preco: '', estoque: '10', descricao: '', imagemUrl: '' });
@@ -224,7 +223,7 @@ export default function AdminDashboard() {
   const removerProduto = async (id: string) => {
     if (confirm('Deseja excluir este produto do estoque?')) {
       try {
-        await axios.delete(`${API_URL}/admin/produtos/${id}`);
+        await adminApi.deleteProduct(id);
         carregarDashboard();
       } catch (error) {
         alert('Erro ao remover produto.');
@@ -238,7 +237,7 @@ export default function AdminDashboard() {
   const criarAluno = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_URL}/admin/alunos`, novoAluno);
+      const response = await adminApi.createStudent(novoAluno);
       alert(`Aluno criado com sucesso!\n\nSenha temporária gerada: ${response.data.senhaTemporaria}\n(Envie isso para o aluno acessar o portal)`);
       carregarDashboard();
       setShowModal(false);
@@ -251,7 +250,7 @@ export default function AdminDashboard() {
   const handleRegistrarPagamento = async (aluno: any) => {
     if (confirm(`Confirmar recebimento presencial da mensalidade de ${aluno.nome} (Dinheiro/PIX/Cartão no balcão) e renovar por +30 dias?`)) {
       try {
-        const response = await axios.post(`${API_URL}/admin/alunos/${aluno.id}/pagar`);
+        const response = await adminApi.registerPayment(aluno.id);
         alert(response.data.mensagem);
         carregarDashboard();
         if (alunoSelecionado && alunoSelecionado.id === aluno.id) {
@@ -265,7 +264,7 @@ export default function AdminDashboard() {
 
   const atualizarPrajied = async (alunoId: string, prajied: string) => {
     try {
-      await axios.patch(`${API_URL}/admin/alunos/${alunoId}/prajied`, { prajied });
+      await adminApi.updateStudentGrade(alunoId, { prajied });
       alert(`Graduação alterada para ${prajied} com sucesso!`);
       carregarDashboard();
     } catch (error: any) {
@@ -314,9 +313,7 @@ export default function AdminDashboard() {
   const carregarDadosCalendario = async (alunoId: string, mes: number, ano: number) => {
     setLoadingCalendario(true);
     try {
-      const res = await axios.get(`${API_URL}/admin/alunos/${alunoId}/calendario`, {
-        params: { mes, ano }
-      });
+      const res = await adminApi.getStudentCalendar(alunoId, { mes, ano });
       setCalendarioDados(res.data);
     } catch (error) {
       console.error('Erro ao carregar calendário do aluno', error);
@@ -355,7 +352,7 @@ export default function AdminDashboard() {
   const salvarPresencaNoDia = async () => {
     if (!alunoSelecionado || !diaSelecionadoAcao) return;
     try {
-      await axios.post(`${API_URL}/admin/alunos/${alunoSelecionado.id}/presenca`, {
+      await adminApi.saveStudentAttendance(alunoSelecionado.id, {
         data: diaSelecionadoAcao,
         status: statusAcaoDia,
         justificativa: justificativaInput || null,
@@ -373,9 +370,7 @@ export default function AdminDashboard() {
     if (!alunoSelecionado || !diaSelecionadoAcao) return;
     if (confirm('Deseja remover o registro de frequência deste dia?')) {
       try {
-        await axios.delete(`${API_URL}/admin/alunos/${alunoSelecionado.id}/presenca`, {
-          data: { data: diaSelecionadoAcao }
-        });
+        await adminApi.deleteStudentAttendance(alunoSelecionado.id, { data: diaSelecionadoAcao });
         setModalAcaoDia(false);
         carregarDadosCalendario(alunoSelecionado.id, mesCalendario, anoCalendario);
         carregarDashboard();
@@ -390,7 +385,7 @@ export default function AdminDashboard() {
   // ==========================================
   const handleAlterarStatusPresenca = async (presencaId: string, novoStatus: string) => {
     try {
-      await axios.patch(`${API_URL}/admin/presencas/${presencaId}/status`, {
+      await adminApi.updateAttendanceStatus(presencaId, {
         status: novoStatus
       });
       setPresencas(prev => prev.map(p => p.id === presencaId ? { ...p, status: novoStatus } : p));
@@ -408,7 +403,7 @@ export default function AdminDashboard() {
   const marcarAulaRealizada = async (agendamentoId: string) => {
     if (confirm('Confirmar que a pessoa realizou a aula experimental?')) {
       try {
-        await axios.patch(`${API_URL}/admin/agendamentos/${agendamentoId}`, { status: 'REALIZADA' });
+        await adminApi.updateAppointment(agendamentoId, { status: 'REALIZADA' });
         carregarDashboard();
         setSubAbaExperimental('posAula');
       } catch (error) {
@@ -421,7 +416,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!leadParaConverter) return;
     try {
-      const response = await axios.post(`${API_URL}/admin/agendamentos/${leadParaConverter.id}/converter`, {
+      const response = await adminApi.convertAppointment(leadParaConverter.id, {
         plano: planoConversao,
         valorMensalidade: valorConversao
       });
@@ -818,37 +813,12 @@ export default function AdminDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {avisos.map(aviso => (
-                <div key={aviso.id} className="bg-[#141416] border border-zinc-800 rounded-xl p-5 relative overflow-hidden flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start gap-2 mb-2">
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                        aviso.tipo === 'URGENTE' ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
-                        aviso.tipo === 'GRADUACAO' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
-                        aviso.tipo === 'EVENTO' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40' :
-                        'bg-zinc-800 text-zinc-300'
-                      }`}>
-                        {aviso.tipo}
-                      </span>
-                      {aviso.fixado && (
-                        <span className="text-xs text-amber-400 font-bold flex items-center gap-1">
-                          📌 Fixado
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-bold text-white mb-2">{aviso.titulo}</h3>
-                    <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{aviso.conteudo}</p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
-                    <span>Por {aviso.autorNome} ({aviso.autorCargo})</span>
-                    <button 
-                      onClick={() => removerAviso(aviso.id)}
-                      className="text-red-500 hover:text-red-400 font-bold transition text-xs"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </div>
+                <NoticeCard
+                  key={aviso.id}
+                  aviso={aviso}
+                  variant="admin"
+                  onDelete={removerAviso}
+                />
               ))}
             </div>
           </div>

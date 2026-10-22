@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { publicApi } from '../services/api';
 
 export default function Checkout() {
   const location = useLocation();
@@ -41,7 +41,7 @@ export default function Checkout() {
   const concluirCadastroPresencial = async () => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3001/api/checkout', {
+      const response = await publicApi.checkout({
         ...formData,
         plano: planoNome,
         valor: planoValor

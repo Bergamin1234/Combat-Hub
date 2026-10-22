@@ -1,0 +1,52 @@
+import axios from 'axios';
+
+const api = axios.create({ baseURL: 'http://localhost:3001/api' });
+
+export const publicApi = {
+  createAppointment: (data: unknown) => api.post('/agendamentos', data),
+  checkout: (data: unknown) => api.post('/checkout', data),
+  getNotices: () => api.get('/avisos'),
+  getProducts: () => api.get('/produtos')
+};
+
+export const adminApi = {
+  getDashboard: () => api.get('/admin/dashboard'),
+  getAppointments: () => api.get('/admin/agendamentos'),
+  getAttendance: () => api.get('/admin/presencas'),
+  getTeachers: () => api.get('/admin/professores'),
+  login: (data: unknown) => api.post('/auth/login', data),
+  createTeacher: (data: unknown) => api.post('/admin/professores', data),
+  deleteTeacher: (id: string) => api.delete(`/admin/professores/${id}`),
+  createNotice: (data: unknown) => api.post('/admin/avisos', data),
+  deleteNotice: (id: string) => api.delete(`/admin/avisos/${id}`),
+  createProduct: (data: unknown) => api.post('/admin/produtos', data),
+  deleteProduct: (id: string) => api.delete(`/admin/produtos/${id}`),
+  createStudent: (data: unknown) => api.post('/admin/alunos', data),
+  registerPayment: (studentId: string) => api.post(`/admin/alunos/${studentId}/pagar`),
+  updateStudentGrade: (studentId: string, data: unknown) =>
+    api.patch(`/admin/alunos/${studentId}/prajied`, data),
+  getStudentCalendar: (studentId: string, params: { mes: number; ano: number }) =>
+    api.get(`/admin/alunos/${studentId}/calendario`, { params }),
+  saveStudentAttendance: (studentId: string, data: unknown) =>
+    api.post(`/admin/alunos/${studentId}/presenca`, data),
+  deleteStudentAttendance: (studentId: string, data: unknown) =>
+    api.delete(`/admin/alunos/${studentId}/presenca`, { data }),
+  updateAttendanceStatus: (attendanceId: string, data: unknown) =>
+    api.patch(`/admin/presencas/${attendanceId}/status`, data),
+  updateAppointment: (appointmentId: string, data: unknown) =>
+    api.patch(`/admin/agendamentos/${appointmentId}`, data),
+  convertAppointment: (appointmentId: string, data: unknown) =>
+    api.post(`/admin/agendamentos/${appointmentId}/converter`, data)
+};
+
+export const studentApi = {
+  login: (data: unknown) => api.post('/alunos/login', data),
+  recoverPassword: (data: unknown) => api.post('/alunos/recuperar-senha', data),
+  changePassword: (data: unknown) => api.post('/alunos/alterar-senha', data),
+  getClasses: (params: { alunoId?: string }) => api.get('/aulas', { params }),
+  getCalendar: (studentId: string, params: { mes: number; ano: number }) =>
+    api.get(`/admin/alunos/${studentId}/calendario`, { params }),
+  getGamification: (studentId: string) => api.get(`/alunos/${studentId}/gamificacao`),
+  checkIn: (data: unknown) => api.post('/checkin', data),
+  justifyAbsence: (data: unknown) => api.post('/alunos/justificar-ausencia', data)
+};
