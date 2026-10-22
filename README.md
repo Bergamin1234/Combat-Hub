@@ -53,11 +53,21 @@ O sistema possui controle de acesso baseado em funções (RBAC) com distinção 
 - **Autenticação Segura & Recuperação de Senha:** Login com CPF e recuperação via CPF/E-mail/Telefone com credencial provisória.
 - **Graduação Oficial de Muay Thai (Prajied):** Identificação visual por cores de Prajied reconhecidas pelo Mestre Felipe Borü.
 
+<<<<<<< HEAD
 ### 🔥 2. Estímulo ao Check-in & Gamificação
 - **Sequência de Treinos (Streak):** Contador do *Fogo do Guerreiro* 🔥 que contabiliza treinos e semanas consecutivas para incentivar a disciplina.
 - **Meta Mensal de Treinos:** Barra de progresso interativa mostrando a meta do plano (ex: 8, 12 ou 20 treinos/mês).
 - **Medalhas Marciais (Badges):** Conquistas desbloqueáveis (*Primeiro Sangue*, *Guerreiro Focado*, *Inabalável*, *Casca Grossa*).
 - **Justificativa de Ausência / Doença:** O aluno pode avisar antecipadamente pelo app caso esteja doente ou com atestado médico, evitando falta não justificada.
+=======
+### 👤 2. Portal do Aluno
+- **Autenticação:** Acesso por CPF e senha com fluxo para primeiro acesso.
+- **Recuperação de Senha ("Esqueci a Senha"):** Recuperação simples via CPF com senha provisória e redefinição obrigatória.
+- **Graduação Oficial de Muay Thai (Prajied):** Sistema dinâmico com identificação visual por cores (Branco, Ponta Vermelha, Vermelho, etc.), atualizado pelo professor.
+- **Sensei IA (Google Gemini):** Chatbot inteligente com IA para orientações sobre treinos, regras e preparação física. (Não disponível por Enquanto)
+- **Check-in & Histórico de Treinos:** Registro e acompanhamento de frequência nas aulas.
+- **Módulo Financeiro:** Visualização de vencimento da mensalidade e checkout com suporte a Cartão de Crédito e PIX.
+>>>>>>> 05cd11e44594573145caf246a10ce70be513b44c
 
 ### 📊 3. Controle de Frequência, Faltas e Doenças
 O banco de dados armazena registros categorizados de frequência e calcula automaticamente:
