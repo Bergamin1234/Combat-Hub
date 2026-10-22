@@ -9,6 +9,7 @@ frontend/node_modules/
 dist/
 frontend/dist/
 backend/dist/
+backend/public/
 coverage/
 *.log
 .vite/
