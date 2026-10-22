@@ -7,16 +7,34 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+// ==========================================
+// USUÁRIOS DO SISTEMA (ADMINISTRADOR & PROFESSORES)
+// ==========================================
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  cargo     String   @default("PROFESSOR") // Valores: "ADMIN" ou "PROFESSOR"
+  telefone  String?
+  prajied   String?  @default("Prajied Azul Escuro e Preto")
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
+}
+
+// ==========================================
+// ALUNOS & MATRÍCULAS
+// ==========================================
 model Aluno {
   id             String        @id @default(uuid())
   nome           String
   email          String?       @unique
   telefone       String?
   cpf            String?       @unique
-  senha          String?       // Senha criptografada (ou temporária)
-  primeiroAcesso Boolean       @default(true) // Controla se o aluno precisa trocar a senha
+  senha          String?       // Senha de acesso
+  primeiroAcesso Boolean       @default(true) // Obriga a redefinir no 1º acesso
   plano          String?       // Valores: DIARIA, 2x na semana, 3x na semana, Todos os Horários
-  prajied        String        @default("Branco") // Nível/Graduação do aluno
+  prajied        String        @default("Branco") // Graduação do Muay Thai
   criadoEm       DateTime      @default(now())
   
   mensalidades   Mensalidade[]
@@ -31,11 +49,14 @@ model Mensalidade {
   status         String          @default("PENDENTE") // Valores: PENDENTE, PAGO, ATRASADO
   
   alunoId        String
-  aluno          Aluno           @relation(fields: [alunoId], references: [id])
+  aluno          Aluno           @relation(fields: [alunoId], references: [id], onDelete: Cascade)
   
   criadoEm       DateTime        @default(now())
 }
 
+// ==========================================
+// AGENDA, AULAS & FREQUÊNCIA DETALHADA
+// ==========================================
 model EventoDeAula {
   id          String                @id @default(uuid())
   titulo      String
@@ -49,17 +70,19 @@ model EventoDeAula {
 
 model AgendamentoPresenca {
   id                 String        @id @default(uuid())
-  status             String        @default("AGENDADO") // Valores: AGENDADO, PRESENTE, AUSENTE, JUSTIFICADO
+  // Status: AGENDADO, PRESENTE, FALTA (AUSENTE), DOENCA (FALTA_DOENCA), JUSTIFICADO
+  status             String        @default("AGENDADO")
   fotoComprovanteUrl String?
 
   alunoId            String
-  aluno              Aluno         @relation(fields: [alunoId], references: [id])
+  aluno              Aluno         @relation(fields: [alunoId], references: [id], onDelete: Cascade)
   
   eventoId           String?
   evento             EventoDeAula? @relation(fields: [eventoId], references: [id])
   
   data               DateTime      @default(now())
-  justificativa      String?
+  justificativa      String?       // Detalhe ou atestado
+  tipoJustificativa  String?       // DOENCA, ATESTADO, TRABALHO, PESSOAL, OUTRO
 
   criadoEm           DateTime      @default(now())
 }
@@ -74,4 +97,33 @@ model AgendamentoExperimental {
   dataRealizada DateTime?
   observacao    String?
   criadoEm      DateTime  @default(now())
+}
+
+// ==========================================
+// MURAL DE AVISOS (PROFESSORES & ADMIN)
+// ==========================================
+model Aviso {
+  id          String   @id @default(uuid())
+  titulo      String
+  conteudo    String
+  tipo        String   @default("GERAL") // GERAL, URGENTE, GRADUACAO, EVENTO
+  autorNome   String   @default("Felipe Borü")
+  autorCargo  String   @default("Professor") // "Administrador" ou "Professor"
+  fixado      Boolean  @default(false)
+  criadoEm    DateTime @default(now())
+}
+
+// ==========================================
+// LOJA & MERCADO BORÜ (BETA)
+// ==========================================
+model Produto {
+  id          String   @id @default(uuid())
+  nome        String
+  categoria   String   // PROTETOR_BUCAL, LUVAS, CANELEIRAS, BANDAGENS, ALIMENTOS
+  preco       Float
+  estoque     Int      @default(0)
+  descricao   String?
+  imagemUrl   String?
+  disponivel  Boolean  @default(true)
+  criadoEm    DateTime @default(now())
 }

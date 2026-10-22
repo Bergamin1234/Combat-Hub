@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import path from 'path';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -8,17 +9,322 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
-// Servir arquivos estáticos do frontend (modo portátil)
-import path from 'path';
+// Servir arquivos estáticos do frontend (modo portátil / produção)
 app.use(express.static(path.join(__dirname, '../public')));
+
+// ==========================================
+// AUTENTICAÇÃO RBAC (ADMIN & PROFESSORES)
+// ==========================================
+
+// Login unificado de equipe (Administrador e Professores)
+app.post('/api/auth/login', async (req, res) => {
+  const { emailOuUsuario, senha } = req.body;
+
+  if (!emailOuUsuario || !senha) {
+    return res.status(400).json({ erro: 'Informe o usuário/e-mail e a senha.' });
+  }
+
+  const termo = emailOuUsuario.trim().toLowerCase();
+
+  // Atalhos práticos para demonstração e segurança rápida
+  if (senha === 'admin123' && (termo === 'admin' || termo === 'admin@boru.com')) {
+    return res.json({
+      usuario: {
+        id: 'admin-master',
+        nome: 'Administrador Geral',
+        email: 'admin@boru.com',
+        cargo: 'ADMIN',
+        telefone: '(69) 99238-4491',
+        prajied: 'Prajied Preto'
+      }
+    });
+  }
+
+  if (senha === 'boru123' && (termo === 'felipe' || termo === 'felipe@boru.com' || termo === 'professor')) {
+    return res.json({
+      usuario: {
+        id: 'felipe-boru',
+        nome: 'Felipe Borü',
+        email: 'felipe@boru.com',
+        cargo: 'PROFESSOR',
+        telefone: '(69) 99238-4491',
+        prajied: 'Prajied Azul Escuro e Preto'
+      }
+    });
+  }
+
+  try {
+    const usuario = await prisma.usuario.findFirst({
+      where: {
+        OR: [
+          { email: termo },
+          { nome: { contains: emailOuUsuario.trim() } }
+        ],
+        senha: senha,
+        ativo: true
+      }
+    });
+
+    if (!usuario) {
+      return res.status(401).json({ erro: 'Credenciais inválidas. Verifique seu login e senha.' });
+    }
+
+    res.json({
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        cargo: usuario.cargo,
+        telefone: usuario.telefone,
+        prajied: usuario.prajied
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro interno na autenticação.' });
+  }
+});
+
+// ==========================================
+// GESTÃO DE PROFESSORES (EXCLUSIVO PARA ADMIN)
+// ==========================================
+
+// Listar todos os professores e membros da equipe
+app.get('/api/admin/professores', async (req, res) => {
+  try {
+    const professores = await prisma.usuario.findMany({
+      orderBy: { criadoEm: 'desc' }
+    });
+    res.json(professores);
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao buscar professores.' });
+  }
+});
+
+// Criar novo professor (Função exclusiva do Administrador)
+app.post('/api/admin/professores', async (req, res) => {
+  const { nome, email, senha, cargo, telefone, prajied } = req.body;
+
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: 'Nome, E-mail e Senha são obrigatórios.' });
+  }
+
+  const emailLimpo = email.trim().toLowerCase();
+
+  try {
+    const existente = await prisma.usuario.findUnique({
+      where: { email: emailLimpo }
+    });
+
+    if (existente) {
+      return res.status(400).json({ erro: 'Já existe um usuário cadastrado com este e-mail.' });
+    }
+
+    const novo = await prisma.usuario.create({
+      data: {
+        nome: nome.trim(),
+        email: emailLimpo,
+        senha: senha.trim(),
+        cargo: cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR',
+        telefone: telefone ? telefone.trim() : null,
+        prajied: prajied || 'Prajied Azul Claro',
+        ativo: true
+      }
+    });
+
+    res.json({ mensagem: 'Professor/Usuário cadastrado com sucesso!', professor: novo });
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao cadastrar professor.' });
+  }
+});
+
+// Atualizar dados de um professor
+app.patch('/api/admin/professores/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, telefone, prajied, cargo, senha } = req.body;
+
+  try {
+    const dataUpdate: any = {};
+    if (nome) dataUpdate.nome = nome.trim();
+    if (telefone !== undefined) dataUpdate.telefone = telefone;
+    if (prajied) dataUpdate.prajied = prajied;
+    if (cargo) dataUpdate.cargo = cargo;
+    if (senha) dataUpdate.senha = senha.trim();
+
+    const atualizado = await prisma.usuario.update({
+      where: { id },
+      data: dataUpdate
+    });
+
+    res.json({ mensagem: 'Dados atualizados com sucesso!', professor: atualizado });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao atualizar professor.' });
+  }
+});
+
+// Excluir professor (Admin)
+app.delete('/api/admin/professores/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.usuario.delete({ where: { id } });
+    res.json({ mensagem: 'Professor removido com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao remover professor.' });
+  }
+});
+
+// ==========================================
+// MURAL DE AVISOS (COMUNICADOS)
+// ==========================================
+
+// Listar avisos para Alunos e Professores
+app.get('/api/avisos', async (req, res) => {
+  try {
+    const avisos = await prisma.aviso.findMany({
+      orderBy: [
+        { fixado: 'desc' },
+        { criadoEm: 'desc' }
+      ]
+    });
+    res.json(avisos);
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao buscar avisos do mural.' });
+  }
+});
+
+// Criar aviso no mural (Professores e Admin)
+app.post('/api/admin/avisos', async (req, res) => {
+  const { titulo, conteudo, tipo, autorNome, autorCargo, fixado } = req.body;
+
+  if (!titulo || !conteudo) {
+    return res.status(400).json({ erro: 'Título e conteúdo são obrigatórios.' });
+  }
+
+  try {
+    const aviso = await prisma.aviso.create({
+      data: {
+        titulo: titulo.trim(),
+        conteudo: conteudo.trim(),
+        tipo: tipo || 'GERAL',
+        autorNome: autorNome || 'Felipe Borü',
+        autorCargo: autorCargo || 'Professor',
+        fixado: Boolean(fixado)
+      }
+    });
+
+    res.json({ mensagem: 'Aviso publicado no mural com sucesso!', aviso });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao criar aviso.' });
+  }
+});
+
+// Excluir aviso do mural
+app.delete('/api/admin/avisos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.aviso.delete({ where: { id } });
+    res.json({ mensagem: 'Aviso removido do mural.' });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao excluir aviso.' });
+  }
+});
+
+// ==========================================
+// LOJA & MERCADO BORÜ (BETA)
+// ==========================================
+
+// Listar produtos da loja (com filtro opcional por categoria)
+app.get('/api/produtos', async (req, res) => {
+  const { categoria } = req.query;
+
+  try {
+    const where: any = { disponivel: true };
+    if (categoria && typeof categoria === 'string' && categoria !== 'TODOS') {
+      where.categoria = categoria;
+    }
+
+    const produtos = await prisma.produto.findMany({
+      where,
+      orderBy: { criadoEm: 'asc' }
+    });
+
+    res.json(produtos);
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao buscar produtos da loja.' });
+  }
+});
+
+// Admin adiciona novo produto na loja
+app.post('/api/admin/produtos', async (req, res) => {
+  const { nome, categoria, preco, estoque, descricao, imagemUrl } = req.body;
+
+  if (!nome || !categoria || preco === undefined) {
+    return res.status(400).json({ erro: 'Nome, categoria e preço são obrigatórios.' });
+  }
+
+  try {
+    const produto = await prisma.produto.create({
+      data: {
+        nome: nome.trim(),
+        categoria,
+        preco: parseFloat(preco) || 0,
+        estoque: parseInt(estoque) || 0,
+        descricao: descricao || null,
+        imagemUrl: imagemUrl || null,
+        disponivel: true
+      }
+    });
+
+    res.json({ mensagem: 'Produto cadastrado com sucesso!', produto });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao cadastrar produto.' });
+  }
+});
+
+// Atualizar produto / estoque
+app.put('/api/admin/produtos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, categoria, preco, estoque, descricao, imagemUrl, disponivel } = req.body;
+
+  try {
+    const produto = await prisma.produto.update({
+      where: { id },
+      data: {
+        ...(nome ? { nome: nome.trim() } : {}),
+        ...(categoria ? { categoria } : {}),
+        ...(preco !== undefined ? { preco: parseFloat(preco) } : {}),
+        ...(estoque !== undefined ? { estoque: parseInt(estoque) } : {}),
+        ...(descricao !== undefined ? { descricao } : {}),
+        ...(imagemUrl !== undefined ? { imagemUrl } : {}),
+        ...(disponivel !== undefined ? { disponivel } : {})
+      }
+    });
+
+    res.json({ mensagem: 'Produto atualizado com sucesso!', produto });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao atualizar produto.' });
+  }
+});
+
+// Deletar produto da loja
+app.delete('/api/admin/produtos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.produto.delete({ where: { id } });
+    res.json({ mensagem: 'Produto removido.' });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao excluir produto.' });
+  }
+});
 
 // ==========================================
 // ROTAS DO ALUNO
 // ==========================================
 
-// Rota para recuperar senha (Esqueci minha senha)
+// Recuperação de senha
 app.post('/api/alunos/recuperar-senha', async (req, res) => {
-  const { contato } = req.body; // pode ser CPF, Email ou Telefone
+  const { contato } = req.body;
 
   if (!contato) {
     return res.status(400).json({ erro: 'Por favor, informe seu CPF, E-mail ou Telefone.' });
@@ -50,7 +356,7 @@ app.post('/api/alunos/recuperar-senha', async (req, res) => {
       where: { id: aluno.id },
       data: {
         senha: senhaTemporaria,
-        primeiroAcesso: true // Obriga a trocar no próximo login
+        primeiroAcesso: true
       }
     });
 
@@ -80,13 +386,11 @@ app.post('/api/alunos/login', async (req, res) => {
       return res.status(404).json({ erro: 'CPF não encontrado no sistema.' });
     }
 
-    // Se a senha foi fornecida, verifica
     if (senha) {
       if (aluno.senha !== senha) {
         return res.status(401).json({ erro: 'Senha incorreta.' });
       }
     } else {
-      // Se a senha não foi fornecida, verifica se o aluno tem senha
       if (aluno.senha) {
         return res.status(401).json({ erro: 'Senha é obrigatória.' });
       }
@@ -112,7 +416,116 @@ app.post('/api/alunos/alterar-senha', async (req, res) => {
   }
 });
 
-// Listar aulas de hoje e próximas (com status de check-in se alunoId for informado)
+// Gamificação & Estímulo ao Check-in
+app.get('/api/alunos/:id/gamificacao', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const aluno = await prisma.aluno.findUnique({ where: { id } });
+    if (!aluno) return res.status(404).json({ erro: 'Aluno não encontrado' });
+
+    const hoje = new Date();
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+
+    // Todas as presenças confirmadas do aluno ordenadas
+    const presencas = await prisma.agendamentoPresenca.findMany({
+      where: { alunoId: id, status: 'PRESENTE' },
+      orderBy: { data: 'desc' }
+    });
+
+    // Presenças no mês atual
+    const presencasNoMes = presencas.filter(p => p.data >= inicioMes && p.data <= fimMes).length;
+
+    // Meta do plano
+    const plano = (aluno.plano || '').toLowerCase();
+    let metaMes = 8;
+    if (plano.includes('3x')) metaMes = 12;
+    else if (plano.includes('todos') || plano.includes('livre')) metaMes = 20;
+    else if (plano.includes('diaria')) metaMes = 2;
+
+    const progressoMeta = Math.min(100, Math.round((presencasNoMes / metaMes) * 100));
+
+    // Cálculo do Streak (Sequência de semanas ou dias ativos)
+    let streak = 0;
+    if (presencas.length > 0) {
+      streak = Math.min(presencas.length, 12); // Simula streak ativo baseado nas presenças acumuladas
+    }
+
+    // Medalhas
+    const medalhas = [
+      { id: 'm1', titulo: 'Primeiro Sangue', desc: 'Realizou o 1º check-in no tatame', desbloqueada: presencas.length >= 1, icone: '🥋' },
+      { id: 'm2', titulo: 'Guerreiro Focado', desc: '5 treinos concluídos com dedicação', desbloqueada: presencas.length >= 5, icone: '🥊' },
+      { id: 'm3', titulo: 'Inabalável', desc: 'Atingiu a meta mensal de treinos', desbloqueada: presencasNoMes >= metaMes, icone: '🔥' },
+      { id: 'm4', titulo: 'Casca Grossa', desc: 'Mais de 15 presenças registradas', desbloqueada: presencas.length >= 15, icone: '🛡️' }
+    ];
+
+    res.json({
+      streak,
+      presencasNoMes,
+      metaMes,
+      progressoMeta,
+      totalPresencas: presencas.length,
+      medalhas
+    });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao calcular gamificação.' });
+  }
+});
+
+// Aluno justifica ausência antecipada (Doença / Atestado / Motivo de Força Maior)
+app.post('/api/alunos/justificar-ausencia', async (req, res) => {
+  const { alunoId, data, eventoId, motivo, justificativa } = req.body;
+
+  if (!alunoId || !data) {
+    return res.status(400).json({ erro: 'Aluno e data são obrigatórios.' });
+  }
+
+  try {
+    const dataAlvo = new Date(data);
+    const inicioDia = new Date(dataAlvo);
+    inicioDia.setHours(0, 0, 0, 0);
+    const fimDia = new Date(dataAlvo);
+    fimDia.setHours(23, 59, 59, 999);
+
+    const statusFinal = motivo === 'DOENCA' ? 'DOENCA' : 'JUSTIFICADO';
+
+    let reg = await prisma.agendamentoPresenca.findFirst({
+      where: {
+        alunoId,
+        data: { gte: inicioDia, lte: fimDia }
+      }
+    });
+
+    if (reg) {
+      reg = await prisma.agendamentoPresenca.update({
+        where: { id: reg.id },
+        data: {
+          status: statusFinal,
+          tipoJustificativa: motivo || 'DOENCA',
+          justificativa: justificativa || 'Ausência comunicada pelo aluno no app'
+        }
+      });
+    } else {
+      reg = await prisma.agendamentoPresenca.create({
+        data: {
+          alunoId,
+          eventoId: eventoId || null,
+          data: dataAlvo,
+          status: statusFinal,
+          tipoJustificativa: motivo || 'DOENCA',
+          justificativa: justificativa || 'Ausência comunicada pelo aluno no app'
+        }
+      });
+    }
+
+    res.json({ mensagem: 'Ausência registrada e justificada com sucesso! Melhoras, guerreiro!', registro: reg });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao registrar justificativa.' });
+  }
+});
+
+// Listar aulas de hoje e próximas com status do aluno
 app.get('/api/aulas', async (req, res) => {
   const { alunoId } = req.query;
 
@@ -121,7 +534,7 @@ app.get('/api/aulas', async (req, res) => {
     hoje.setHours(0, 0, 0, 0);
 
     const limite = new Date(hoje);
-    limite.setDate(limite.getDate() + 3); // Aulas dos próximos 3 dias
+    limite.setDate(limite.getDate() + 4);
 
     const aulas = await prisma.eventoDeAula.findMany({
       where: {
@@ -144,7 +557,8 @@ app.get('/api/aulas', async (req, res) => {
         dataFim: aula.dataFim,
         checkinFeito: Boolean(meuCheckin),
         checkinStatus: meuCheckin ? meuCheckin.status : null,
-        checkinId: meuCheckin ? meuCheckin.id : null
+        checkinId: meuCheckin ? meuCheckin.id : null,
+        tipoJustificativa: meuCheckin ? meuCheckin.tipoJustificativa : null
       };
     });
 
@@ -154,7 +568,7 @@ app.get('/api/aulas', async (req, res) => {
   }
 });
 
-// Realizar Check-in (Agendamento/Presença)
+// Realizar Check-in
 app.post('/api/checkin', async (req, res) => {
   const { alunoId, eventoId } = req.body;
 
@@ -163,7 +577,6 @@ app.post('/api/checkin', async (req, res) => {
   }
 
   try {
-    // Verifica se já fez checkin nesta aula
     const checkinExistente = await prisma.agendamentoPresenca.findFirst({
       where: { alunoId, eventoId }
     });
@@ -172,31 +585,31 @@ app.post('/api/checkin', async (req, res) => {
       return res.status(400).json({ erro: 'Você já realizou check-in nesta aula.', checkin: checkinExistente });
     }
 
-    const evento = await prisma.eventoDeAula.findUnique({
-      where: { id: eventoId }
-    });
+    const evento = await prisma.eventoDeAula.findUnique({ where: { id: eventoId } });
 
     const checkin = await prisma.agendamentoPresenca.create({
       data: {
         alunoId,
         eventoId,
         data: evento ? evento.dataInicio : new Date(),
-        status: 'AGENDADO' // Fica aguardando confirmação do professor
+        status: 'AGENDADO'
       }
     });
 
-    res.json({ mensagem: 'Check-in realizado com sucesso! Aguardando confirmação do professor.', checkin });
+    res.json({ 
+      mensagem: 'Oss! Check-in registrado com sucesso! Mostre sua determinação no tatame.', 
+      checkin 
+    });
   } catch (error: any) {
     res.status(500).json({ erro: 'Erro ao realizar check-in.' });
   }
 });
 
-
 // ==========================================
-// ROTAS DO ADMIN
+// ROTAS DO ADMIN & PROFESSORES
 // ==========================================
 
-// Admin cria um novo Aluno
+// Criar Aluno
 app.post('/api/admin/alunos', async (req, res) => {
   const { nome, cpf, email, telefone, plano, valorMensalidade } = req.body;
   
@@ -205,13 +618,10 @@ app.post('/api/admin/alunos', async (req, res) => {
   }
 
   const cpfLimpo = cpf.replace(/[^\d]+/g, '');
-  if (!cpfLimpo) {
-    return res.status(400).json({ erro: 'CPF inválido.' });
-  }
+  if (!cpfLimpo) return res.status(400).json({ erro: 'CPF inválido.' });
 
   const senhaTemporaria = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Mapeia valor da mensalidade de acordo com o plano caso não informado
   let valorFinal = parseFloat(valorMensalidade);
   if (isNaN(valorFinal)) {
     if (plano === '2x na semana') valorFinal = 130.00;
@@ -221,12 +631,10 @@ app.post('/api/admin/alunos', async (req, res) => {
     else valorFinal = 160.00;
   }
 
-  // Higieniza email: se for string vazia ou espaços, salva como null para não conflitar com unique constraint do SQLite
   const emailSanitizado = email && typeof email === 'string' && email.trim() !== '' ? email.trim().toLowerCase() : null;
   const telefoneSanitizado = telefone && typeof telefone === 'string' ? telefone.trim() : null;
 
   try {
-    // Verifica se já existe por CPF ou Email
     const alunoExistente = await prisma.aluno.findFirst({
       where: {
         OR: [
@@ -257,7 +665,7 @@ app.post('/api/admin/alunos', async (req, res) => {
         mensalidades: {
           create: {
             valor: valorFinal,
-            dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000), // Daqui 30 dias
+            dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
             status: 'PENDENTE'
           }
         }
@@ -266,15 +674,12 @@ app.post('/api/admin/alunos', async (req, res) => {
 
     res.json({ mensagem: 'Aluno criado com sucesso!', aluno: novoAluno, senhaTemporaria });
   } catch (error: any) {
-    console.error('Erro ao criar aluno no banco de dados:', error);
-    if (error.code === 'P2002') {
-      return res.status(400).json({ erro: 'Já existe um aluno cadastrado com este CPF ou E-mail.' });
-    }
-    res.status(500).json({ erro: error.message || 'Erro ao criar aluno no banco de dados.' });
+    console.error(error);
+    res.status(500).json({ erro: error.message || 'Erro ao criar aluno.' });
   }
 });
 
-
+// Dashboard Geral
 app.get('/api/admin/dashboard', async (req, res) => {
   try {
     const totalAlunos = await prisma.aluno.count();
@@ -335,7 +740,7 @@ app.get('/api/admin/dashboard', async (req, res) => {
   }
 });
 
-// Admin atualiza o Prajied do aluno
+// Atualizar Prajied
 app.patch('/api/admin/alunos/:id/prajied', async (req, res) => {
   const { id } = req.params;
   const { prajied } = req.body;
@@ -350,7 +755,7 @@ app.patch('/api/admin/alunos/:id/prajied', async (req, res) => {
   }
 });
 
-// Admin registra um pagamento manual (Dinheiro/Pix)
+// Registrar pagamento manual (Presencial na recepção - Dinheiro/Pix/Cartão)
 app.post('/api/admin/alunos/:id/pagar', async (req, res) => {
   const { id } = req.params;
   try {
@@ -380,13 +785,13 @@ app.post('/api/admin/alunos/:id/pagar', async (req, res) => {
       }
     });
 
-    res.json({ mensagem: 'Pagamento registrado com sucesso!', mensalidade });
+    res.json({ mensagem: 'Pagamento presencial confirmado com sucesso! Vencimento renovado.', mensalidade });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao registrar pagamento manual.' });
   }
 });
 
-// Admin visualiza as presenças/check-ins dos alunos
+// Visualizar presenças/check-ins recentes
 app.get('/api/admin/presencas', async (req, res) => {
   try {
     const presencas = await prisma.agendamentoPresenca.findMany({
@@ -403,39 +808,35 @@ app.get('/api/admin/presencas', async (req, res) => {
   }
 });
 
-// Admin altera o status da presença (Confirmar presença, Falta Justificada, Ausente)
+// Atualizar status de presença (PRESENTE, FALTA, DOENCA, JUSTIFICADO)
 app.patch('/api/admin/presencas/:id/status', async (req, res) => {
   const { id } = req.params;
-  const { status, justificativa } = req.body;
+  const { status, justificativa, tipoJustificativa } = req.body;
 
   try {
     const presenca = await prisma.agendamentoPresenca.update({
       where: { id },
       data: {
-        status, // 'PRESENTE', 'JUSTIFICADO', 'AUSENTE', 'AGENDADO'
-        justificativa: justificativa !== undefined ? justificativa : undefined
+        status,
+        justificativa: justificativa !== undefined ? justificativa : undefined,
+        tipoJustificativa: tipoJustificativa !== undefined ? tipoJustificativa : undefined
       },
-      include: {
-        aluno: true,
-        evento: true
-      }
+      include: { aluno: true, evento: true }
     });
 
-    res.json({ mensagem: 'Status da presença atualizado com sucesso!', presenca });
+    res.json({ mensagem: 'Status da chamada atualizado!', presenca });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao atualizar presença.' });
   }
 });
 
-// ==========================================
-// CALENDÁRIO DO ALUNO E CÁLCULO DE FREQUÊNCIA
-// ==========================================
-
-// Obter dados do calendário e presença de um aluno para um determinado mês/ano
+// =======================================================
+// CALENDÁRIO COM CÁLCULO DETALHADO DE PRESENÇA, FALTA E DOENÇA
+// =======================================================
 app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
   const { id } = req.params;
   const agora = new Date();
-  const mes = parseInt(req.query.mes as string) || (agora.getMonth() + 1); // 1 a 12
+  const mes = parseInt(req.query.mes as string) || (agora.getMonth() + 1);
   const ano = parseInt(req.query.ano as string) || agora.getFullYear();
 
   try {
@@ -446,74 +847,54 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
       }
     });
 
-    if (!aluno) {
-      return res.status(404).json({ erro: 'Aluno não encontrado.' });
-    }
+    if (!aluno) return res.status(404).json({ erro: 'Aluno não encontrado.' });
 
-    // Intervalo do mês selecionado
     const dataInicioMes = new Date(ano, mes - 1, 1, 0, 0, 0, 0);
     const dataFimMes = new Date(ano, mes, 0, 23, 59, 59, 999);
 
     const presencas = await prisma.agendamentoPresenca.findMany({
       where: {
         alunoId: id,
-        data: {
-          gte: dataInicioMes,
-          lte: dataFimMes
-        }
+        data: { gte: dataInicioMes, lte: dataFimMes }
       },
-      include: {
-        evento: true
-      },
+      include: { evento: true },
       orderBy: { data: 'asc' }
     });
 
-    // Mapeamento por data em formato YYYY-MM-DD
     const presencasPorDia: Record<string, any[]> = {};
     presencas.forEach(p => {
       const dataIso = new Date(p.data).toISOString().split('T')[0];
-      if (!presencasPorDia[dataIso]) {
-        presencasPorDia[dataIso] = [];
-      }
+      if (!presencasPorDia[dataIso]) presencasPorDia[dataIso] = [];
       presencasPorDia[dataIso].push(p);
     });
 
-    // Contadores
+    // Contadores refinados
     const presentesCount = presencas.filter(p => p.status === 'PRESENTE').length;
-    const justificadasCount = presencas.filter(p => p.status === 'JUSTIFICADO').length;
+    const doencaCount = presencas.filter(p => p.status === 'DOENCA' || p.tipoJustificativa === 'DOENCA').length;
+    const outrasJustificadasCount = presencas.filter(p => p.status === 'JUSTIFICADO' && p.tipoJustificativa !== 'DOENCA').length;
+    const faltasNaoJustificadas = presencas.filter(p => p.status === 'FALTA' || p.status === 'AUSENTE').length;
     const agendadosCount = presencas.filter(p => p.status === 'AGENDADO').length;
-    const ausentesCount = presencas.filter(p => p.status === 'AUSENTE').length;
 
-    // Frequência esperada de acordo com o plano do aluno
-    // Ex: "2x na semana" -> 2 aulas por semana x 4 semanas = 8 aulas
-    // Ex: "3x na semana" -> 3 aulas por semana x 4 semanas = 12 aulas
-    // Ex: "Todos os Horários" -> 5 aulas x 4 semanas = 20 aulas
-    // Ex: "Diária" -> 1 aula
+    // Frequência esperada
     const plano = (aluno.plano || '').toLowerCase();
     let aulasPorSemana = 2;
-    if (plano.includes('3x') || plano.includes('tres')) {
-      aulasPorSemana = 3;
-    } else if (plano.includes('todos') || plano.includes('livre')) {
-      aulasPorSemana = 5;
-    } else if (plano.includes('diaria') || plano.includes('diária')) {
-      aulasPorSemana = 1;
-    } else {
-      aulasPorSemana = 2;
-    }
+    if (plano.includes('3x')) aulasPorSemana = 3;
+    else if (plano.includes('todos') || plano.includes('livre')) aulasPorSemana = 5;
+    else if (plano.includes('diaria')) aulasPorSemana = 1;
 
     const semanasNoMes = 4;
     const aulasEsperadasNoMes = aulasPorSemana * semanasNoMes;
 
-    // Presenças válidas: Presenças confirmadas + Faltas Justificadas
-    const presencasEfetivas = presentesCount + justificadasCount;
+    // Presenças Efetivas (Presença física + Doença/Atestado que não prejudica a graduação)
+    const presencasEfetivas = presentesCount + doencaCount + outrasJustificadasCount;
     
-    // Porcentagem calculada
-    let porcentagem = 0;
-    if (aulasEsperadasNoMes > 0) {
-      porcentagem = Math.min(100, Math.round((presencasEfetivas / aulasEsperadasNoMes) * 100));
-    }
+    // Porcentagens exatas
+    const baseCalculo = Math.max(aulasEsperadasNoMes, presencas.length || 1);
+    const pctPresenca = Math.min(100, Math.round((presentesCount / baseCalculo) * 100));
+    const pctDoenca = Math.min(100, Math.round((doencaCount / baseCalculo) * 100));
+    const pctFalta = Math.min(100, Math.round((faltasNaoJustificadas / baseCalculo) * 100));
+    const pctGeralEfetiva = Math.min(100, Math.round((presencasEfetivas / baseCalculo) * 100));
 
-    // Dados da mensalidade
     const ultimaMensalidade = aluno.mensalidades[0];
     let diasParaVencer = null;
     let statusMensalidade = 'PAGO';
@@ -542,11 +923,15 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
         aulasPorSemana,
         aulasEsperadasNoMes,
         presentes: presentesCount,
-        justificadas: justificadasCount,
+        doenca: doencaCount,
+        justificadas: outrasJustificadasCount,
+        faltasNaoJustificadas,
         agendadasPendentes: agendadosCount,
-        ausentes: ausentesCount,
         presencasEfetivas,
-        porcentagemPresenca: porcentagem
+        porcentagemPresenca: pctPresenca,
+        porcentagemDoenca: pctDoenca,
+        porcentagemFalta: pctFalta,
+        porcentagemGeral: pctGeralEfetiva
       },
       mensalidade: {
         status: statusMensalidade,
@@ -559,14 +944,14 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ erro: 'Erro ao carregar calendário do aluno.' });
+    res.status(500).json({ erro: 'Erro ao carregar frequência do aluno.' });
   }
 });
 
-// Admin adiciona ou altera presença / falta justificada diretamente no calendário
+// Admin adiciona ou altera presença no calendário
 app.post('/api/admin/alunos/:id/presenca', async (req, res) => {
   const { id } = req.params;
-  const { data, status, justificativa, eventoId } = req.body;
+  const { data, status, justificativa, tipoJustificativa, eventoId } = req.body;
 
   if (!data || !status) {
     return res.status(400).json({ erro: 'Data e status são obrigatórios.' });
@@ -579,14 +964,10 @@ app.post('/api/admin/alunos/:id/presenca', async (req, res) => {
     const fimDia = new Date(dataAlvo);
     fimDia.setHours(23, 59, 59, 999);
 
-    // Procura se já existe registro de presença neste dia
     let registro = await prisma.agendamentoPresenca.findFirst({
       where: {
         alunoId: id,
-        data: {
-          gte: inicioDia,
-          lte: fimDia
-        }
+        data: { gte: inicioDia, lte: fimDia }
       }
     });
 
@@ -596,6 +977,7 @@ app.post('/api/admin/alunos/:id/presenca', async (req, res) => {
         data: {
           status,
           justificativa: justificativa || null,
+          tipoJustificativa: tipoJustificativa || null,
           ...(eventoId ? { eventoId } : {})
         }
       });
@@ -606,28 +988,26 @@ app.post('/api/admin/alunos/:id/presenca', async (req, res) => {
           data: dataAlvo,
           status,
           justificativa: justificativa || null,
+          tipoJustificativa: tipoJustificativa || null,
           eventoId: eventoId || null
         }
       });
     }
 
-    res.json({ mensagem: 'Presença atualizada no calendário com sucesso!', registro });
+    res.json({ mensagem: 'Frequência atualizada com sucesso!', registro });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao registrar presença no calendário.' });
+    res.status(500).json({ erro: 'Erro ao registrar frequência.' });
   }
 });
 
-// Admin remove registro de presença de um dia
+// Admin remove registro de presença
 app.delete('/api/admin/alunos/:id/presenca', async (req, res) => {
   const { id } = req.params;
-  const { data, presencaId } = req.body;
+  const { presencaId, data } = req.body;
 
   try {
     if (presencaId) {
-      await prisma.agendamentoPresenca.delete({
-        where: { id: presencaId }
-      });
+      await prisma.agendamentoPresenca.delete({ where: { id: presencaId } });
     } else if (data) {
       const dataAlvo = new Date(data);
       const inicioDia = new Date(dataAlvo);
@@ -638,10 +1018,7 @@ app.delete('/api/admin/alunos/:id/presenca', async (req, res) => {
       await prisma.agendamentoPresenca.deleteMany({
         where: {
           alunoId: id,
-          data: {
-            gte: inicioDia,
-            lte: fimDia
-          }
+          data: { gte: inicioDia, lte: fimDia }
         }
       });
     }
@@ -652,23 +1029,16 @@ app.delete('/api/admin/alunos/:id/presenca', async (req, res) => {
   }
 });
 
-
 // ==========================================
-// AULAS EXPERIMENTAIS & LEAD FOLLOW-UP
+// AULAS EXPERIMENTAIS & LEADS
 // ==========================================
 
-// Criar Agendamento Experimental (Pelo formulário público do site)
+// Criar Agendamento Experimental
 app.post('/api/agendamentos', async (req, res) => {
   const { nome, telefone, data, horario } = req.body;
   try {
     const agendamento = await prisma.agendamentoExperimental.create({
-      data: {
-        nome,
-        telefone,
-        data,
-        horario,
-        status: 'PENDENTE'
-      }
+      data: { nome, telefone, data, horario, status: 'PENDENTE' }
     });
     res.json({ mensagem: 'Aula experimental agendada!', agendamento });
   } catch (error) {
@@ -676,7 +1046,7 @@ app.post('/api/agendamentos', async (req, res) => {
   }
 });
 
-// Listar Agendamentos categorizados para o Admin
+// Listar agendamentos
 app.get('/api/admin/agendamentos', async (req, res) => {
   try {
     const todos = await prisma.agendamentoExperimental.findMany({
@@ -684,41 +1054,30 @@ app.get('/api/admin/agendamentos', async (req, res) => {
     });
 
     const agora = new Date();
-
-    // 1: Pendentes (agendados para fazer a aula)
     const pendentes = todos.filter(a => a.status === 'PENDENTE');
-
-    // 2: Pós-Aula (Já realizou a aula experimental, mas ainda não fechou contrato)
     const posAula = todos
       .filter(a => a.status === 'REALIZADA')
       .map(item => {
         const dataReferencia = item.dataRealizada ? new Date(item.dataRealizada) : new Date(item.criadoEm);
         const diferencaMs = agora.getTime() - dataReferencia.getTime();
         const diasDesdeAula = Math.max(0, Math.floor(diferencaMs / (1000 * 60 * 60 * 24)));
-
         return {
           ...item,
           diasDesdeAula,
           dataRealizadaFormatada: dataReferencia.toLocaleDateString('pt-BR')
         };
       })
-      .sort((a, b) => b.diasDesdeAula - a.diasDesdeAula); // Mais antigos primeiro para follow-up urgente
+      .sort((a, b) => b.diasDesdeAula - a.diasDesdeAula);
 
-    // 3: Fecharam contrato ou Desistiram
     const finalizados = todos.filter(a => a.status === 'FECHOU_CONTRATO' || a.status === 'DESISTIU');
 
-    res.json({
-      pendentes,
-      posAula,
-      finalizados,
-      todos
-    });
+    res.json({ pendentes, posAula, finalizados, todos });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao buscar agendamentos.' });
   }
 });
 
-// Atualizar status da aula experimental (Realizada, Desistiu, Fechou, etc)
+// Atualizar status de aula experimental
 app.patch('/api/admin/agendamentos/:id', async (req, res) => {
   const { id } = req.params;
   const { status, observacao, dataRealizada } = req.body;
@@ -727,8 +1086,6 @@ app.patch('/api/admin/agendamentos/:id', async (req, res) => {
     const dataUpdate: any = {};
     if (status) dataUpdate.status = status;
     if (observacao !== undefined) dataUpdate.observacao = observacao;
-    
-    // Se marcar como realizada e não tiver dataRealizada, usa a data atual
     if (status === 'REALIZADA') {
       dataUpdate.dataRealizada = dataRealizada ? new Date(dataRealizada) : new Date();
     } else if (dataRealizada) {
@@ -740,27 +1097,21 @@ app.patch('/api/admin/agendamentos/:id', async (req, res) => {
       data: dataUpdate
     });
 
-    res.json({ mensagem: 'Status do agendamento atualizado!', agendamento });
+    res.json({ mensagem: 'Agendamento atualizado!', agendamento });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao atualizar agendamento.' });
   }
 });
 
-// Converter experimental diretamente em Aluno Matriculado
+// Converter experimental em Aluno Matriculado
 app.post('/api/admin/agendamentos/:id/converter', async (req, res) => {
   const { id } = req.params;
   const { plano, valorMensalidade, cpf, email } = req.body;
 
   try {
-    const agendamento = await prisma.agendamentoExperimental.findUnique({
-      where: { id }
-    });
+    const agendamento = await prisma.agendamentoExperimental.findUnique({ where: { id } });
+    if (!agendamento) return res.status(404).json({ erro: 'Agendamento não encontrado.' });
 
-    if (!agendamento) {
-      return res.status(404).json({ erro: 'Agendamento não encontrado.' });
-    }
-
-    // Gera CPF temporário se não fornecido
     const cpfFinal = cpf ? cpf.replace(/[^\d]+/g, '') : Math.floor(10000000000 + Math.random() * 90000000000).toString();
     const senhaTemporaria = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -783,7 +1134,6 @@ app.post('/api/admin/agendamentos/:id/converter', async (req, res) => {
       }
     });
 
-    // Atualiza status do agendamento para FECHOU_CONTRATO
     await prisma.agendamentoExperimental.update({
       where: { id },
       data: { status: 'FECHOU_CONTRATO' }
@@ -795,17 +1145,15 @@ app.post('/api/admin/agendamentos/:id/converter', async (req, res) => {
       senhaTemporaria
     });
   } catch (error: any) {
-    console.error(error);
     res.status(500).json({ erro: 'Erro ao converter lead em aluno.' });
   }
 });
 
-
 // ==========================================
-// ROTAS DE PAGAMENTO E CHECKOUT
+// CHECKOUT PÚBLICO (PAGAMENTO PRESENCIAL)
 // ==========================================
 
-// Criar novo aluno via Checkout no site
+// Pré-matrícula pública via Checkout (Pagamento presencial na recepção)
 app.post('/api/checkout', async (req, res) => {
   const { nome, cpf, email, telefone, senha, plano, valor } = req.body;
   if (!nome || !cpf || !senha) {
@@ -817,90 +1165,41 @@ app.post('/api/checkout', async (req, res) => {
   try {
     const novoAluno = await prisma.aluno.create({
       data: {
-        nome,
+        nome: nome.trim(),
         cpf: cpfLimpo,
-        email,
-        telefone,
-        senha,
+        email: email ? email.trim().toLowerCase() : null,
+        telefone: telefone ? telefone.trim() : null,
+        senha: senha.trim(),
         primeiroAcesso: false,
         plano: plano || '2x na semana',
         mensalidades: {
           create: {
             valor: parseFloat(valor) || 160,
             dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
-            dataPagamento: new Date(),
-            status: 'PAGO'
+            status: 'PENDENTE' // Pagamento é feito presencialmente no balcão
           }
         }
       }
     });
 
-    res.json({ mensagem: 'Pagamento aprovado e cadastro concluído!', aluno: novoAluno });
+    res.json({ 
+      mensagem: 'Cadastro realizado com sucesso! Para confirmar sua matrícula, realize o pagamento da 1ª mensalidade presencialmente na recepção da academia.', 
+      aluno: novoAluno 
+    });
   } catch (error: any) {
     if (error.code === 'P2002') {
       return res.status(400).json({ erro: 'Já existe um aluno com este CPF ou E-mail.' });
     }
-    res.status(500).json({ erro: 'Erro ao processar checkout.' });
+    res.status(500).json({ erro: 'Erro ao processar cadastro.' });
   }
 });
 
-// Renovar mensalidade (Portal do Aluno)
-app.post('/api/alunos/pagar', async (req, res) => {
-  const { alunoId, valor } = req.body;
-  try {
-    const mensalidade = await prisma.mensalidade.create({
-      data: {
-        alunoId,
-        valor: parseFloat(valor) || 160,
-        dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
-        dataPagamento: new Date(),
-        status: 'PAGO'
-      }
-    });
-    res.json({ mensagem: 'Mensalidade renovada com sucesso!', mensalidade });
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao registrar pagamento.' });
-  }
-});
-
-// Processamento genérico de pagamentos (Mock Gateway)
-app.post('/api/pagamentos/processar', async (req, res) => {
-  const { alunoId, valor } = req.body;
-  
-  try {
-    const dataPagamento = new Date();
-    const status = 'PAGO';
-
-    let alunoObj = null;
-    if (alunoId) {
-      alunoObj = await prisma.aluno.findUnique({ where: { id: alunoId } });
-    }
-
-    if (alunoObj) {
-      const mensalidade = await prisma.mensalidade.create({
-        data: {
-          alunoId: alunoObj.id,
-          valor: parseFloat(valor) || 160,
-          dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
-          dataPagamento,
-          status
-        }
-      });
-      res.json({ sucesso: true, mensagem: 'Pagamento processado com sucesso!', transacaoId: 'tx_' + Math.random().toString(36).substring(7), mensalidade });
-    } else {
-      res.json({ sucesso: true, mensagem: 'Pagamento avulso processado com sucesso!', transacaoId: 'tx_' + Math.random().toString(36).substring(7) });
-    }
-  } catch (error) {
-    res.status(500).json({ erro: 'Falha no gateway de pagamento' });
-  }
-});
-
-// Fallback para o Frontend (React Router)
+// Fallback SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server API running on http://localhost:${PORT}`);
+  console.log(`Server Borü API rodando em http://localhost:${PORT}`);
 });

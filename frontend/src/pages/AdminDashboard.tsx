@@ -6,33 +6,72 @@ const API_URL = 'http://localhost:3001/api';
 
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [usuarioLogado, setUsuarioLogado] = useState<any>(null);
+  const [loginInput, setLoginInput] = useState('');
   const [password, setPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
   
   const [metricas, setMetricas] = useState({ totalAlunos: 0, assinaturasAtivas: 0, inadimplentes: 0 });
   const [alunos, setAlunos] = useState<any[]>([]);
   const [agendamentos, setAgendamentos] = useState<any>({ pendentes: [], posAula: [], finalizados: [] });
   const [presencas, setPresencas] = useState<any[]>([]);
+  const [professores, setProfessores] = useState<any[]>([]);
+  const [avisos, setAvisos] = useState<any[]>([]);
+  const [produtos, setProdutos] = useState<any[]>([]);
+  const [categoriaFiltroLoja, setCategoriaFiltroLoja] = useState('TODOS');
   const [loading, setLoading] = useState(true);
 
-  // Aba ativa: 'alunos' | 'agendamentos' | 'presencas'
+  // Abas: 'alunos' | 'agendamentos' | 'presencas' | 'avisos' | 'loja' | 'professores'
   const [abaAtiva, setAbaAtiva] = useState('alunos');
-  // Sub-aba de agendamentos experimentais: 'pendentes' | 'posAula'
   const [subAbaExperimental, setSubAbaExperimental] = useState<'pendentes' | 'posAula'>('pendentes');
 
   // Modal Novo Aluno
   const [showModal, setShowModal] = useState(false);
   const [novoAluno, setNovoAluno] = useState({ nome: '', cpf: '', email: '', telefone: '', plano: '2x na semana' });
 
-  // Modal Calendário / Presença do Aluno (Comando 2 e 5)
+  // Modal Novo Professor (Apenas Admin)
+  const [showModalProf, setShowModalProf] = useState(false);
+  const [novoProfessor, setNovoProfessor] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    cargo: 'PROFESSOR',
+    telefone: '',
+    prajied: 'Prajied Azul Claro'
+  });
+
+  // Modal Novo Aviso no Mural
+  const [showModalAviso, setShowModalAviso] = useState(false);
+  const [novoAviso, setNovoAviso] = useState({
+    titulo: '',
+    conteudo: '',
+    tipo: 'GERAL',
+    fixado: false
+  });
+
+  // Modal Novo Produto na Loja
+  const [showModalProduto, setShowModalProduto] = useState(false);
+  const [novoProduto, setNovoProduto] = useState({
+    nome: '',
+    categoria: 'PROTETOR_BUCAL',
+    preco: '',
+    estoque: '10',
+    descricao: '',
+    imagemUrl: ''
+  });
+
+  // Modal Calendário / Presença Detalhada do Aluno
   const [alunoSelecionado, setAlunoSelecionado] = useState<any>(null);
   const [calendarioDados, setCalendarioDados] = useState<any>(null);
   const [loadingCalendario, setLoadingCalendario] = useState(false);
   const [mesCalendario, setMesCalendario] = useState(new Date().getMonth() + 1);
   const [anoCalendario, setAnoCalendario] = useState(new Date().getFullYear());
 
-  // Modal de Ação do Dia no Calendário (Marcar presença / Falta Justificada)
+  // Modal de Ação do Dia no Calendário (Marcar presença / Falta / Doença)
   const [diaSelecionadoAcao, setDiaSelecionadoAcao] = useState<string | null>(null);
+  const [statusAcaoDia, setStatusAcaoDia] = useState('PRESENTE');
   const [justificativaInput, setJustificativaInput] = useState('');
+  const [tipoJustificativaInput, setTipoJustificativaInput] = useState('DOENCA');
   const [modalAcaoDia, setModalAcaoDia] = useState(false);
 
   // Modal Converter Experimental em Aluno
@@ -49,15 +88,24 @@ export default function AdminDashboard() {
   const carregarDashboard = async () => {
     setLoading(true);
     try {
-      const [dashRes, agendRes, presencasRes] = await Promise.all([
+      const [dashRes, agendRes, presencasRes, avisosRes, produtosRes] = await Promise.all([
         axios.get(`${API_URL}/admin/dashboard`),
         axios.get(`${API_URL}/admin/agendamentos`),
-        axios.get(`${API_URL}/admin/presencas`)
+        axios.get(`${API_URL}/admin/presencas`),
+        axios.get(`${API_URL}/avisos`),
+        axios.get(`${API_URL}/produtos`)
       ]);
       setMetricas(dashRes.data.metricas);
       setAlunos(dashRes.data.alunos);
       setAgendamentos(agendRes.data);
       setPresencas(presencasRes.data);
+      setAvisos(avisosRes.data);
+      setProdutos(produtosRes.data);
+
+      if (usuarioLogado?.cargo === 'ADMIN') {
+        const profsRes = await axios.get(`${API_URL}/admin/professores`);
+        setProfessores(profsRes.data);
+      }
     } catch (error) {
       console.error('Erro ao carregar dashboard', error);
     } finally {
@@ -65,15 +113,128 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') {
+    setLoginLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        emailOuUsuario: loginInput,
+        senha: password
+      });
+      setUsuarioLogado(response.data.usuario);
       setIsLoggedIn(true);
-    } else {
-      alert('Senha incorreta! (Dica: a senha é admin123)');
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao realizar login.');
+    } finally {
+      setLoginLoading(false);
     }
   };
 
+  const handleQuickLogin = async (cargo: 'ADMIN' | 'PROFESSOR') => {
+    setLoginLoading(true);
+    try {
+      const payload = cargo === 'ADMIN'
+        ? { emailOuUsuario: 'admin@boru.com', senha: 'admin123' }
+        : { emailOuUsuario: 'felipe@boru.com', senha: 'boru123' };
+      const response = await axios.post(`${API_URL}/auth/login`, payload);
+      setUsuarioLogado(response.data.usuario);
+      setIsLoggedIn(true);
+    } catch (error: any) {
+      alert('Erro ao realizar login rápido.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // ==========================================
+  // PROFESSORES (Exclusivo Admin)
+  // ==========================================
+  const criarProfessor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/admin/professores`, novoProfessor);
+      alert(`Professor ${novoProfessor.nome} cadastrado com sucesso!`);
+      setShowModalProf(false);
+      setNovoProfessor({ nome: '', email: '', senha: '', cargo: 'PROFESSOR', telefone: '', prajied: 'Prajied Azul Claro' });
+      carregarDashboard();
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao criar professor.');
+    }
+  };
+
+  const removerProfessor = async (id: string, nome: string) => {
+    if (confirm(`Tem certeza que deseja remover o professor(a) ${nome}?`)) {
+      try {
+        await axios.delete(`${API_URL}/admin/professores/${id}`);
+        alert('Professor removido.');
+        carregarDashboard();
+      } catch (error) {
+        alert('Erro ao remover professor.');
+      }
+    }
+  };
+
+  // ==========================================
+  // MURAL DE AVISOS
+  // ==========================================
+  const criarAviso = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/admin/avisos`, {
+        ...novoAviso,
+        autorNome: usuarioLogado?.nome || 'Felipe Borü',
+        autorCargo: usuarioLogado?.cargo === 'ADMIN' ? 'Administrador' : 'Professor'
+      });
+      alert('Aviso publicado no mural com sucesso!');
+      setShowModalAviso(false);
+      setNovoAviso({ titulo: '', conteudo: '', tipo: 'GERAL', fixado: false });
+      carregarDashboard();
+    } catch (error) {
+      alert('Erro ao criar aviso.');
+    }
+  };
+
+  const removerAviso = async (id: string) => {
+    if (confirm('Deseja excluir este comunicado do mural?')) {
+      try {
+        await axios.delete(`${API_URL}/admin/avisos/${id}`);
+        carregarDashboard();
+      } catch (error) {
+        alert('Erro ao excluir aviso.');
+      }
+    }
+  };
+
+  // ==========================================
+  // LOJA & MERCADO (BETA)
+  // ==========================================
+  const criarProduto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/admin/produtos`, novoProduto);
+      alert('Produto adicionado ao catálogo da loja!');
+      setShowModalProduto(false);
+      setNovoProduto({ nome: '', categoria: 'PROTETOR_BUCAL', preco: '', estoque: '10', descricao: '', imagemUrl: '' });
+      carregarDashboard();
+    } catch (error) {
+      alert('Erro ao cadastrar produto.');
+    }
+  };
+
+  const removerProduto = async (id: string) => {
+    if (confirm('Deseja excluir este produto do estoque?')) {
+      try {
+        await axios.delete(`${API_URL}/admin/produtos/${id}`);
+        carregarDashboard();
+      } catch (error) {
+        alert('Erro ao remover produto.');
+      }
+    }
+  };
+
+  // ==========================================
+  // ALUNOS & MENSALIDADES
+  // ==========================================
   const criarAluno = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -83,44 +244,12 @@ export default function AdminDashboard() {
       setShowModal(false);
       setNovoAluno({ nome: '', cpf: '', email: '', telefone: '', plano: '2x na semana' });
     } catch (error: any) {
-      const msg = error.response?.data?.erro 
-        || (error.message?.includes('Network Error') ? 'Não foi possível conectar ao servidor (Backend offline). Verifique se o servidor está rodando.' : null)
-        || error.message
-        || 'Erro ao criar aluno.';
-      alert(msg);
+      alert(error.response?.data?.erro || 'Erro ao criar aluno.');
     }
-  };
-
-  const formatarWhatsUrl = (telefone: string, mensagem: string) => {
-    let limpo = (telefone || '').replace(/\D/g, '');
-    if (!limpo) return '#';
-    if (!limpo.startsWith('55') && (limpo.length === 10 || limpo.length === 11)) {
-      limpo = '55' + limpo;
-    }
-    return `https://wa.me/${limpo}?text=${encodeURIComponent(mensagem)}`;
-  };
-
-  const handleCobrar = (aluno: any) => {
-    if (!aluno.telefone) {
-      alert(`O aluno ${aluno.nome} não possui número de telefone cadastrado no registro.`);
-      return;
-    }
-    const dias = aluno.diasVencimento;
-    let msg = '';
-    if (dias === null) {
-      msg = `Olá ${aluno.nome}, aqui é o Professor Felipe do CT BORÜ Muay Thai (+55 69 9238-4491)! Tudo bem? Passando para regularizar sua matrícula no plano ${aluno.plano}.`;
-    } else if (dias < 0) {
-      msg = `Olá ${aluno.nome}, tudo bem? Aqui é o Professor Felipe do CT BORÜ Muay Thai. Sua mensalidade venceu há ${Math.abs(dias)} dias. Por favor, nos envie o comprovante de pagamento assim que possível! Qualquer dúvida, fale no WhatsApp (+55 69 9238-4491).`;
-    } else if (dias === 0) {
-      msg = `Olá ${aluno.nome}, aqui é do CT BORÜ Muay Thai! Sua mensalidade vence hoje. Caso já tenha realizado o pagamento, desconsidere! Contato Professor: +55 69 9238-4491.`;
-    } else {
-      msg = `Olá ${aluno.nome}, tudo bem? Passando para lembrar que sua mensalidade no CT BORÜ vence em ${dias} dias. Bons treinos! Contato Professor: +55 69 9238-4491.`;
-    }
-    window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
 
   const handleRegistrarPagamento = async (aluno: any) => {
-    if (confirm(`Deseja registrar o pagamento de ${aluno.nome} e renovar por +30 dias?`)) {
+    if (confirm(`Confirmar recebimento presencial da mensalidade de ${aluno.nome} (Dinheiro/PIX/Cartão no balcão) e renovar por +30 dias?`)) {
       try {
         const response = await axios.post(`${API_URL}/admin/alunos/${aluno.id}/pagar`);
         alert(response.data.mensagem);
@@ -144,28 +273,36 @@ export default function AdminDashboard() {
     }
   };
 
-  // ==========================================
-  // CONFIRMAÇÃO DE CHECK-IN (Comando 4)
-  // ==========================================
-  const handleAlterarStatusPresenca = async (presencaId: string, novoStatus: string, justificativa?: string) => {
-    try {
-      await axios.patch(`${API_URL}/admin/presencas/${presencaId}/status`, {
-        status: novoStatus,
-        justificativa
-      });
-      // Atualiza estado local de presenças
-      setPresencas(prev => prev.map(p => p.id === presencaId ? { ...p, status: novoStatus, justificativa } : p));
-      // Se o calendário estiver aberto, recarrega
-      if (alunoSelecionado) {
-        carregarDadosCalendario(alunoSelecionado.id, mesCalendario, anoCalendario);
-      }
-    } catch (error) {
-      alert('Erro ao atualizar presença.');
+  const formatarWhatsUrl = (telefone: string, mensagem: string) => {
+    let limpo = (telefone || '').replace(/\D/g, '');
+    if (!limpo) return '#';
+    if (!limpo.startsWith('55') && (limpo.length === 10 || limpo.length === 11)) {
+      limpo = '55' + limpo;
     }
+    return `https://wa.me/${limpo}?text=${encodeURIComponent(mensagem)}`;
+  };
+
+  const handleCobrar = (aluno: any) => {
+    if (!aluno.telefone) {
+      alert(`O aluno ${aluno.nome} não possui número de telefone cadastrado.`);
+      return;
+    }
+    const dias = aluno.diasVencimento;
+    let msg = '';
+    if (dias === null) {
+      msg = `Olá ${aluno.nome}, aqui é do CT BORÜ Muay Thai! Tudo bem? Passando para regularizar sua matrícula presencialmente no balcão.`;
+    } else if (dias < 0) {
+      msg = `Olá ${aluno.nome}, tudo bem? Aqui é do CT BORÜ. Sua mensalidade venceu há ${Math.abs(dias)} dias. Por favor, acerte presencialmente na recepção ou via PIX (+55 69 9238-4491) para manter seu acesso aos treinos!`;
+    } else if (dias === 0) {
+      msg = `Olá ${aluno.nome}, passando para avisar que sua mensalidade no CT BORÜ vence hoje! O acerto pode ser feito na recepção no início do treino.`;
+    } else {
+      msg = `Olá ${aluno.nome}, tudo bem? Passando para lembrar que sua mensalidade no CT BORÜ vence em ${dias} dias. Bons treinos!`;
+    }
+    window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
 
   // ==========================================
-  // CALENDÁRIO DO ALUNO (Comando 2 e 5)
+  // CALENDÁRIO & FREQUÊNCIA DETALHADA
   // ==========================================
   const abrirCalendarioAluno = async (aluno: any) => {
     setAlunoSelecionado(aluno);
@@ -209,29 +346,32 @@ export default function AdminDashboard() {
     setDiaSelecionadoAcao(dataIso);
     const presencasDoDia = calendarioDados?.presencasPorDia?.[dataIso] || [];
     const presencaAtual = presencasDoDia[0];
+    setStatusAcaoDia(presencaAtual?.status || 'PRESENTE');
     setJustificativaInput(presencaAtual?.justificativa || '');
+    setTipoJustificativaInput(presencaAtual?.tipoJustificativa || 'DOENCA');
     setModalAcaoDia(true);
   };
 
-  const salvarPresencaNoDia = async (status: string) => {
+  const salvarPresencaNoDia = async () => {
     if (!alunoSelecionado || !diaSelecionadoAcao) return;
     try {
       await axios.post(`${API_URL}/admin/alunos/${alunoSelecionado.id}/presenca`, {
         data: diaSelecionadoAcao,
-        status,
-        justificativa: status === 'JUSTIFICADO' ? (justificativaInput || 'Falta Justificada') : null
+        status: statusAcaoDia,
+        justificativa: justificativaInput || null,
+        tipoJustificativa: statusAcaoDia === 'DOENCA' ? 'DOENCA' : (statusAcaoDia === 'JUSTIFICADO' ? tipoJustificativaInput : null)
       });
       setModalAcaoDia(false);
       carregarDadosCalendario(alunoSelecionado.id, mesCalendario, anoCalendario);
       carregarDashboard();
     } catch (error) {
-      alert('Erro ao salvar presença no calendário.');
+      alert('Erro ao salvar frequência.');
     }
   };
 
   const removerPresencaDoDia = async () => {
     if (!alunoSelecionado || !diaSelecionadoAcao) return;
-    if (confirm('Deseja remover o registro deste dia?')) {
+    if (confirm('Deseja remover o registro de frequência deste dia?')) {
       try {
         await axios.delete(`${API_URL}/admin/alunos/${alunoSelecionado.id}/presenca`, {
           data: { data: diaSelecionadoAcao }
@@ -246,1037 +386,1057 @@ export default function AdminDashboard() {
   };
 
   // ==========================================
-  // AULAS EXPERIMENTAIS (Comando 3)
+  // CONFIRMAÇÃO DE CHECK-IN RÁPIDO
+  // ==========================================
+  const handleAlterarStatusPresenca = async (presencaId: string, novoStatus: string) => {
+    try {
+      await axios.patch(`${API_URL}/admin/presencas/${presencaId}/status`, {
+        status: novoStatus
+      });
+      setPresencas(prev => prev.map(p => p.id === presencaId ? { ...p, status: novoStatus } : p));
+      if (alunoSelecionado) {
+        carregarDadosCalendario(alunoSelecionado.id, mesCalendario, anoCalendario);
+      }
+    } catch (error) {
+      alert('Erro ao atualizar presença.');
+    }
+  };
+
+  // ==========================================
+  // LEADS & AULAS EXPERIMENTAIS
   // ==========================================
   const marcarAulaRealizada = async (agendamentoId: string) => {
-    if (confirm('Confirmar que a pessoa realizou a aula experimental? Ela irá para a tabela de Follow-up para fechar contrato!')) {
+    if (confirm('Confirmar que a pessoa realizou a aula experimental?')) {
       try {
-        await axios.patch(`${API_URL}/admin/agendamentos/${agendamentoId}`, {
-          status: 'REALIZADA'
-        });
+        await axios.patch(`${API_URL}/admin/agendamentos/${agendamentoId}`, { status: 'REALIZADA' });
         carregarDashboard();
-        setSubAbaExperimental('posAula'); // Direciona para a nova tabela
+        setSubAbaExperimental('posAula');
       } catch (error) {
         alert('Erro ao atualizar agendamento.');
       }
     }
   };
 
-  const abrirModalConversao = (lead: any) => {
-    setLeadParaConverter(lead);
-    setPlanoConversao('2x na semana');
-    setValorConversao('130');
-  };
-
   const converterLeadEmAluno = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!leadParaConverter) return;
-
     try {
-      const res = await axios.post(`${API_URL}/admin/agendamentos/${leadParaConverter.id}/converter`, {
+      const response = await axios.post(`${API_URL}/admin/agendamentos/${leadParaConverter.id}/converter`, {
         plano: planoConversao,
         valorMensalidade: valorConversao
       });
-      alert(`${res.data.mensagem}\n\nSenha temporária: ${res.data.senhaTemporaria}`);
+      alert(`Parabéns! ${leadParaConverter.nome} agora é um aluno matriculado!\n\nSenha temporária: ${response.data.senhaTemporaria}`);
       setLeadParaConverter(null);
       carregarDashboard();
-    } catch (error: any) {
-      alert(error.response?.data?.erro || 'Erro ao matricular aluno.');
+      setAbaAtiva('alunos');
+    } catch (error) {
+      alert('Erro ao converter lead em aluno.');
     }
   };
 
-  const marcarComoDesistente = async (agendamentoId: string) => {
-    if (confirm('Deseja arquivar este contato como desistente?')) {
-      try {
-        await axios.patch(`${API_URL}/admin/agendamentos/${agendamentoId}`, {
-          status: 'DESISTIU'
-        });
-        carregarDashboard();
-      } catch (error) {
-        alert('Erro ao arquivar contato.');
-      }
-    }
-  };
-
-  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let v = e.target.value.replace(/\D/g, "");
-    v = v.replace(/(\d{3})(\d)/, "$1.$2");
-    v = v.replace(/(\d{3})(\d)/, "$1.$2");
-    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    setNovoAluno({ ...novoAluno, cpf: v });
-  };
-
-  // Contagem de check-ins pendentes
-  const checkinsPendentesCount = presencas.filter(p => p.status === 'AGENDADO').length;
-
-  // TELA DE LOGIN
+  // ==========================================
+  // TELA DE LOGIN DO ADMIN / PROFESSOR
+  // ==========================================
   if (!isLoggedIn) {
     return (
       <div className="fixed inset-0 bg-[#0B0B0C] flex items-center justify-center z-[9999] px-4">
-        <div className="bg-[#141416] border border-zinc-800 p-8 rounded-2xl w-full max-w-sm shadow-2xl">
-          <div className="text-center mb-8">
+        <div className="bg-[#141416] border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+          <div className="text-center mb-6">
             <h1 className="text-3xl font-black text-white tracking-widest mb-1">BORÜ</h1>
-            <p className="text-red-500 font-bold text-sm tracking-widest uppercase">Acesso Professor</p>
+            <p className="text-red-500 font-bold text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
+            <p className="text-zinc-400 text-xs mt-1">Controle de Alunos, Aulas, Prajied e Equipe</p>
           </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-sm font-semibold mb-2">Senha de Acesso</label>
+              <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail ou Usuário</label>
+              <input 
+                type="text" 
+                value={loginInput}
+                onChange={(e) => setLoginInput(e.target.value)}
+                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                placeholder="Ex: admin@boru.com ou felipe@boru.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha de Acesso</label>
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition"
-                placeholder="••••••••"
+                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                placeholder="Sua senha"
+                required
               />
             </div>
-            <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30">
-              Entrar no Painel
+            <button 
+              type="submit" 
+              disabled={loginLoading}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm uppercase tracking-wider"
+            >
+              {loginLoading ? 'Verificando...' : 'Entrar no Painel'}
             </button>
           </form>
-          <Link to="/" className="block text-center mt-6 text-zinc-500 hover:text-white text-sm transition">
-            ← Voltar ao site
+
+          {/* Atalhos rápidos para apresentação */}
+          <div className="mt-6 pt-5 border-t border-zinc-800/80">
+            <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider text-center mb-2">Acesso Rápido de Demonstração:</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                type="button"
+                onClick={() => handleQuickLogin('ADMIN')}
+                className="p-2.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 text-xs text-white font-bold transition flex flex-col items-center justify-center gap-0.5"
+              >
+                <span>👑 Administrador</span>
+                <span className="text-[10px] text-zinc-400 font-normal">Acesso Master</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleQuickLogin('PROFESSOR')}
+                className="p-2.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 text-xs text-red-400 font-bold transition flex flex-col items-center justify-center gap-0.5"
+              >
+                <span>🥋 Prof. Felipe Borü</span>
+                <span className="text-[10px] text-zinc-400 font-normal">Acesso Instrutor</span>
+              </button>
+            </div>
+          </div>
+
+          <Link to="/" className="block text-center mt-5 text-zinc-500 hover:text-white text-xs transition">
+            ← Voltar ao site principal
           </Link>
         </div>
       </div>
     );
   }
 
-  // Meses para o calendário
-  const mesesNomes = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-  ];
-
+  // ==========================================
+  // PAINEL LOGADO
+  // ==========================================
   return (
-    <div className="fixed inset-0 overflow-y-auto bg-[#0B0B0C] text-zinc-100 font-sans p-4 sm:p-6 z-[9999]">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* HEADER */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
+    <div className="min-h-screen bg-[#0B0B0C] text-zinc-100 font-sans p-3 sm:p-6 pb-20">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-              PAINEL <span className="text-red-600">DO PROFESSOR</span>
-            </h1>
-            <p className="text-zinc-400 mt-1">CT BORÜ Muay Thai — Gestão de Alunos, Presenças e Follow-up</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
+                PAINEL <span className="text-red-600">BORÜ</span>
+              </h1>
+              {usuarioLogado?.cargo === 'ADMIN' ? (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                  👑 ADMINISTRADOR
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                  🥋 PROFESSOR
+                </span>
+              )}
+            </div>
+            <p className="text-zinc-400 text-xs sm:text-sm mt-1">
+              Olá, <strong className="text-white">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link to="/" onClick={() => setIsLoggedIn(false)} className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold transition">
-              Sair (Logout)
-            </Link>
+
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {usuarioLogado?.cargo === 'ADMIN' && (
+              <button 
+                onClick={() => setShowModalProf(true)}
+                className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-900/30"
+              >
+                <span>➕ Criar Novo Professor</span>
+              </button>
+            )}
+            <button 
+              onClick={() => setShowModal(true)}
+              className="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
+            >
+              <span>➕ Novo Aluno</span>
+            </button>
+            <button 
+              onClick={() => { setIsLoggedIn(false); setUsuarioLogado(null); }}
+              className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 transition"
+            >
+              Sair
+            </button>
           </div>
         </header>
 
-        {loading ? (
-          <div className="text-center py-20 text-zinc-500">Carregando dados do servidor...</div>
-        ) : (
-          <>
-            {/* METRICS CARDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-[#141416] border border-zinc-800 rounded-xl p-6">
-                <p className="text-zinc-400 text-sm font-semibold mb-1">Total de Alunos Matriculados</p>
-                <p className="text-4xl font-black text-white">{metricas.totalAlunos}</p>
-              </div>
-              <div className="bg-[#141416] border border-zinc-800 rounded-xl p-6">
-                <p className="text-zinc-400 text-sm font-semibold mb-1">Mensalidades em Dia</p>
-                <p className="text-4xl font-black text-green-500">{metricas.assinaturasAtivas}</p>
-              </div>
-              <div className="bg-[#141416] border border-red-900/30 rounded-xl p-6">
-                <p className="text-zinc-400 text-sm font-semibold mb-1">Mensalidades em Atraso</p>
-                <p className="text-4xl font-black text-red-500">{metricas.inadimplentes}</p>
-              </div>
+        {/* CARDS DE MÉTRICAS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5">
+            <p className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Total de Alunos</p>
+            <p className="text-3xl font-black text-white">{metricas.totalAlunos}</p>
+          </div>
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5">
+            <p className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Mensalidades em Dia</p>
+            <p className="text-3xl font-black text-green-500">{metricas.assinaturasAtivas}</p>
+          </div>
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5">
+            <p className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Pendentes / Atrasados</p>
+            <p className="text-3xl font-black text-red-500">{metricas.inadimplentes}</p>
+          </div>
+        </div>
+
+        {/* NAVEGAÇÃO DE ABAS (TOUCH-FRIENDLY & RESPONSIVO) */}
+        <div className="flex gap-2 sm:gap-3 border-b border-zinc-800 pb-3 overflow-x-auto scrollbar-none">
+          <button 
+            onClick={() => setAbaAtiva('alunos')}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'alunos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+            }`}
+          >
+            👥 Alunos ({alunos.length})
+          </button>
+          <button 
+            onClick={() => setAbaAtiva('presencas')}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'presencas' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+            }`}
+          >
+            📋 Chamada & Presenças
+          </button>
+          <button 
+            onClick={() => setAbaAtiva('avisos')}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'avisos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+            }`}
+          >
+            📢 Mural de Avisos ({avisos.length})
+          </button>
+          <button 
+            onClick={() => setAbaAtiva('loja')}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'loja' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+            }`}
+          >
+            🛍️ Loja & Mercado (Beta)
+          </button>
+          <button 
+            onClick={() => setAbaAtiva('agendamentos')}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'agendamentos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+            }`}
+          >
+            🎯 Leads & Aulas Exp.
+          </button>
+          {usuarioLogado?.cargo === 'ADMIN' && (
+            <button 
+              onClick={() => setAbaAtiva('professores')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                abaAtiva === 'professores' ? 'bg-amber-600 text-white' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-900/50'
+              }`}
+            >
+              👑 Professores & Equipe
+            </button>
+          )}
+        </div>
+
+        {/* CONTEÚDO DA ABA: ALUNOS */}
+        {abaAtiva === 'alunos' && (
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-zinc-800 flex justify-between items-center flex-wrap gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-white">Alunos Matriculados</h2>
+              <span className="text-xs text-zinc-400">Clique em "Frequência" para ver % de falta, presença e doença.</span>
             </div>
 
-            {/* AVISO DE CHECK-INS PENDENTES */}
-            {checkinsPendentesCount > 0 && (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 animate-pulse">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">⏳</span>
-                  <div>
-                    <h4 className="font-bold text-amber-400">
-                      Você tem {checkinsPendentesCount} check-in(s) aguardando confirmação de presença!
-                    </h4>
-                    <p className="text-xs text-zinc-400">Alunos deram check-in no aplicativo. Dê o OK para confirmar que estavam presentes no treino.</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setAbaAtiva('presencas')} 
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-xs rounded-lg uppercase tracking-wider transition whitespace-nowrap"
-                >
-                  Confirmar Presenças Agora
-                </button>
-              </div>
-            )}
-
-            {/* MODAL NOVO ALUNO */}
-            {showModal && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] px-4">
-                <div className="bg-[#141416] border border-zinc-800 p-8 rounded-2xl w-full max-w-md text-white shadow-2xl">
-                  <h2 className="text-2xl font-bold mb-6">Cadastrar Novo Aluno</h2>
-                  <form onSubmit={criarAluno} className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Nome Completo</label>
-                      <input required type="text" value={novoAluno.nome} onChange={(e) => setNovoAluno({...novoAluno, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500" />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">CPF</label>
-                      <input required type="text" maxLength={14} value={novoAluno.cpf} onChange={handleCpfChange} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500" placeholder="000.000.000-00" />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">WhatsApp</label>
-                      <input type="text" value={novoAluno.telefone} onChange={(e) => setNovoAluno({...novoAluno, telefone: e.target.value})} placeholder="(69) 99999-9999" className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500" />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">E-mail (Opcional)</label>
-                      <input type="email" value={novoAluno.email} onChange={(e) => setNovoAluno({...novoAluno, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500" />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Plano Escolhido</label>
-                      <select value={novoAluno.plano} onChange={(e) => setNovoAluno({...novoAluno, plano: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500">
-                        <option value="2x na semana">2x na semana (R$ 130)</option>
-                        <option value="3x na semana">3x na semana (R$ 160)</option>
-                        <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
-                        <option value="Diária">Diária (R$ 40)</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-4 pt-4">
-                      <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 py-2 rounded-lg font-bold transition">Cancelar</button>
-                      <button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg font-bold transition shadow-lg shadow-red-600/30">Cadastrar</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* MODAL MATRICULAR LEAD EXPERIMENTAL */}
-            {leadParaConverter && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] px-4">
-                <div className="bg-[#141416] border border-zinc-800 p-8 rounded-2xl w-full max-w-md text-white shadow-2xl">
-                  <h2 className="text-2xl font-bold mb-2">Matricular Lead</h2>
-                  <p className="text-sm text-zinc-400 mb-6">
-                    Convertendo <strong>{leadParaConverter.nome}</strong> da aula experimental em Aluno Oficial.
-                  </p>
-                  <form onSubmit={converterLeadEmAluno} className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">WhatsApp</label>
-                      <input disabled type="text" value={leadParaConverter.telefone} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-zinc-400" />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Plano Escolhido</label>
-                      <select 
-                        value={planoConversao} 
-                        onChange={(e) => {
-                          setPlanoConversao(e.target.value);
-                          if (e.target.value === '2x na semana') setValorConversao('130');
-                          else if (e.target.value === '3x na semana') setValorConversao('160');
-                          else if (e.target.value === 'Todos os Horários') setValorConversao('280');
-                          else setValorConversao('40');
-                        }} 
-                        className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500"
-                      >
-                        <option value="2x na semana">2x na semana (R$ 130)</option>
-                        <option value="3x na semana">3x na semana (R$ 160)</option>
-                        <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
-                        <option value="Diária">Diária (R$ 40)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Valor da Mensalidade (R$)</label>
-                      <input type="number" value={valorConversao} onChange={(e) => setValorConversao(e.target.value)} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500" />
-                    </div>
-                    <div className="flex gap-4 pt-4">
-                      <button type="button" onClick={() => setLeadParaConverter(null)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 py-2 rounded-lg font-bold transition">Cancelar</button>
-                      <button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold transition shadow-lg shadow-green-600/30">Confirmar Matrícula</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* MODAL CALENDÁRIO / PRESENÇA DO ALUNO (Comando 2 e 5) */}
-            {alunoSelecionado && (
-              <div className="fixed inset-0 bg-black/85 flex items-center justify-center z-[10000] p-4 overflow-y-auto">
-                <div className="bg-[#141416] border border-zinc-800 rounded-2xl w-full max-w-4xl p-6 sm:p-8 text-white max-h-[95vh] overflow-y-auto shadow-2xl">
-                  
-                  {/* HEADER DO MODAL */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-800 pb-5 mb-6">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-black text-white">{alunoSelecionado.nome}</h2>
-                        <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-red-950/60 text-red-400 border border-red-800/40 uppercase">
-                          {alunoSelecionado.plano}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider border-b border-zinc-800">
+                  <tr>
+                    <th className="p-3 sm:p-4">Aluno</th>
+                    <th className="p-3 sm:p-4">Plano</th>
+                    <th className="p-3 sm:p-4">Graduação (Prajied)</th>
+                    <th className="p-3 sm:p-4">Mensalidade</th>
+                    <th className="p-3 sm:p-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/60">
+                  {alunos.map(aluno => (
+                    <tr key={aluno.id} className="hover:bg-zinc-800/30 transition">
+                      <td className="p-3 sm:p-4 font-bold text-white">
+                        <div>{aluno.nome}</div>
+                        <div className="text-[11px] text-zinc-500 font-normal">{aluno.telefone || 'Sem telefone'}</div>
+                      </td>
+                      <td className="p-3 sm:p-4 text-zinc-300 font-medium">{aluno.plano}</td>
+                      <td className="p-3 sm:p-4">
+                        <select 
+                          value={aluno.prajied || 'Branco'}
+                          onChange={(e) => atualizarPrajied(aluno.id, e.target.value)}
+                          className="bg-[#1A1A1E] border border-zinc-700 text-white text-xs rounded-lg px-2 py-1 font-semibold focus:border-red-500 outline-none"
+                        >
+                          <option value="Branco">Branco</option>
+                          <option value="Branco e Vermelho">Branco e Vermelho</option>
+                          <option value="Vermelho">Vermelho</option>
+                          <option value="Vermelho e Azul">Vermelho e Azul</option>
+                          <option value="Azul Claro">Azul Claro</option>
+                          <option value="Azul Escuro">Azul Escuro</option>
+                          <option value="Preto">Preto</option>
+                        </select>
+                      </td>
+                      <td className="p-3 sm:p-4">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          aluno.status === 'PAGO' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {aluno.status}
                         </span>
-                      </div>
-                      <p className="text-xs text-zinc-400 mt-1">
-                        Prajied: <strong className="text-white">{alunoSelecionado.prajied || 'Branco'}</strong> | WhatsApp: {alunoSelecionado.telefone || 'Não informado'}
-                      </p>
-                    </div>
-                    <button 
-                      onClick={() => setAlunoSelecionado(null)} 
-                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-bold transition self-end sm:self-auto"
-                    >
-                      ✕ Fechar
-                    </button>
-                  </div>
-
-                  {loadingCalendario ? (
-                    <div className="py-20 text-center text-zinc-500">Carregando calendário de frequência...</div>
-                  ) : calendarioDados && (
-                    <div className="space-y-6">
-                      
-                      {/* STATS DE FREQUÊNCIA E PORCENTAGEM (Comando 2) */}
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-4">
-                          <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-1">Frequência no Mês</p>
-                          <div className="flex items-baseline gap-2">
-                            <span className={`text-4xl font-black ${
-                              calendarioDados.estatisticas.porcentagemPresenca >= 80 ? 'text-green-500' :
-                              calendarioDados.estatisticas.porcentagemPresenca >= 50 ? 'text-yellow-500' : 'text-red-500'
-                            }`}>
-                              {calendarioDados.estatisticas.porcentagemPresenca}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-zinc-800 h-2 rounded-full mt-3 overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                calendarioDados.estatisticas.porcentagemPresenca >= 80 ? 'bg-green-500' :
-                                calendarioDados.estatisticas.porcentagemPresenca >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                              }`}
-                              style={{ width: `${calendarioDados.estatisticas.porcentagemPresenca}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-[10px] text-zinc-500 mt-2">
-                            {calendarioDados.estatisticas.porcentagemPresenca === 100 
-                              ? '✓ 100% de presença atingida!' 
-                              : `Meta: ${calendarioDados.estatisticas.aulasEsperadasNoMes} aulas`}
-                          </p>
-                        </div>
-
-                        <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-4">
-                          <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-1">Presenças Confirmadas</p>
-                          <p className="text-3xl font-black text-green-400">{calendarioDados.estatisticas.presentes}</p>
-                          <p className="text-[11px] text-zinc-400 mt-2">
-                            De {calendarioDados.estatisticas.aulasEsperadasNoMes} aulas esperadas ({calendarioDados.estatisticas.aulasPorSemana}x/sem)
-                          </p>
-                        </div>
-
-                        <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-4">
-                          <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-1">Faltas Justificadas</p>
-                          <p className="text-3xl font-black text-blue-400">{calendarioDados.estatisticas.justificadas}</p>
-                          <p className="text-[11px] text-blue-400/80 mt-2">Abonadas na porcentagem</p>
-                        </div>
-
-                        {/* STATUS DE PAGAMENTO */}
-                        <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-4 flex flex-col justify-between">
-                          <div>
-                            <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-1">Status Mensalidade</p>
-                            {calendarioDados.mensalidade.diasParaVencer === null ? (
-                              <p className="text-lg font-bold text-zinc-500">Sem mensalidade</p>
-                            ) : calendarioDados.mensalidade.diasParaVencer < 0 ? (
-                              <p className="text-lg font-black text-red-500">Atrasado há {Math.abs(calendarioDados.mensalidade.diasParaVencer)} dias</p>
-                            ) : (
-                              <p className="text-lg font-black text-green-500">Em dia (Faltam {calendarioDados.mensalidade.diasParaVencer} dias)</p>
-                            )}
-                          </div>
-                          <div className="flex gap-2 mt-3">
-                            <button 
-                              onClick={() => handleCobrar(alunoSelecionado)}
-                              className="flex-1 py-1.5 px-2 bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold rounded transition border border-zinc-700 text-center"
-                            >
-                              📲 Notificar Whats
-                            </button>
-                            <button 
-                              onClick={() => handleRegistrarPagamento(alunoSelecionado)}
-                              className="py-1.5 px-2 bg-green-600 hover:bg-green-700 text-[10px] font-bold rounded transition text-center"
-                            >
-                              +30d
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* NAVEGAÇÃO DO MÊS */}
-                      <div className="flex justify-between items-center bg-[#1A1A1E] p-4 rounded-xl border border-zinc-800">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">📅</span>
-                          <h3 className="text-base font-bold text-white">
-                            {mesesNomes[mesCalendario - 1]} de {anoCalendario}
-                          </h3>
-                        </div>
-                        <div className="flex items-center gap-2">
+                        {aluno.diasVencimento !== null && (
+                          <span className="block text-[10px] text-zinc-400 mt-0.5">
+                            {aluno.diasVencimento < 0 ? `Venceu há ${Math.abs(aluno.diasVencimento)}d` : `Vence em ${aluno.diasVencimento}d`}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 sm:p-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
                           <button 
-                            onClick={() => mudarMesCalendario(-1)}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded-lg transition"
+                            onClick={() => abrirCalendarioAluno(aluno)}
+                            className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-xs font-bold transition"
+                            title="Ver frequência e calendário detalhado"
                           >
-                            ← Anterior
+                            📅 Frequência
                           </button>
                           <button 
-                            onClick={() => mudarMesCalendario(1)}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded-lg transition"
+                            onClick={() => handleRegistrarPagamento(aluno)}
+                            className="px-2.5 py-1 rounded bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 text-xs font-bold transition"
+                            title="Confirmar pagamento presencial (balcão)"
                           >
-                            Próximo →
+                            💵 Pago (+30d)
+                          </button>
+                          <button 
+                            onClick={() => handleCobrar(aluno)}
+                            className="px-2.5 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700 text-xs font-bold transition"
+                            title="Enviar cobrança via WhatsApp"
+                          >
+                            📲 WhatsApp
                           </button>
                         </div>
-                      </div>
-
-                      {/* GRADE DO CALENDÁRIO DA VIDA REAL */}
-                      <div>
-                        <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                          <div>Dom</div>
-                          <div>Seg</div>
-                          <div>Ter</div>
-                          <div>Qua</div>
-                          <div>Qui</div>
-                          <div>Sex</div>
-                          <div>Sáb</div>
-                        </div>
-
-                        <div className="grid grid-cols-7 gap-2">
-                          {(() => {
-                            const primeiroDiaSemana = new Date(anoCalendario, mesCalendario - 1, 1).getDay();
-                            const totalDiasNoMes = new Date(anoCalendario, mesCalendario, 0).getDate();
-                            const items = [];
-
-                            for (let i = 0; i < primeiroDiaSemana; i++) {
-                              items.push(<div key={`empty-${i}`} className="h-24 rounded-xl bg-zinc-900/30"></div>);
-                            }
-
-                            for (let d = 1; d <= totalDiasNoMes; d++) {
-                              const dataIso = `${anoCalendario}-${String(mesCalendario).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                              const presencasDoDia = calendarioDados.presencasPorDia?.[dataIso] || [];
-                              const ehHoje = new Date().toISOString().split('T')[0] === dataIso;
-
-                              const presencaConfirmada = presencasDoDia.find((p: any) => p.status === 'PRESENTE');
-                              const faltaJustificada = presencasDoDia.find((p: any) => p.status === 'JUSTIFICADO');
-                              const checkinPendente = presencasDoDia.find((p: any) => p.status === 'AGENDADO');
-                              const ausente = presencasDoDia.find((p: any) => p.status === 'AUSENTE');
-
-                              items.push(
-                                <div 
-                                  key={`day-${d}`}
-                                  onClick={() => abrirAcaoDia(dataIso)}
-                                  className={`min-h-[96px] p-2.5 rounded-xl border flex flex-col justify-between cursor-pointer transition hover:border-red-500/80 hover:scale-[1.02] ${
-                                    presencaConfirmada
-                                      ? 'bg-green-500/15 border-green-500/40 text-white'
-                                      : faltaJustificada
-                                      ? 'bg-blue-500/15 border-blue-500/40 text-white'
-                                      : checkinPendente
-                                      ? 'bg-amber-500/15 border-amber-500/40 text-white'
-                                      : ausente
-                                      ? 'bg-red-500/15 border-red-500/30 text-white'
-                                      : ehHoje
-                                      ? 'bg-[#1A1A1E] border-red-500 text-white shadow-md shadow-red-500/10'
-                                      : 'bg-[#1A1A1E] border-zinc-800/80 text-zinc-400 hover:bg-[#202025]'
-                                  }`}
-                                >
-                                  <div className="flex justify-between items-center">
-                                    <span className={`text-sm font-black ${ehHoje ? 'text-red-500' : 'text-zinc-200'}`}>{d}</span>
-                                    {ehHoje && <span className="text-[8px] bg-red-600 text-white px-1 py-0.5 rounded font-bold uppercase">Hoje</span>}
-                                  </div>
-
-                                  <div className="space-y-1 mt-1">
-                                    {presencaConfirmada && (
-                                      <div className="text-[10px] font-bold text-green-400 bg-green-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 truncate">
-                                        <span>✓</span> Presente
-                                      </div>
-                                    )}
-                                    {faltaJustificada && (
-                                      <div className="text-[10px] font-bold text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 truncate" title={faltaJustificada.justificativa || 'Falta Justificada'}>
-                                        <span>ℹ️</span> {faltaJustificada.justificativa || 'Justificada'}
-                                      </div>
-                                    )}
-                                    {checkinPendente && (
-                                      <div className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 truncate animate-pulse">
-                                        <span>⏳</span> Aguardando OK
-                                      </div>
-                                    )}
-                                    {ausente && (
-                                      <div className="text-[10px] font-bold text-red-400 bg-red-500/20 px-1.5 py-0.5 rounded flex items-center gap-1 truncate">
-                                        <span>✗</span> Falta
-                                      </div>
-                                    )}
-                                    {!presencaConfirmada && !faltaJustificada && !checkinPendente && !ausente && (
-                                      <span className="text-[10px] text-zinc-600 opacity-0 hover:opacity-100 transition block text-center">
-                                        + Registrar
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return items;
-                          })()}
-                        </div>
-                      </div>
-
-                      {/* LEGENDA E INSTRUÇÃO */}
-                      <div className="bg-[#1A1A1E] p-4 rounded-xl border border-zinc-800 flex flex-wrap justify-between items-center gap-4 text-xs text-zinc-400">
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                            <span>Presença Confirmada</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-blue-400"></span>
-                            <span>Falta Justificada (Abonada)</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-amber-400"></span>
-                            <span>Check-in Pendente</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                            <span>Falta (Ausente)</span>
-                          </div>
-                        </div>
-                        <p className="text-zinc-500 text-[11px]">
-                          💡 Clique em qualquer dia do calendário para marcar <strong>Presença</strong> ou <strong>Falta Justificada</strong>.
-                        </p>
-                      </div>
-
-                    </div>
-                  )}
-
-                </div>
-              </div>
-            )}
-
-            {/* MODAL DE AÇÃO DO DIA (Comando 5: Falta Justificada / Presença) */}
-            {modalAcaoDia && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10001] px-4">
-                <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-sm text-white shadow-2xl">
-                  <h3 className="text-lg font-bold mb-1">
-                    Gerenciar Dia: {diaSelecionadoAcao?.split('-').reverse().join('/')}
-                  </h3>
-                  <p className="text-xs text-zinc-400 mb-4">
-                    Aluno: <strong>{alunoSelecionado?.nome}</strong>
-                  </p>
-
-                  <div className="space-y-3">
-                    <button 
-                      onClick={() => salvarPresencaNoDia('PRESENTE')}
-                      className="w-full py-2.5 bg-green-600 hover:bg-green-700 font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md shadow-green-600/20"
-                    >
-                      ✓ Marcar como Presente
-                    </button>
-
-                    <div className="bg-[#1A1A1E] p-3 rounded-xl border border-zinc-800 space-y-2">
-                      <label className="block text-xs font-semibold text-blue-400">
-                        📋 Falta Justificada (Atestado / Motivo)
-                      </label>
-                      <input 
-                        type="text" 
-                        placeholder="Ex: Atestado médico, trabalho..." 
-                        value={justificativaInput}
-                        onChange={(e) => setJustificativaInput(e.target.value)}
-                        className="w-full bg-[#141416] border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
-                      />
-                      <button 
-                        onClick={() => salvarPresencaNoDia('JUSTIFICADO')}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 font-bold rounded-lg text-xs transition"
-                      >
-                        Salvar Falta Justificada
-                      </button>
-                    </div>
-
-                    <button 
-                      onClick={() => salvarPresencaNoDia('AUSENTE')}
-                      className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-lg text-xs transition"
-                    >
-                      Marcar como Falta (Não Compareceu)
-                    </button>
-
-                    <button 
-                      onClick={removerPresencaDoDia}
-                      className="w-full py-2 text-red-500 hover:text-red-400 text-xs font-bold transition"
-                    >
-                      🗑️ Limpar / Remover Registro Deste Dia
-                    </button>
-
-                    <button 
-                      onClick={() => setModalAcaoDia(false)}
-                      className="w-full py-2 bg-zinc-900 text-zinc-400 hover:text-white rounded-lg text-xs font-bold transition mt-2"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TABS PRINCIPAIS */}
-            <div className="flex gap-4 border-b border-zinc-800 pb-4 overflow-x-auto">
-              <button 
-                onClick={() => setAbaAtiva('alunos')} 
-                className={`font-bold pb-2 transition whitespace-nowrap ${abaAtiva === 'alunos' ? 'text-red-500 border-b-2 border-red-500' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                🥊 Alunos e Mensalidades
-              </button>
-              <button 
-                onClick={() => setAbaAtiva('agendamentos')} 
-                className={`font-bold pb-2 transition flex items-center gap-2 whitespace-nowrap ${abaAtiva === 'agendamentos' ? 'text-red-500 border-b-2 border-red-500' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                🥋 Aulas Experimentais
-                {(agendamentos?.pendentes?.length > 0 || agendamentos?.posAula?.length > 0) && (
-                  <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">
-                    {(agendamentos?.pendentes?.length || 0) + (agendamentos?.posAula?.length || 0)}
-                  </span>
-                )}
-              </button>
-              <button 
-                onClick={() => setAbaAtiva('presencas')} 
-                className={`font-bold pb-2 transition flex items-center gap-2 whitespace-nowrap ${abaAtiva === 'presencas' ? 'text-red-500 border-b-2 border-red-500' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                📋 Frequência e Check-ins
-                {checkinsPendentesCount > 0 && (
-                  <span className="bg-amber-500 text-zinc-950 font-black text-[10px] px-2 py-0.5 rounded-full animate-bounce">
-                    {checkinsPendentesCount}
-                  </span>
-                )}
-              </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-
-            {/* ABA 1: ALUNOS E MENSALIDADES */}
-            {abaAtiva === 'alunos' ? (
-              <section className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-bold text-white">Alunos Matriculados</h2>
-                    <p className="text-xs text-zinc-400 mt-0.5">Clique em "Calendário" para ver a frequência em tempo real e justificar faltas.</p>
-                  </div>
-                  <button onClick={() => setShowModal(true)} className="text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-bold transition shadow-md shadow-red-600/30">
-                    + Novo Aluno
-                  </button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-xs font-semibold">
-                      <tr>
-                        <th className="px-6 py-4">Aluno</th>
-                        <th className="px-6 py-4">Plano</th>
-                        <th className="px-6 py-4">Prajied</th>
-                        <th className="px-6 py-4">Vencimento</th>
-                        <th className="px-6 py-4">Status</th>
-                        <th className="px-6 py-4 text-right">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800">
-                      {alunos.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
-                            Nenhum aluno cadastrado no banco de dados ainda.
-                          </td>
-                        </tr>
-                      )}
-                      {alunos.map((aluno) => (
-                        <tr key={aluno.id} className="hover:bg-[#1A1A1E]/50 transition">
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-white">{aluno.nome}</p>
-                            <p className="text-xs text-zinc-500">{aluno.telefone || aluno.cpf}</p>
-                          </td>
-                          <td className="px-6 py-4 text-zinc-300 font-semibold">{aluno.plano}</td>
-                          <td className="px-6 py-4">
-                            <select 
-                              value={aluno.prajied || 'Branco'}
-                              onChange={(e) => atualizarPrajied(aluno.id, e.target.value)}
-                              className="bg-[#1A1A1E] border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-red-500"
-                            >
-                              <option value="Branco">Branco</option>
-                              <option value="Branco e Vermelho">Branco e Vermelho</option>
-                              <option value="Vermelho">Vermelho</option>
-                              <option value="Vermelho e Azul">Vermelho e Azul</option>
-                              <option value="Azul Claro">Azul Claro</option>
-                              <option value="Azul Escuro">Azul Escuro (Instrutor)</option>
-                              <option value="Preto">Preto (Mestre)</option>
-                            </select>
-                          </td>
-                          <td className="px-6 py-4">
-                            {aluno.diasVencimento === null ? (
-                              <span className="text-zinc-600">-</span>
-                            ) : aluno.diasVencimento < 0 ? (
-                              <span className="text-red-500 font-bold">Atrasado há {Math.abs(aluno.diasVencimento)} dias</span>
-                            ) : aluno.diasVencimento === 0 ? (
-                              <span className="text-amber-500 font-bold">Vence hoje!</span>
-                            ) : (
-                              <span className="text-zinc-300 font-semibold">Faltam {aluno.diasVencimento} dias</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            {aluno.status === 'PAGO' ? (
-                              <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500 border border-green-500/20 uppercase">
-                                Em Dia
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-500 border border-red-500/20 uppercase">
-                                Pendente
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex gap-2 justify-end">
-                              {/* BOTÃO CALENDÁRIO / FREQUÊNCIA (Comando 2) */}
-                              <button 
-                                onClick={() => abrirCalendarioAluno(aluno)}
-                                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded transition flex items-center gap-1 shadow-sm"
-                                title="Abrir Calendário de Frequência"
-                              >
-                                📅 Calendário
-                              </button>
-                              <button 
-                                onClick={() => handleRegistrarPagamento(aluno)} 
-                                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium text-xs rounded transition"
-                                title="Registrar Pagamento de Mensalidade"
-                              >
-                                Pago
-                              </button>
-                              <button 
-                                onClick={() => handleCobrar(aluno)} 
-                                className="px-3 py-1.5 bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-zinc-300 font-medium text-xs rounded transition"
-                                title="Cobrar / Lembrete via WhatsApp"
-                              >
-                                Cobrar
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            ) : abaAtiva === 'agendamentos' ? (
-              /* ABA 2: AULAS EXPERIMENTAIS COM 2 TABELAS (Comando 3) */
-              <div className="space-y-6">
-                
-                {/* SUB-TABS */}
-                <div className="flex gap-3 bg-[#141416] p-2 rounded-xl border border-zinc-800 w-fit">
-                  <button 
-                    onClick={() => setSubAbaExperimental('pendentes')}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-                      subAbaExperimental === 'pendentes' ? 'bg-red-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    1. Aulas a Realizar (Agendamentos)
-                    {agendamentos?.pendentes?.length > 0 && (
-                      <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px]">
-                        {agendamentos.pendentes.length}
-                      </span>
-                    )}
-                  </button>
-                  <button 
-                    onClick={() => setSubAbaExperimental('posAula')}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-                      subAbaExperimental === 'posAula' ? 'bg-amber-500 text-zinc-950 shadow-md font-black' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    2. Pós-Aula (Aguardando Fechar Contrato)
-                    {agendamentos?.posAula?.length > 0 && (
-                      <span className="bg-red-600 text-white px-2 py-0.5 rounded-full text-[10px]">
-                        {agendamentos.posAula.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
-
-                {/* TABELA 1: PENDENTES (A REALIZAR) */}
-                {subAbaExperimental === 'pendentes' ? (
-                  <section className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
-                    <div className="p-6 border-b border-zinc-800">
-                      <h2 className="text-xl font-bold text-white">Agendamentos de Aula Experimental (Aguardando Treino)</h2>
-                      <p className="text-xs text-zinc-400 mt-1">
-                        Pessoas que agendaram pelo site. Quando a pessoa comparecer ao treino, clique em <strong>"Fez a Aula"</strong> para acompanhar o fechamento de contrato.
-                      </p>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-xs font-semibold">
-                          <tr>
-                            <th className="px-6 py-4">Nome</th>
-                            <th className="px-6 py-4">WhatsApp</th>
-                            <th className="px-6 py-4">Dia Marcado</th>
-                            <th className="px-6 py-4">Horário</th>
-                            <th className="px-6 py-4 text-right">Ação</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-800">
-                          {(!agendamentos?.pendentes || agendamentos.pendentes.length === 0) && (
-                            <tr>
-                              <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">
-                                Nenhum agendamento experimental pendente no momento.
-                              </td>
-                            </tr>
-                          )}
-                          {agendamentos?.pendentes?.map((ag: any) => (
-                            <tr key={ag.id} className="hover:bg-[#1A1A1E]/50 transition">
-                              <td className="px-6 py-4 font-bold text-white">{ag.nome}</td>
-                              <td className="px-6 py-4 text-zinc-400">{ag.telefone}</td>
-                              <td className="px-6 py-4 font-bold text-amber-500">{ag.data}</td>
-                              <td className="px-6 py-4 font-bold text-white">{ag.horario}</td>
-                              <td className="px-6 py-4 text-right">
-                                <div className="flex gap-2 justify-end">
-                                  <a 
-                                    href={formatarWhatsUrl(
-                                      ag.telefone,
-                                      `Olá ${ag.nome}, confirmamos seu agendamento para a aula experimental de Muay Thai no CT BORÜ na ${ag.data} às ${ag.horario}! Estamos ansiosos para te receber no tatame. Contato do Professor: +55 69 9238-4491.`
-                                    )} 
-                                    target="_blank" 
-                                    className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold transition flex items-center gap-1"
-                                  >
-                                    📲 Whats
-                                  </a>
-                                  <button 
-                                    onClick={() => marcarAulaRealizada(ag.id)}
-                                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition shadow-sm"
-                                  >
-                                    ✓ Fez a Aula
-                                  </button>
-                                  <button 
-                                    onClick={() => marcarComoDesistente(ag.id)}
-                                    className="px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded text-xs transition"
-                                    title="Não compareceu / Cancelar"
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
-                ) : (
-                  /* TABELA 2: PÓS-AULA EXPERIMENTAL (Comando 3: Dias desde a aula para mandar msg e chamar para o CT) */
-                  <section className="bg-[#141416] border border-amber-500/20 rounded-xl overflow-hidden shadow-2xl">
-                    <div className="p-6 border-b border-zinc-800 bg-amber-500/5">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                        <div>
-                          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            <span>🔥</span> Leads Pós-Aula Experimental (Aguardando Fechar Contrato)
-                          </h2>
-                          <p className="text-xs text-zinc-400 mt-1">
-                            Pessoas que já treinaram no CT mas ainda não fecharam plano. Acompanhe os dias e mande mensagem pelo WhatsApp para fechar a matrícula!
-                          </p>
-                        </div>
-                        <span className="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-bold">
-                          {agendamentos?.posAula?.length || 0} em negociação
-                        </span>
-                      </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-xs font-semibold">
-                          <tr>
-                            <th className="px-6 py-4">Nome do Lead</th>
-                            <th className="px-6 py-4">WhatsApp</th>
-                            <th className="px-6 py-4">Data que Treinou</th>
-                            <th className="px-6 py-4">Dias Desde a Aula</th>
-                            <th className="px-6 py-4 text-right">Ação / Follow-up</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-800">
-                          {(!agendamentos?.posAula || agendamentos.posAula.length === 0) && (
-                            <tr>
-                              <td colSpan={5} className="px-6 py-10 text-center text-zinc-500">
-                                Nenhum lead aguardando fechamento de contrato no momento.
-                              </td>
-                            </tr>
-                          )}
-                          {agendamentos?.posAula?.map((lead: any) => {
-                            const dias = lead.diasDesdeAula;
-                            const msgFollowUp = `Olá ${lead.nome}, tudo bem? Aqui é o Professor Felipe do CT BORÜ Muay Thai (+55 69 9238-4491)! Vimos que você fez sua aula experimental com a gente ${dias === 0 ? 'hoje' : dias === 1 ? 'ontem' : `há ${dias} dias`}. O que achou do treino? Temos uma condição muito bacana para você começar seus treinos essa semana! Bora voltar pro tatame?`;
-
-                            return (
-                              <tr key={lead.id} className="hover:bg-[#1A1A1E]/50 transition">
-                                <td className="px-6 py-4 font-bold text-white text-base">{lead.nome}</td>
-                                <td className="px-6 py-4 text-zinc-300 font-mono">{lead.telefone}</td>
-                                <td className="px-6 py-4 text-zinc-400 text-xs">{lead.dataRealizadaFormatada}</td>
-                                <td className="px-6 py-4">
-                                  {dias === 0 ? (
-                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30">
-                                      Treinou Hoje (0 dias)
-                                    </span>
-                                  ) : dias === 1 ? (
-                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                      Treinou Ontem (1 dia)
-                                    </span>
-                                  ) : dias <= 4 ? (
-                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                                      Fez há {dias} dias
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
-                                      Fez há {dias} dias (Chamar Urgente!)
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                  <div className="flex gap-2 justify-end">
-                                    {/* MENSAGEM WHATSAPP FOLLOW-UP (Comando 3) */}
-                                    <a 
-                                      href={formatarWhatsUrl(lead.telefone, msgFollowUp)}
-                                      target="_blank" 
-                                      className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-md shadow-green-600/20"
-                                      title="Mandar mensagem no WhatsApp convidando para fechar o plano"
-                                    >
-                                      📲 Mandar Mensagem
-                                    </a>
-                                    {/* FECHAR CONTRATO / MATRICULAR */}
-                                    <button 
-                                      onClick={() => abrirModalConversao(lead)}
-                                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
-                                      title="Converter em Aluno Matriculado"
-                                    >
-                                      🥋 Fechar Contrato
-                                    </button>
-                                    <button 
-                                      onClick={() => marcarComoDesistente(lead.id)}
-                                      className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-lg text-xs transition"
-                                      title="Desistiu / Arquivar"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
-                )}
-
-              </div>
-            ) : abaAtiva === 'presencas' ? (
-              /* ABA 3: FREQUÊNCIA E CHECK-INS (Comando 4: Dar OK para confirmar presença) */
-              <section className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-bold text-white">Check-ins & Presenças no Tatame</h2>
-                    <p className="text-xs text-zinc-400 mt-1">
-                      Sempre que o aluno der check-in no aplicativo, dê o <strong>OK (Confirmar)</strong> para validar a presença na aula ou marque falta justificada.
-                    </p>
-                  </div>
-                  <button onClick={carregarDashboard} className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg transition font-semibold">
-                    ↻ Atualizar
-                  </button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-xs font-semibold">
-                      <tr>
-                        <th className="px-6 py-4">Data / Hora</th>
-                        <th className="px-6 py-4">Aluno</th>
-                        <th className="px-6 py-4">Plano</th>
-                        <th className="px-6 py-4">Aula</th>
-                        <th className="px-6 py-4">Status</th>
-                        <th className="px-6 py-4 text-right">Ação do Professor</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800">
-                      {presencas.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
-                            Nenhum check-in registrado ainda.
-                          </td>
-                        </tr>
-                      )}
-                      {presencas.map((p) => {
-                        const ehPendente = p.status === 'AGENDADO';
-                        const ehPresente = p.status === 'PRESENTE';
-                        const ehJustificado = p.status === 'JUSTIFICADO';
-
-                        return (
-                          <tr key={p.id} className={`transition ${ehPendente ? 'bg-amber-500/5 hover:bg-amber-500/10' : 'hover:bg-[#1A1A1E]/50'}`}>
-                            <td className="px-6 py-4 text-zinc-400 text-xs">
-                              {new Date(p.data || p.criadoEm).toLocaleString('pt-BR')}
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="font-bold text-white">{p.aluno?.nome || 'Aluno'}</p>
-                              {p.justificativa && (
-                                <p className="text-[11px] text-blue-400">Obs: {p.justificativa}</p>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-zinc-400 text-xs">{p.aluno?.plano || '2x na semana'}</td>
-                            <td className="px-6 py-4 font-semibold text-zinc-200">
-                              {p.evento?.titulo || 'Muay Thai Tradicional'}
-                            </td>
-                            <td className="px-6 py-4">
-                              {ehPresente ? (
-                                <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[10px] font-bold bg-green-500/15 text-green-400 border border-green-500/30 uppercase">
-                                  ✓ Presença Confirmada
-                                </span>
-                              ) : ehJustificado ? (
-                                <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 uppercase">
-                                  ℹ️ Falta Justificada
-                                </span>
-                              ) : ehPendente ? (
-                                <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase animate-pulse">
-                                  ⏳ Aguardando OK
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30 uppercase">
-                                  ✗ Não Compareceu
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex gap-2 justify-end">
-                                {/* DAR OK / CONFIRMAR PRESENÇA (Comando 4) */}
-                                {ehPendente ? (
-                                  <>
-                                    <button 
-                                      onClick={() => handleAlterarStatusPresenca(p.id, 'PRESENTE')}
-                                      className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold transition shadow-sm flex items-center gap-1"
-                                      title="Dar OK e confirmar que o aluno compareceu ao treino"
-                                    >
-                                      ✓ Confirmar Presença (OK)
-                                    </button>
-                                    <button 
-                                      onClick={() => {
-                                        const motivo = prompt('Informe a justificativa da falta (ex: Atestado médico, trabalho):', 'Falta justificada');
-                                        if (motivo !== null) {
-                                          handleAlterarStatusPresenca(p.id, 'JUSTIFICADO', motivo);
-                                        }
-                                      }}
-                                      className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition"
-                                      title="Marcar como Falta Justificada"
-                                    >
-                                      Justificada
-                                    </button>
-                                    <button 
-                                      onClick={() => handleAlterarStatusPresenca(p.id, 'AUSENTE')}
-                                      className="px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded text-xs transition"
-                                      title="Não veio"
-                                    >
-                                      Não Veio
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button 
-                                    onClick={() => {
-                                      if (p.aluno) {
-                                        abrirCalendarioAluno(p.aluno);
-                                      }
-                                    }}
-                                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs font-semibold transition"
-                                  >
-                                    📅 Ver Calendário
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            ) : null}
-          </>
+          </div>
         )}
+
+        {/* CONTEÚDO DA ABA: CHAMADA & PRESENÇAS */}
+        {abaAtiva === 'presencas' && (
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-zinc-800 flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white">Chamada de Treinos Recentes</h2>
+                <p className="text-xs text-zinc-400">Valide os check-ins ou registre faltas e ausências por doença.</p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider border-b border-zinc-800">
+                  <tr>
+                    <th className="p-3 sm:p-4">Aluno</th>
+                    <th className="p-3 sm:p-4">Aula / Data</th>
+                    <th className="p-3 sm:p-4">Status Atual</th>
+                    <th className="p-3 sm:p-4 text-right">Lançar Chamada</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/60">
+                  {presencas.map(p => (
+                    <tr key={p.id} className="hover:bg-zinc-800/30 transition">
+                      <td className="p-3 sm:p-4 font-bold text-white">
+                        {p.aluno?.nome}
+                        <span className="block text-[11px] text-zinc-400 font-normal">{p.aluno?.plano}</span>
+                      </td>
+                      <td className="p-3 sm:p-4 text-zinc-300">
+                        {p.evento?.titulo || 'Treino de Muay Thai'}
+                        <span className="block text-[11px] text-zinc-500">
+                          {new Date(p.data).toLocaleDateString('pt-BR')} às {new Date(p.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </td>
+                      <td className="p-3 sm:p-4">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          p.status === 'PRESENTE' ? 'bg-green-500/20 text-green-400' :
+                          p.status === 'DOENCA' ? 'bg-blue-500/20 text-blue-400' :
+                          p.status === 'JUSTIFICADO' ? 'bg-cyan-500/20 text-cyan-400' :
+                          p.status === 'FALTA' || p.status === 'AUSENTE' ? 'bg-red-500/20 text-red-400' :
+                          'bg-amber-500/20 text-amber-400'
+                        }`}>
+                          {p.status}
+                        </span>
+                        {p.justificativa && (
+                          <span className="block text-[10px] text-zinc-400 mt-1 italic">
+                            Motivo: {p.justificativa}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 sm:p-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          <button 
+                            onClick={() => handleAlterarStatusPresenca(p.id, 'PRESENTE')}
+                            className="px-2 py-1 rounded bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white border border-green-500/30 text-xs font-bold transition"
+                          >
+                            ✓ Presente
+                          </button>
+                          <button 
+                            onClick={() => handleAlterarStatusPresenca(p.id, 'DOENCA')}
+                            className="px-2 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-xs font-bold transition"
+                            title="Registrar falta por motivo de doença / atestado"
+                          >
+                            🩺 Doença
+                          </button>
+                          <button 
+                            onClick={() => handleAlterarStatusPresenca(p.id, 'FALTA')}
+                            className="px-2 py-1 rounded bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/30 text-xs font-bold transition"
+                          >
+                            ✗ Falta
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: MURAL DE AVISOS */}
+        {abaAtiva === 'avisos' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h2 className="text-xl font-bold text-white">Mural de Avisos da Academia</h2>
+                <p className="text-xs text-zinc-400">Publicações e recados oficiais vistos por todos os alunos no portal.</p>
+              </div>
+              <button 
+                onClick={() => setShowModalAviso(true)}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
+              >
+                <span>➕ Publicar Novo Aviso</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {avisos.map(aviso => (
+                <div key={aviso.id} className="bg-[#141416] border border-zinc-800 rounded-xl p-5 relative overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                        aviso.tipo === 'URGENTE' ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
+                        aviso.tipo === 'GRADUACAO' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
+                        aviso.tipo === 'EVENTO' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40' :
+                        'bg-zinc-800 text-zinc-300'
+                      }`}>
+                        {aviso.tipo}
+                      </span>
+                      {aviso.fixado && (
+                        <span className="text-xs text-amber-400 font-bold flex items-center gap-1">
+                          📌 Fixado
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-2">{aviso.titulo}</h3>
+                    <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{aviso.conteudo}</p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
+                    <span>Por {aviso.autorNome} ({aviso.autorCargo})</span>
+                    <button 
+                      onClick={() => removerAviso(aviso.id)}
+                      className="text-red-500 hover:text-red-400 font-bold transition text-xs"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: LOJA & MERCADO (BETA) */}
+        {abaAtiva === 'loja' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-white">Mercado & Loja Borü</h2>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    VERSÃO BETA
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400">Controle de estoque dos itens físicos vendidos presencialmente na recepção.</p>
+              </div>
+              <button 
+                onClick={() => setShowModalProduto(true)}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
+              >
+                <span>➕ Adicionar Produto</span>
+              </button>
+            </div>
+
+            {/* Categorias */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {['TODOS', 'PROTETOR_BUCAL', 'LUVAS', 'CANELEIRAS', 'BANDAGENS', 'ALIMENTOS'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoriaFiltroLoja(cat)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                    categoriaFiltroLoja === cat ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+                  }`}
+                >
+                  {cat === 'TODOS' ? 'Todos os Produtos' :
+                   cat === 'PROTETOR_BUCAL' ? 'Protetor Bucal' :
+                   cat === 'LUVAS' ? 'Luvas' :
+                   cat === 'CANELEIRAS' ? 'Caneleiras' :
+                   cat === 'BANDAGENS' ? 'Bandagens' : 'Alimentos & Bebidas'}
+                </button>
+              ))}
+            </div>
+
+            {/* Grid de produtos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {produtos
+                .filter(p => categoriaFiltroLoja === 'TODOS' || p.categoria === categoriaFiltroLoja)
+                .map(prod => (
+                  <div key={prod.id} className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden flex flex-col justify-between hover:border-zinc-700 transition">
+                    <div className="h-40 bg-zinc-900 relative overflow-hidden">
+                      <img 
+                        src={prod.imagemUrl || 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=500&q=80'} 
+                        alt={prod.nome} 
+                        className="w-full h-full object-cover" 
+                      />
+                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-black/80 text-white">
+                        Estoque: {prod.estoque}
+                      </span>
+                    </div>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-red-500">
+                          {prod.categoria.replace('_', ' ')}
+                        </span>
+                        <h4 className="text-sm font-bold text-white mt-1 leading-snug">{prod.nome}</h4>
+                        {prod.descricao && (
+                          <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{prod.descricao}</p>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-zinc-800 flex justify-between items-center">
+                        <span className="text-base font-black text-white">
+                          R$ {prod.preco.toFixed(2).replace('.', ',')}
+                        </span>
+                        <button 
+                          onClick={() => removerProduto(prod.id)}
+                          className="text-xs text-red-500 hover:text-red-400 transition font-semibold"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: PROFESSORES & EQUIPE (ADMIN) */}
+        {abaAtiva === 'professores' && usuarioLogado?.cargo === 'ADMIN' && (
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-zinc-800 flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white">Professores e Membros da Equipe</h2>
+                <p className="text-xs text-zinc-400">Área restrita de gestão de acessos e instrutores do CT.</p>
+              </div>
+              <button 
+                onClick={() => setShowModalProf(true)}
+                className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition flex items-center gap-1.5"
+              >
+                <span>➕ Cadastrar Professor</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider border-b border-zinc-800">
+                  <tr>
+                    <th className="p-3 sm:p-4">Nome</th>
+                    <th className="p-3 sm:p-4">E-mail / Login</th>
+                    <th className="p-3 sm:p-4">Graduação</th>
+                    <th className="p-3 sm:p-4">Cargo</th>
+                    <th className="p-3 sm:p-4 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/60">
+                  {professores.map(prof => (
+                    <tr key={prof.id} className="hover:bg-zinc-800/30 transition">
+                      <td className="p-3 sm:p-4 font-bold text-white">
+                        {prof.nome}
+                        <span className="block text-[11px] text-zinc-400 font-normal">{prof.telefone || 'Sem contato'}</span>
+                      </td>
+                      <td className="p-3 sm:p-4 text-zinc-300">{prof.email}</td>
+                      <td className="p-3 sm:p-4 text-zinc-300 font-semibold">{prof.prajied || 'Prajied Oficial'}</td>
+                      <td className="p-3 sm:p-4">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          prof.cargo === 'ADMIN' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {prof.cargo}
+                        </span>
+                      </td>
+                      <td className="p-3 sm:p-4 text-right">
+                        {prof.id !== usuarioLogado?.id && (
+                          <button 
+                            onClick={() => removerProfessor(prof.id, prof.nome)}
+                            className="text-xs text-red-500 hover:text-red-400 font-bold transition"
+                          >
+                            Excluir
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: LEADS & AGENDAMENTOS EXPERIMENTAIS */}
+        {abaAtiva === 'agendamentos' && (
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl p-4 sm:p-6 space-y-4">
+            <div className="flex gap-2 border-b border-zinc-800 pb-3">
+              <button 
+                onClick={() => setSubAbaExperimental('pendentes')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  subAbaExperimental === 'pendentes' ? 'bg-red-600 text-white' : 'bg-[#1A1A1E] text-zinc-400'
+                }`}
+              >
+                Aulas Agendadas ({agendamentos.pendentes?.length || 0})
+              </button>
+              <button 
+                onClick={() => setSubAbaExperimental('posAula')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  subAbaExperimental === 'posAula' ? 'bg-red-600 text-white' : 'bg-[#1A1A1E] text-zinc-400'
+                }`}
+              >
+                Pós-Aula / Fechar Contrato ({agendamentos.posAula?.length || 0})
+              </button>
+            </div>
+
+            {subAbaExperimental === 'pendentes' ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider">
+                    <tr>
+                      <th className="p-3">Nome</th>
+                      <th className="p-3">Telefone</th>
+                      <th className="p-3">Data Prevista</th>
+                      <th className="p-3 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60">
+                    {agendamentos.pendentes?.map((ag: any) => (
+                      <tr key={ag.id} className="hover:bg-zinc-800/30">
+                        <td className="p-3 font-bold text-white">{ag.nome}</td>
+                        <td className="p-3 text-zinc-300">{ag.telefone}</td>
+                        <td className="p-3 text-zinc-300">{ag.data} às {ag.horario}</td>
+                        <td className="p-3 text-right">
+                          <button 
+                            onClick={() => marcarAulaRealizada(ag.id)}
+                            className="px-2.5 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition"
+                          >
+                            ✓ Fez a Aula
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider">
+                    <tr>
+                      <th className="p-3">Lead (Fez Aula)</th>
+                      <th className="p-3">Dias Desde o Treino</th>
+                      <th className="p-3">Observação</th>
+                      <th className="p-3 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60">
+                    {agendamentos.posAula?.map((ag: any) => (
+                      <tr key={ag.id} className="hover:bg-zinc-800/30">
+                        <td className="p-3 font-bold text-white">
+                          {ag.nome}
+                          <span className="block text-[11px] text-zinc-400 font-normal">{ag.telefone}</span>
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                            ag.diasDesdeAula > 3 ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'
+                          }`}>
+                            {ag.diasDesdeAula} dias atrás
+                          </span>
+                        </td>
+                        <td className="p-3 text-zinc-400 text-xs italic">{ag.observacao || 'Sem observação'}</td>
+                        <td className="p-3 text-right">
+                          <button 
+                            onClick={() => setLeadParaConverter(ag)}
+                            className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition"
+                          >
+                            Matricular Aluno
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
+
+      {/* MODAL NOVO ALUNO */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-4">Matricular Novo Aluno</h3>
+            <form onSubmit={criarAluno} className="space-y-3">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome Completo</label>
+                <input required type="text" value={novoAluno.nome} onChange={(e) => setNovoAluno({...novoAluno, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">CPF (Obrigatório)</label>
+                <input required type="text" value={novoAluno.cpf} onChange={(e) => setNovoAluno({...novoAluno, cpf: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="000.000.000-00" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp</label>
+                  <input type="text" value={novoAluno.telefone} onChange={(e) => setNovoAluno({...novoAluno, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Plano</label>
+                  <select value={novoAluno.plano} onChange={(e) => setNovoAluno({...novoAluno, plano: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                    <option value="2x na semana">2x na semana (R$ 130)</option>
+                    <option value="3x na semana">3x na semana (R$ 160)</option>
+                    <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
+                    <option value="Diária">Diária (R$ 40)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold">Salvar Matrícula</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVO PROFESSOR (EXCLUSIVO ADMIN) */}
+      {showModalProf && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-amber-400 mb-1">Cadastrar Professor / Usuário</h3>
+            <p className="text-zinc-400 text-xs mb-4">Adicione um novo instrutor com permissão de lançar chamadas e graduar alunos.</p>
+            <form onSubmit={criarProfessor} className="space-y-3">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome Completo</label>
+                <input required type="text" value={novoProfessor.nome} onChange={(e) => setNovoProfessor({...novoProfessor, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail para Login</label>
+                <input required type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha</label>
+                  <input required type="password" value={novoProfessor.senha} onChange={(e) => setNovoProfessor({...novoProfessor, senha: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Mínimo 6" />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
+                  <select value={novoProfessor.cargo} onChange={(e) => setNovoProfessor({...novoProfessor, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                    <option value="PROFESSOR">Professor / Instrutor</option>
+                    <option value="ADMIN">Administrador Geral</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Graduação (Prajied)</label>
+                <select value={novoProfessor.prajied} onChange={(e) => setNovoProfessor({...novoProfessor, prajied: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                  <option value="Prajied Azul Claro">Prajied Azul Claro</option>
+                  <option value="Prajied Azul Escuro">Prajied Azul Escuro</option>
+                  <option value="Prajied Azul Escuro e Preto">Prajied Azul Escuro e Preto</option>
+                  <option value="Prajied Preto">Prajied Preto</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setShowModalProf(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold">Criar Professor</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVO AVISO */}
+      {showModalAviso && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-3">Publicar no Mural</h3>
+            <form onSubmit={criarAviso} className="space-y-3">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Título do Aviso</label>
+                <input required type="text" value={novoAviso.titulo} onChange={(e) => setNovoAviso({...novoAviso, titulo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Exame de Graduação" />
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Categoria / Tipo</label>
+                <select value={novoAviso.tipo} onChange={(e) => setNovoAviso({...novoAviso, tipo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                  <option value="GERAL">Geral</option>
+                  <option value="URGENTE">Urgente</option>
+                  <option value="GRADUACAO">Graduação / Prajied</option>
+                  <option value="EVENTO">Evento / Workshop</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Conteúdo da Mensagem</label>
+                <textarea required rows={4} value={novoAviso.conteudo} onChange={(e) => setNovoAviso({...novoAviso, conteudo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Escreva o comunicado para os alunos..." />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="fixarAviso" checked={novoAviso.fixado} onChange={(e) => setNovoAviso({...novoAviso, fixado: e.target.checked})} className="rounded bg-zinc-800 border-zinc-700 text-red-600" />
+                <label htmlFor="fixarAviso" className="text-xs text-zinc-300 font-semibold cursor-pointer">Fixar no topo do mural</label>
+              </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setShowModalAviso(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold">Publicar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVO PRODUTO NA LOJA */}
+      {showModalProduto && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-3">Adicionar Produto na Loja</h3>
+            <form onSubmit={criarProduto} className="space-y-3">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome do Produto</label>
+                <input required type="text" value={novoProduto.nome} onChange={(e) => setNovoProduto({...novoProduto, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Luva Muay Thai 14oz" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Categoria</label>
+                  <select value={novoProduto.categoria} onChange={(e) => setNovoProduto({...novoProduto, categoria: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                    <option value="PROTETOR_BUCAL">Protetor Bucal</option>
+                    <option value="LUVAS">Luvas</option>
+                    <option value="CANELEIRAS">Caneleiras</option>
+                    <option value="BANDAGENS">Bandagens</option>
+                    <option value="ALIMENTOS">Alimentos & Bebidas</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Preço (R$)</label>
+                  <input required type="number" step="0.5" value={novoProduto.preco} onChange={(e) => setNovoProduto({...novoProduto, preco: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: 45.00" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Estoque</label>
+                  <input type="number" value={novoProduto.estoque} onChange={(e) => setNovoProduto({...novoProduto, estoque: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">URL Imagem</label>
+                  <input type="text" value={novoProduto.imagemUrl} onChange={(e) => setNovoProduto({...novoProduto, imagemUrl: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Opcional" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setShowModalProduto(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold">Cadastrar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CALENDÁRIO & FREQUÊNCIA DETALHADA COM PORCENTAGENS */}
+      {alunoSelecionado && calendarioDados && (
+        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-6 z-[99999] overflow-y-auto">
+          <div className="bg-[#141416] border border-zinc-800 rounded-2xl w-full max-w-3xl p-5 sm:p-7 shadow-2xl my-8">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                  📅 Frequência: {alunoSelecionado.nome}
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-400">
+                  Plano: <strong className="text-white">{alunoSelecionado.plano}</strong> • Prajied: <strong className="text-red-400">{alunoSelecionado.prajied}</strong>
+                </p>
+              </div>
+              <button 
+                onClick={() => setAlunoSelecionado(null)}
+                className="text-zinc-500 hover:text-white text-lg font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* CARDS COM AS PORCENTAGENS REQUISITADAS */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+              <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-3">
+                <p className="text-[10px] uppercase font-bold text-green-400 mb-0.5">🟢 Presença Real</p>
+                <p className="text-2xl font-black text-white">{calendarioDados.estatisticas.porcentagemPresenca}%</p>
+                <span className="text-[10px] text-zinc-500">{calendarioDados.estatisticas.presentes} aulas feitas</span>
+              </div>
+              <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-3">
+                <p className="text-[10px] uppercase font-bold text-blue-400 mb-0.5">🔵 Ausência Doença</p>
+                <p className="text-2xl font-black text-blue-400">{calendarioDados.estatisticas.porcentagemDoenca}%</p>
+                <span className="text-[10px] text-zinc-500">{calendarioDados.estatisticas.doenca} com atestado</span>
+              </div>
+              <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-3">
+                <p className="text-[10px] uppercase font-bold text-red-400 mb-0.5">🔴 Falta Comum</p>
+                <p className="text-2xl font-black text-red-500">{calendarioDados.estatisticas.porcentagemFalta}%</p>
+                <span className="text-[10px] text-zinc-500">{calendarioDados.estatisticas.faltasNaoJustificadas} sem aviso</span>
+              </div>
+              <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-3">
+                <p className="text-[10px] uppercase font-bold text-amber-400 mb-0.5">⭐ Presença Efetiva</p>
+                <p className="text-2xl font-black text-amber-400">{calendarioDados.estatisticas.porcentagemGeral}%</p>
+                <span className="text-[10px] text-zinc-500">Considera atestados</span>
+              </div>
+            </div>
+
+            {/* MÊS E DIAS */}
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-sm sm:text-base font-bold text-white">
+                Mês: {mesCalendario} / {anoCalendario}
+              </h4>
+              <div className="flex gap-2">
+                <button onClick={() => mudarMesCalendario(-1)} className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded">← Anterior</button>
+                <button onClick={() => mudarMesCalendario(1)} className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded">Próximo →</button>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-zinc-400 mb-2">Clique em qualquer dia para registrar Presença, Falta ou Doença:</p>
+
+            {/* Grid dos dias */}
+            <div className="grid grid-cols-7 gap-1.5 text-center text-[10px] font-bold text-zinc-500 mb-1">
+              <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+            </div>
+            <div className="grid grid-cols-7 gap-1.5">
+              {Array.from({ length: new Date(anoCalendario, mesCalendario - 1, 1).getDay() }).map((_, i) => (
+                <div key={`emp-${i}`} className="h-16 rounded bg-zinc-900/20"></div>
+              ))}
+              {Array.from({ length: new Date(anoCalendario, mesCalendario, 0).getDate() }).map((_, i) => {
+                const dia = i + 1;
+                const dataIso = `${anoCalendario}-${String(mesCalendario).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                const pres = calendarioDados.presencasPorDia?.[dataIso]?.[0];
+                return (
+                  <button
+                    key={`d-${dia}`}
+                    onClick={() => abrirAcaoDia(dataIso)}
+                    className={`h-16 p-1.5 rounded-lg border text-left flex flex-col justify-between transition hover:scale-105 ${
+                      pres?.status === 'PRESENTE' ? 'bg-green-500/20 border-green-500/50 text-white' :
+                      pres?.status === 'DOENCA' ? 'bg-blue-500/20 border-blue-500/50 text-white' :
+                      pres?.status === 'FALTA' ? 'bg-red-500/20 border-red-500/50 text-white' :
+                      'bg-[#1A1A1E] border-zinc-800 text-zinc-400'
+                    }`}
+                  >
+                    <span className="font-bold text-xs">{dia}</span>
+                    <span className="text-[9px] font-bold truncate">
+                      {pres?.status === 'PRESENTE' ? '✓ Presente' :
+                       pres?.status === 'DOENCA' ? '🩺 Doença' :
+                       pres?.status === 'FALTA' ? '✗ Falta' : '+ Marcar'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL AÇÃO DO DIA (PRESENÇA / FALTA / DOENÇA) */}
+      {modalAcaoDia && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[999999]">
+          <div className="bg-[#141416] border border-zinc-800 p-5 rounded-2xl w-full max-w-sm shadow-2xl">
+            <h4 className="text-base font-bold text-white mb-2">Lançar Registro para {diaSelecionadoAcao}</h4>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Status da Chamada</label>
+                <select 
+                  value={statusAcaoDia} 
+                  onChange={(e) => setStatusAcaoDia(e.target.value)}
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white"
+                >
+                  <option value="PRESENTE">🟢 PRESENTE (Treinou normalmente)</option>
+                  <option value="DOENCA">🔵 FALTA POR DOENÇA (Com atestado médico)</option>
+                  <option value="FALTA">🔴 FALTA NÃO JUSTIFICADA (Sem comparecimento)</option>
+                  <option value="JUSTIFICADO">ℹ️ OUTRA JUSTIFICATIVA (Trabalho/Viagem)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Motivo / Detalhes (Opcional)</label>
+                <input 
+                  type="text" 
+                  value={justificativaInput} 
+                  onChange={(e) => setJustificativaInput(e.target.value)}
+                  placeholder="Ex: Gripe forte, Atestado de 2 dias..."
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white" 
+                />
+              </div>
+
+              <div className="flex justify-between items-center pt-3 border-t border-zinc-800">
+                <button 
+                  type="button" 
+                  onClick={removerPresencaDoDia}
+                  className="text-red-500 hover:text-red-400 text-xs font-bold"
+                >
+                  Limpar Dia
+                </button>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setModalAcaoDia(false)} className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
+                  <button type="button" onClick={salvarPresencaNoDia} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold">Salvar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONVERTER LEAD EM ALUNO */}
+      {leadParaConverter && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">Matricular {leadParaConverter.nome}</h3>
+            <p className="text-zinc-400 text-xs mb-4">A pessoa já fez a aula experimental e agora será inserida como aluno ativo.</p>
+            <form onSubmit={converterLeadEmAluno} className="space-y-3">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Plano Escolhido</label>
+                <select value={planoConversao} onChange={(e) => setPlanoConversao(e.target.value)} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white">
+                  <option value="2x na semana">2x na semana (R$ 130)</option>
+                  <option value="3x na semana">3x na semana (R$ 160)</option>
+                  <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
+                  <option value="Diária">Diária (R$ 40)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Valor da Mensalidade (R$)</label>
+                <input type="number" value={valorConversao} onChange={(e) => setValorConversao(e.target.value)} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white" />
+              </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setLeadParaConverter(null)} className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
+                <button type="submit" className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">Concluir Matrícula</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # 🥊 Borü Centro de Combate
 
-> Plataforma completa de gestão acadêmica, portal do aluno e experiência interativa para academias de artes marciais (Muay Thai, Boxe e Jiu-Jitsu), idealizada para o mestre **Felipe Borü**.
+> Plataforma completa de gestão acadêmica, portal do aluno gamificado e experiência interativa para academias de artes marciais (Muay Thai, Boxe e Jiu-Jitsu), idealizada para o mestre **Felipe Borü**.
 
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
@@ -8,160 +8,124 @@
 ![Express](https://img.shields.io/badge/Express-4-lightgrey?logo=express)
 ![Prisma](https://img.shields.io/badge/Prisma-5-black?logo=prisma)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-3-38bdf8?logo=tailwindcss)
-![Google Gemini](https://img.shields.io/badge/AI-Google_Gemini-orange?logo=google)
 
 ---
 
 ## 📌 Sumário
-- [Visão Geral](#-visão-geral)
+- [Divisão de Perfis & Acessos](#-divisão-de-perfis--acessos)
 - [Funcionalidades Principais](#-funcionalidades-principais)
+- [Estímulo ao Check-in & Gamificação](#-estímulo-ao-check-in--gamificação)
+- [Controle de Frequência, Faltas e Doenças](#-controle-de-frequência-faltas-e-doenças)
+- [Mercado & Loja Borü (Versão Beta)](#-mercado--loja-borü-versão-beta)
+- [Mural de Avisos da Academia](#-mural-de-avisos-da-academia)
+- [Pagamentos Exclusivamente Presenciais](#-pagamentos-exclusivamente-presenciais)
 - [Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
 - [Como Executar o Projeto](#-como-executar-o-projeto)
-- [Configuração de Variáveis de Ambiente](#-configuração-de-variáveis-de-ambiente)
-- [Próximos Passos (Roadmap)](#-próximos-passos-roadmap)
 
 ---
 
-## 🥋 Visão Geral
+## 👥 Divisão de Perfis & Acessos
 
-O **Borü Centro de Combate** foi desenvolvido para unir uma presença online moderna (Landing Page de alta conversão) com um ecossistema completo de gestão de alunos e treino:
-- **Alunos** acompanham sua evolução real por Prajied (cordão de Muay Thai), histórico de presença, situação financeira e tiram dúvidas com uma IA treinada para artes marciais.
-- **Professores e Gestores** têm controle centralizado de matrículas, graduações, renovação de mensalidades e cobrança facilitada via WhatsApp com 1 clique.
+O sistema possui controle de acesso baseado em funções (RBAC) com distinção clara de responsabilidades:
+
+1. **👑 Administrador Geral:**
+   - Acesso irrestrito a todos os módulos do sistema.
+   - **Função exclusiva de cadastrar, gerenciar e remover novos Professores e instrutores**.
+   - Gestão de matrículas, pagamentos presenciais, relatórios de inadimplência e estoque da loja.
+
+2. **🥋 Professor / Instrutor (Ex: Felipe Borü):**
+   - Acesso ao painel operacional do dojo.
+   - Atualização da graduação de **Prajied** dos alunos.
+   - Lançamento de chamadas e controle de presença/falta/doença.
+   - Publicação de comunicados e recados oficiais no **Mural de Avisos**.
+   - *(A aba de criação e exclusão de novos professores é restrita e oculta para este perfil)*.
+
+3. **👤 Aluno:**
+   - Acesso ao **Portal do Aluno** otimizado para celulares (com barra de navegação inferior estilo app nativo) e computadores.
+   - Check-in de treinos, histórico com porcentagens de presença, mural de avisos e vitrine da loja física.
 
 ---
 
 ## ✨ Funcionalidades Principais
 
-### 🌐 1. Landing Page Institucional
-- Design escuro agressivo e imersivo voltado para o universo da luta.
-- Demonstração de modalidades, metodologia e perfil do instrutor.
-- Planos e agendamento de aula experimental interativo.
+### 👤 1. Portal do Aluno (Mobile-First & Desktop)
+- **Barra de Navegação Inferior (Mobile):** Acesso rápido aos módulos principais (Treinos, Presença, Mural, Loja e Plano) com 1 toque no celular.
+- **Autenticação Segura & Recuperação de Senha:** Login com CPF e recuperação via CPF/E-mail/Telefone com credencial provisória.
+- **Graduação Oficial de Muay Thai (Prajied):** Identificação visual por cores de Prajied reconhecidas pelo Mestre Felipe Borü.
 
-### 👤 2. Portal do Aluno
-- **Autenticação:** Acesso por CPF e senha com fluxo para primeiro acesso.
-- **Recuperação de Senha ("Esqueci a Senha"):** Recuperação simples via CPF com senha provisória e redefinição obrigatória.
-- **Graduação Oficial de Muay Thai (Prajied):** Sistema dinâmico com identificação visual por cores (Branco, Ponta Vermelha, Vermelho, etc.), atualizado pelo professor.
-- **Sensei IA (Google Gemini):** Chatbot inteligente com IA para orientações sobre treinos, regras e preparação física.
-- **Check-in & Histórico de Treinos:** Registro e acompanhamento de frequência nas aulas.
-- **Módulo Financeiro:** Visualização de vencimento da mensalidade e checkout com suporte a Cartão de Crédito e PIX.
+### 🔥 2. Estímulo ao Check-in & Gamificação
+- **Sequência de Treinos (Streak):** Contador do *Fogo do Guerreiro* 🔥 que contabiliza treinos e semanas consecutivas para incentivar a disciplina.
+- **Meta Mensal de Treinos:** Barra de progresso interativa mostrando a meta do plano (ex: 8, 12 ou 20 treinos/mês).
+- **Medalhas Marciais (Badges):** Conquistas desbloqueáveis (*Primeiro Sangue*, *Guerreiro Focado*, *Inabalável*, *Casca Grossa*).
+- **Justificativa de Ausência / Doença:** O aluno pode avisar antecipadamente pelo app caso esteja doente ou com atestado médico, evitando falta não justificada.
 
-### 🛡️ 3. Painel Administrativo (Professor & Recepção)
-- **Gestão de Alunos:** Listagem rápida com status de pagamento e nível.
-- **Graduação em Tempo Real:** Seletor de Prajied que salva imediatamente no banco de dados.
-- **Controle de Mensalidades:** Botão de confirmação de pagamento com extensão automática de +30 dias de vigência.
-- **Cobrança Expressa via WhatsApp:** Mensagem pré-formatada com link direto para o WhatsApp do aluno.
+### 📊 3. Controle de Frequência, Faltas e Doenças
+O banco de dados armazena registros categorizados de frequência e calcula automaticamente:
+- 🟢 **% Presença Real:** Treinos realizados fisicamente no tatame.
+- 🔵 **% Ausência por Doença:** Aulas não frequentadas por motivo de saúde devidamente justificadas/abonadas.
+- 🔴 **% Falta Comum:** Ausências sem justificativa prévia.
+- ⭐ **% Frequência Efetiva:** Base de cálculo ponderada para liberação de exame de graduação de Prajied.
+
+### 🛍️ 4. Mercado & Loja Borü (Versão Beta)
+Módulo completo de catálogo físico de equipamentos e suprimentos esportivos com suporte no backend e abas de categorias:
+- **Protetor Bucal** (Gel termomoldável, Duplo para sparring)
+- **Luvas** (12oz, 14oz, 16oz em couro sintético de alta densidade)
+- **Caneleiras** (Anatômicas com proteção de peito de pé)
+- **Bandagens** (4m e 5m em algodão e elastano)
+- **Alimentos & Bebidas** (Barrinhas de Whey, Paçocas proteicas, Energéticos, Água)
+- *Para os alunos, o módulo avisa que a compra é presencial na recepção da academia, com botão de reserva direta no balcão.*
+
+### 📢 5. Mural de Avisos da Academia
+- Professores e Administradores podem publicar comunicados oficiais categorizados (`URGENTE`, `GRADUAÇÃO`, `EVENTO`, `GERAL`) e fixar avisos no topo.
+- Os avisos são atualizados em tempo real na aba dedicada do Portal do Aluno.
+
+### 💵 6. Pagamentos Exclusivamente Presenciais
+- Removido qualquer formulário de cartão de crédito ou simulação online.
+- As mensalidades e diárias são acertadas **presencialmente no balcão da academia** (PIX no balcão, Cartão de Débito/Crédito na maquininha ou Dinheiro).
+- Alunos visualizam data de vencimento e status (PAGO / PENDENTE / ATRASADO).
+- O professor/administrador confirma o pagamento na recepção com 1 clique (`Pago (+30d)`), renovando a vigência automaticamente.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-### Frontend
-- **React 18** com **Vite** e **TypeScript**
-- **Tailwind CSS** para estilização utilitária e responsiva
-- **Lucide Icons** para iconografia
-- **React Router DOM** para navegação SPA
-
-### Backend
-- **Node.js** com **Express** e **TypeScript** (`tsx`)
-- **Prisma ORM** com **SQLite** para persistência leve e ágil
-- **Google GenAI SDK (`@google/genai`)** para integração com modelos Gemini
-
----
-
-## 📂 Estrutura do Projeto
-
-```text
-boru/
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma       # Definição do banco e modelos
-│   │   ├── dev.db              # Banco SQLite local
-│   │   └── seed.ts             # Dados iniciais de teste
-│   ├── src/
-│   │   └── server.ts           # Servidor Express e rotas da API
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── PortalAluno.tsx    # Portal completo do aluno
-│   │   │   ├── AdminDashboard.tsx # Painel do professor
-│   │   │   ├── Checkout.tsx       # Checkout de mensalidades
-│   │   │   └── AgendarAula.tsx    # Agendamento de aula experimental
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── index.html              # Landing page principal
-│   ├── package.json
-│   └── vite.config.ts
-├── iniciar_sistema.bat         # Script para rodar tudo com 2 cliques
-└── README.md
-```
+- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, Lucide Icons, React Router DOM.
+- **Backend:** Node.js, Express, TypeScript (`tsx`), Prisma ORM.
+- **Banco de Dados:** SQLite (`dev.db`).
 
 ---
 
 ## 🚀 Como Executar o Projeto
 
-### Pré-requisitos
-- [Node.js](https://nodejs.org/) (versão 18 ou superior)
-- Git instalado
-
 ### Modo Rápido (Windows)
-Basta dar dois cliques no arquivo:
+Execute o arquivo:
 ```cmd
 iniciar_sistema.bat
 ```
-Ele iniciará tanto a API (porta `3001`) quanto a interface web (porta `5173`) automaticamente.
 
 ### Modo Manual
-
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/Bergamin1234/boru.git
-   cd boru
-   ```
-
-2. **Backend:**
+1. **Backend:**
    ```bash
    cd backend
    npm install
    npx prisma db push
+   npx prisma db seed
    npm run dev
    ```
-   *A API estará rodando em `http://localhost:3001`.*
+   *Servidor rodando em: `http://localhost:3001`*
 
-3. **Frontend (em outro terminal):**
+2. **Frontend:**
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
-   *O site estará disponível em `http://localhost:5173`.*
+   *Aplicação disponível em: `http://localhost:5173`*
 
 ---
 
-## 🔐 Configuração de Variáveis de Ambiente
+## 🔑 Credenciais Pré-configuradas (Acesso Rápido)
 
-Crie um arquivo `.env` dentro da pasta `backend/`:
-
-```env
-PORT=3001
-DATABASE_URL="file:./dev.db"
-GEMINI_API_KEY="sua_chave_da_google_gemini_aqui"
-```
-
----
-
-## 🗺️ Próximos Passos (Roadmap)
-
-- [ ] Integração de gateway real de pagamento (Mercado Pago / Asaas / Stripe).
-- [ ] Notificações automáticas por WhatsApp e E-mail para avisos de treino e cobrança.
-- [ ] Aplicativo Mobile (PWA ou React Native) para check-in por QR Code na entrada da academia.
-- [ ] Deploy em produção (Vercel para frontend e Render/Railway para backend).
-
----
-
-## 👨‍💻 Autor & Manutenção
-
-Desenvolvido para **Borü Centro de Combate**.  
-Instrutor Responsável: **Felipe Borü**.
+- **Administrador Master:** `admin@boru.com` / `admin123`
+- **Professor Chefe:** `felipe@boru.com` / `boru123`
+- **Aluno (Exemplo):** CPF `000.000.000-00` (Senha temporária padrão: `boru123`)

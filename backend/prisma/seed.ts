@@ -9,6 +9,176 @@ async function main() {
   await prisma.mensalidade.deleteMany();
   await prisma.aluno.deleteMany();
   await prisma.agendamentoExperimental.deleteMany();
+  await prisma.aviso.deleteMany();
+  await prisma.produto.deleteMany();
+  await prisma.usuario.deleteMany();
+
+  console.log('Criando Usuários (Administrador e Professor)...');
+  await prisma.usuario.create({
+    data: {
+      nome: 'Administrador Geral',
+      email: 'admin@boru.com',
+      senha: 'admin123',
+      cargo: 'ADMIN',
+      telefone: '69999999999',
+      prajied: 'Prajied Preto'
+    }
+  });
+
+  await prisma.usuario.create({
+    data: {
+      nome: 'Felipe Borü',
+      email: 'felipe@boru.com',
+      senha: 'boru123',
+      cargo: 'PROFESSOR',
+      telefone: '6992384491',
+      prajied: 'Prajied Azul Escuro e Preto'
+    }
+  });
+
+  console.log('Criando Produtos da Loja Borü (Beta)...');
+  await prisma.produto.createMany({
+    data: [
+      {
+        nome: 'Protetor Bucal Gel Termomoldável Borü',
+        categoria: 'PROTETOR_BUCAL',
+        preco: 45.00,
+        estoque: 15,
+        descricao: 'Proteção bucal avançada com camada interna de gel para máxima absorção de impacto.',
+        imagemUrl: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Protetor Bucal Duplo Borü Fight',
+        categoria: 'PROTETOR_BUCAL',
+        preco: 60.00,
+        estoque: 8,
+        descricao: 'Proteção superior e inferior para sparrings pesados e competições.',
+        imagemUrl: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Luva Muay Thai Borü Combat 12oz',
+        categoria: 'LUVAS',
+        preco: 220.00,
+        estoque: 6,
+        descricao: 'Couro sintético de alta durabilidade, espuma tripla densidade, punho reforçado.',
+        imagemUrl: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Luva Muay Thai Borü Combat 14oz',
+        categoria: 'LUVAS',
+        preco: 230.00,
+        estoque: 10,
+        descricao: 'Ideal para treinos diários e sparring técnico. Excelente ventilação e grip firme.',
+        imagemUrl: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Luva Muay Thai Borü Combat 16oz',
+        categoria: 'LUVAS',
+        preco: 250.00,
+        estoque: 5,
+        descricao: 'Máximo amortecimento para treinos de força e proteção dos companheiros de tatame.',
+        imagemUrl: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Caneleira Anatômica Borü Pro',
+        categoria: 'CANELEIRAS',
+        preco: 180.00,
+        estoque: 12,
+        descricao: 'Proteção completa da tíbia e peito de pé com fecho duplo reforçado em velcro.',
+        imagemUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Bandagem Elástica Borü Fight 4 Metros',
+        categoria: 'BANDAGENS',
+        preco: 35.00,
+        estoque: 25,
+        descricao: 'Algodão e elastano na medida certa para estabilização de punho e articulações dos dedos.',
+        imagemUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Bandagem Algodão Borü Fight 5 Metros',
+        categoria: 'BANDAGENS',
+        preco: 45.00,
+        estoque: 18,
+        descricao: 'Comprimento profissional para amarração completa de mãos e punhos.',
+        imagemUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Barrinha de Proteína Whey Crisp Chocolate',
+        categoria: 'ALIMENTOS',
+        preco: 9.00,
+        estoque: 40,
+        descricao: '15g de proteína pura para recuperação muscular rápida pós-treino.',
+        imagemUrl: 'https://images.unsplash.com/photo-1622484212850-eb596d769edc?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Paçoca de Amendoim Proteica Borü',
+        categoria: 'ALIMENTOS',
+        preco: 4.50,
+        estoque: 50,
+        descricao: 'Energia saudável com amendoim selecionado e zero adição de açúcar.',
+        imagemUrl: 'https://images.unsplash.com/photo-1582293041079-7814c2f12063?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Energético Monster Energy 473ml',
+        categoria: 'ALIMENTOS',
+        preco: 12.00,
+        estoque: 20,
+        descricao: 'Gás total para aguentar os rounds mais intensos de Muay Thai.',
+        imagemUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80',
+        disponivel: true
+      },
+      {
+        nome: 'Água Mineral 500ml',
+        categoria: 'ALIMENTOS',
+        preco: 3.50,
+        estoque: 60,
+        descricao: 'Hidratação gelada essencial para manter o ritmo no tatame.',
+        imagemUrl: 'https://images.unsplash.com/photo-1559839914-17aae19cec71?w=500&q=80',
+        disponivel: true
+      }
+    ]
+  });
+
+  console.log('Criando Avisos no Mural...');
+  await prisma.aviso.createMany({
+    data: [
+      {
+        titulo: 'Exame Oficial de Graduação de Prajied',
+        conteudo: 'Atenção alunos: o próximo exame de graduação de Prajied de Muay Thai será realizado no último sábado deste mês às 09h. Mantenham a frequência e a disciplina afiadas nos treinos!',
+        tipo: 'GRADUACAO',
+        autorNome: 'Felipe Borü',
+        autorCargo: 'Instrutor Chefe',
+        fixado: true
+      },
+      {
+        titulo: 'Lembrete: Pagamento de Mensalidades Presencial',
+        conteudo: 'Lembramos a todos os alunos que os pagamentos de mensalidades e diárias são realizados exclusivamente presencialmente na recepção da academia (PIX no balcão, Cartão ou Dinheiro).',
+        tipo: 'GERAL',
+        autorNome: 'Administração Borü',
+        autorCargo: 'Recepção',
+        fixado: true
+      },
+      {
+        titulo: 'Seminário Especial de Clinch e Cotoveladas',
+        conteudo: 'Treino especial com foco intensivo em técnicas de clinch, desequilíbrio e cotoveladas da Tailândia. Não perca! Vagas limitadas para alunos matriculados.',
+        tipo: 'EVENTO',
+        autorNome: 'Felipe Borü',
+        autorCargo: 'Professor',
+        fixado: false
+      }
+    ]
+  });
 
   console.log('Criando grade de horários de Muay Thai - Prof. Felipe Borü...');
   
@@ -17,7 +187,6 @@ async function main() {
 
   const eventosCriados = [];
   
-  // Grade fixa: dia da semana (0=Dom, 1=Seg, ..., 6=Sáb)
   const gradeHorarios: Record<number, Array<{h: number, m: number, pub: string}>> = {
     1: [ // Segunda
       {h: 16, m: 0, pub: 'ADULTOS'}, {h: 18, m: 0, pub: 'KIDS'}, {h: 19, m: 0, pub: 'ADULTOS'}, {h: 20, m: 0, pub: 'ADULTOS'}
@@ -119,16 +288,14 @@ async function main() {
     }
   });
 
-  console.log('Registrando presenças no calendário...');
+  console.log('Registrando presenças no calendário com status detalhados...');
 
-  // Presenças no mês para João Pedro (Plano 2x na semana -> meta 8 aulas)
-  // 5 presenças passadas + 1 falta justificada + 1 checkin pendente para hoje/próxima aula
   const anoAtual = hoje.getFullYear();
   const mesAtual = hoje.getMonth();
 
-  // Dias passados do mês atual
-  const diasPassados = [2, 5, 9, 12, 16];
-  for (const dia of diasPassados) {
+  // Dias passados do mês atual para João Pedro
+  const diasPresenca = [2, 5, 9, 12];
+  for (const dia of diasPresenca) {
     const dataPresenca = new Date(anoAtual, mesAtual, dia, 19, 0, 0);
     await prisma.agendamentoPresenca.create({
       data: {
@@ -139,17 +306,28 @@ async function main() {
     });
   }
 
-  // Falta justificada (Comando 5)
+  // Falta por Doença com tipoJustificativa (Comando novo)
+  await prisma.agendamentoPresenca.create({
+    data: {
+      alunoId: aluno1.id,
+      data: new Date(anoAtual, mesAtual, 16, 19, 0, 0),
+      status: 'DOENCA',
+      tipoJustificativa: 'DOENCA',
+      justificativa: 'Gripe forte - Atestado médico de 2 dias'
+    }
+  });
+
+  // Falta comum não justificada
   await prisma.agendamentoPresenca.create({
     data: {
       alunoId: aluno1.id,
       data: new Date(anoAtual, mesAtual, 19, 19, 0, 0),
-      status: 'JUSTIFICADO',
-      justificativa: 'Atestado médico - Consulta de rotina'
+      status: 'FALTA',
+      justificativa: 'Não compareceu ao treino sem aviso prévio'
     }
   });
 
-  // Check-in pendente de confirmação do professor (Comando 4)
+  // Check-ins pendentes de confirmação do professor
   if (eventosCriados.length > 0) {
     await prisma.agendamentoPresenca.create({
       data: {
@@ -170,9 +348,7 @@ async function main() {
     });
   }
 
-  console.log('Criando leads de aulas experimentais (Comando 3)...');
-
-  // Lead 1: Agendamento pendente (ainda não fez a aula)
+  console.log('Criando leads de aulas experimentais...');
   await prisma.agendamentoExperimental.create({
     data: {
       nome: 'Rafael Mendonça',
@@ -183,7 +359,6 @@ async function main() {
     }
   });
 
-  // Lead 2: Pós-Aula Experimental (Fez aula há 2 dias, aguardando fechar contrato)
   const doisDiasAtras = new Date(hoje.getTime() - 2 * 24 * 60 * 60 * 1000);
   await prisma.agendamentoExperimental.create({
     data: {
@@ -194,20 +369,6 @@ async function main() {
       status: 'REALIZADA',
       dataRealizada: doisDiasAtras,
       observacao: 'Gostou bastante do treino. Ficou de conversar com os pais para fechar plano 3x.'
-    }
-  });
-
-  // Lead 3: Pós-Aula Experimental (Fez aula há 5 dias - Follow-up urgente)
-  const cincoDiasAtras = new Date(hoje.getTime() - 5 * 24 * 60 * 60 * 1000);
-  await prisma.agendamentoExperimental.create({
-    data: {
-      nome: 'Gabriel Pires',
-      telefone: '69993334455',
-      data: 'Terça-feira',
-      horario: '20:00',
-      status: 'REALIZADA',
-      dataRealizada: cincoDiasAtras,
-      observacao: 'Interessado no plano Todos os Horários. Mandar mensagem convidando para fechar.'
     }
   });
 
