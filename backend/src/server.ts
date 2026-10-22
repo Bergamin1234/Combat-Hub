@@ -8,6 +8,10 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
+// Servir arquivos estáticos do frontend (modo portátil)
+import path from 'path';
+app.use(express.static(path.join(__dirname, '../public')));
+
 // ==========================================
 // ROTAS DO ALUNO
 // ==========================================
@@ -889,6 +893,11 @@ app.post('/api/pagamentos/processar', async (req, res) => {
   } catch (error) {
     res.status(500).json({ erro: 'Falha no gateway de pagamento' });
   }
+});
+
+// Fallback para o Frontend (React Router)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 const PORT = process.env.PORT || 3001;

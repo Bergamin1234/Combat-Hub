@@ -27,3 +27,9 @@ backend/prisma/*.db-journal
 .DS_Store
 Thumbs.db
 
+# Portable & Demo Builds
+Boru-Portable*/
+*.zip
+build_portable.ps1
+
+
