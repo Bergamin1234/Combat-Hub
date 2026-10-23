@@ -573,12 +573,17 @@ export default function AdminDashboard() {
   // ==========================================
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 bg-[#0B0B0C] flex items-center justify-center z-[9999] px-4">
-        <div className="bg-[#141416] border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+      <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
+        <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
           <div className="text-center mb-6">
+            <img 
+              src="/logo-boru.jpg" 
+              alt="BORÜ Centro de Combate" 
+              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-cover" 
+            />
             <h1 className="text-3xl font-black text-white tracking-widest mb-1">BORÜ</h1>
             <p className="text-red-500 font-bold text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
-            <p className="text-zinc-400 text-xs mt-1">Controle de Alunos, Aulas, Prajied e Equipe</p>
+            <p className="text-zinc-400 text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -648,29 +653,32 @@ export default function AdminDashboard() {
   // PAINEL LOGADO
   // ==========================================
   return (
-    <div className="min-h-screen bg-[#0B0B0C] text-zinc-100 font-sans p-3 sm:p-6 pb-20">
+    <div className="min-h-screen bg-[#0B0B0C]/80 backdrop-blur-[1px] text-zinc-100 font-sans p-3 sm:p-6 pb-20 relative z-10">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-                PAINEL <span className="text-red-600">BORÜ</span>
-              </h1>
-              {usuarioLogado?.cargo === 'ADMIN' ? (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                  👑 ADMINISTRADOR
-                </span>
-              ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
-                  🥋 PROFESSOR
-                </span>
-              )}
+          <div className="flex items-center gap-3">
+            <img src="/logo-boru.jpg" alt="BORÜ" className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover flex-shrink-0" />
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
+                  PAINEL <span className="text-red-600">BORÜ</span>
+                </h1>
+                {usuarioLogado?.cargo === 'ADMIN' ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    👑 ADMINISTRADOR
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                    🥋 PROFESSOR
+                  </span>
+                )}
+              </div>
+              <p className="text-zinc-400 text-xs sm:text-sm mt-1">
+                Olá, <strong className="text-white">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
+              </p>
             </div>
-            <p className="text-zinc-400 text-xs sm:text-sm mt-1">
-              Olá, <strong className="text-white">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
-            </p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">

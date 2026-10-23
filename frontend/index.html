@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BORÜ Centro de Combate | CT de Artes Marciais & Alta Performance em Porto Velho</title>
   <meta name="description" content="Conheça o Centro de Treinamento BORÜ em Porto Velho - RO. Estrutura de ponta, professores graduados em Muay Thai, Jiu-Jitsu, MMA, Kickboxing e Funcional. Agende sua aula experimental gratuita!">
+  <link rel="icon" type="image/png" href="/favicon.png">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -35,12 +36,51 @@
   
 
   <style>
-    body.react-active > *:not(#root):not(script) {
+    /* Wallpaper global do Lobo BORÜ no fundo do site inteiro */
+    #global-boru-wallpaper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    #global-boru-wallpaper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      opacity: 0.18; /* Baixa opacidade no fundo */
+      filter: contrast(1.15) brightness(0.95);
+      will-change: transform;
+    }
+
+    /* Vinheta suave para garantir contraste de leitura perfeito */
+    #global-boru-wallpaper::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 30%, rgba(11, 11, 12, 0.5) 100%),
+                  linear-gradient(to bottom, rgba(11, 11, 12, 0.3) 0%, transparent 15%, transparent 85%, rgba(11, 11, 12, 0.7) 100%);
+      pointer-events: none;
+    }
+
+    body.react-active > *:not(#root):not(script):not(#global-boru-wallpaper) {
       display: none !important;
     }
   </style>
 </head>
-<body class="bg-[#0B0B0C] text-zinc-100 min-h-screen selection:bg-red-600 selection:text-white">
+<body class="bg-[#0B0B0C] text-zinc-100 min-h-screen selection:bg-red-600 selection:text-white relative">
+
+  <!-- WALLPAPER FIXO DO SITE INTEIRO (LOBO BORÜ) -->
+  <div id="global-boru-wallpaper" aria-hidden="true">
+    <img src="/wallpaper-boru.png" alt="Wallpaper Lobo BORÜ" />
+  </div>
 
   <!-- ================= NAVBAR ================= -->
   <header class="fixed top-0 left-0 right-0 z-50 bg-[#0B0B0C]/90 backdrop-blur-md border-b border-zinc-800 transition-all duration-300" id="main-header">
@@ -48,9 +88,7 @@
       
       <!-- Brand Logo -->
       <a href="#hero" class="flex items-center gap-3 group">
-        <div class="w-11 h-11 bg-red-600 flex items-center justify-center rounded-lg shadow-lg group-hover:bg-red-700 transition transform group-hover:scale-105">
-          <i data-lucide="swords" class="w-6 h-6 text-white"></i>
-        </div>
+        <img src="/logo-boru.jpg" alt="BORÜ Centro de Combate" class="w-12 h-12 rounded-full border-2 border-red-600 shadow-lg object-cover group-hover:scale-105 transition" />
         <div class="flex flex-col">
           <span class="font-display text-2xl sm:text-3xl tracking-widest font-black text-white leading-none group-hover:text-red-500 transition">
             BORÜ
@@ -130,8 +168,8 @@
   </header>
 
   <!-- ================= HERO SECTION ================= -->
-  <section id="hero" class="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-combat-gradient">
-    <div class="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none"></div>
+  <section id="hero" class="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden z-10">
+    <div class="absolute inset-0 bg-grid-pattern opacity-30 pointer-events-none"></div>
     <div class="absolute -top-40 -right-40 w-96 h-96 bg-red-600/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute top-1/2 -left-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -190,12 +228,12 @@
 
         <!-- Hero Media Showcase Card -->
         <div class="lg:col-span-5 relative">
-          <div class="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl bg-zinc-900 group">
-            <img src="https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=1000&q=80" 
-                 alt="Treino no BORÜ Centro de Combate" 
-                 class="w-full h-[440px] object-cover object-center group-hover:scale-105 transition duration-700 brightness-90">
+          <div class="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl bg-zinc-950 group flex items-center justify-center p-2">
+            <img src="/wallpaper-boru.png" 
+                 alt="Mascote Lobo BORÜ Centro de Combate" 
+                 class="w-full h-[450px] object-contain object-center group-hover:scale-105 transition duration-700 drop-shadow-[0_15px_30px_rgba(220,38,38,0.3)]">
             
-            <div class="absolute inset-0 bg-gradient-to-t from-[#0B0B0C] via-transparent to-black/30"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0B0B0C] via-transparent to-black/20 pointer-events-none"></div>
 
             <div class="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md text-white text-xs font-black uppercase px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
               <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
@@ -226,7 +264,7 @@
   </section>
 
   <!-- ================= SEÇÃO: PLANOS & CONVÊNIOS ================= -->
-  <section id="planos" class="py-24 bg-[#141416] border-y border-zinc-800">
+  <section id="planos" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
@@ -385,7 +423,7 @@
   </section>
 
   <!-- ================= SEÇÃO: GRADE DE HORÁRIOS ================= -->
-  <section id="horarios" class="py-20 bg-[#0B0B0C]">
+  <section id="horarios" class="py-20 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-12 space-y-3">
@@ -423,7 +461,7 @@
   </section>
 
   <!-- ================= SEÇÃO: O QUE É O CT ================= -->
-  <section id="o-que-e-o-ct" class="py-24 bg-[#141416] border-y border-zinc-800">
+  <section id="o-que-e-o-ct" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -515,7 +553,7 @@
   </section>
 
   <!-- ================= SEÇÃO: ESTRUTURA & INSTALAÇÕES ================= -->
-  <section id="estrutura" class="py-24 bg-[#0B0B0C]">
+  <section id="estrutura" class="py-24 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
@@ -536,7 +574,7 @@
   </section>
 
   <!-- ================= SEÇÃO: PROFESSORES / MESTRES (PORTFÓLIO) ================= -->
-  <section id="professores" class="py-24 bg-[#141416] border-y border-zinc-800">
+  <section id="professores" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
@@ -558,7 +596,7 @@
   </section>
 
   <!-- ================= SEÇÃO: MODALIDADES ================= -->
-  <section id="modalidades" class="py-24 bg-[#0B0B0C]">
+  <section id="modalidades" class="py-24 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
@@ -609,7 +647,7 @@
   </section>
 
   <!-- ================= SEÇÃO: GALERIA DO CT (ATMOSFERA) ================= -->
-  <section id="galeria" class="py-24 bg-[#141416] border-y border-zinc-800">
+  <section id="galeria" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
@@ -658,7 +696,7 @@
   </section>
 
   <!-- ================= SEÇÃO: DÚVIDAS FREQUENTES (FAQ) ================= -->
-  <section id="faq" class="py-24 bg-[#0B0B0C]">
+  <section id="faq" class="py-24 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center mb-16 space-y-3">
@@ -679,7 +717,7 @@
   </section>
 
   <!-- ================= LOCALIZAÇÃO & ATENDIMENTO ================= -->
-  <section id="localizacao" class="py-24 bg-[#141416] border-t border-zinc-800">
+  <section id="localizacao" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-t border-zinc-800/80 relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
@@ -762,14 +800,12 @@
   </section>
 
   <!-- ================= FOOTER ================= -->
-  <footer class="bg-black border-t border-zinc-900 py-12 text-zinc-500 text-sm">
+  <footer class="bg-black/90 backdrop-blur-sm border-t border-zinc-900 py-12 text-zinc-500 text-sm relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col md:flex-row items-center justify-between gap-6">
         
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-red-600 flex items-center justify-center rounded text-white font-bold">
-            <i data-lucide="swords" class="w-4 h-4"></i>
-          </div>
+          <img src="/logo-boru.jpg" alt="BORÜ" class="w-9 h-9 rounded-full border border-red-600/70 shadow-sm object-cover" />
           <span class="font-display text-xl font-bold tracking-widest text-white">BORÜ</span>
           <span class="text-xs text-zinc-500">| Centro de Treinamento em Artes Marciais</span>
         </div>

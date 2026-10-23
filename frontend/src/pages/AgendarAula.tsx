@@ -73,19 +73,20 @@ export default function AgendarAula() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0B0C] text-zinc-100 p-4 font-sans z-[9999] relative flex items-center justify-center">
-      <div className="max-w-xl w-full">
+    <div className="min-h-screen bg-[#0B0B0C]/80 backdrop-blur-[2px] text-zinc-100 p-4 font-sans z-[9999] relative flex items-center justify-center overflow-hidden">
+      <div className="max-w-xl w-full relative z-10">
         
         <div className="mb-6">
           <Link to="/" className="text-zinc-500 hover:text-white transition flex items-center gap-2 text-sm font-semibold">
-            ← Voltar
+            ← Voltar ao site principal
           </Link>
         </div>
 
-        <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+        <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
           <div className="text-center mb-8">
+            <img src="/logo-boru.jpg" alt="BORÜ" className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-lg object-cover" />
             <h1 className="text-3xl font-black text-white uppercase tracking-wider mb-2">Aula Experimental</h1>
-            <p className="text-zinc-400 text-sm">Preencha os dados abaixo para agendar seu primeiro treino de Muay Thai no CT BORÜ.</p>
+            <p className="text-zinc-400 text-sm">Preencha os dados abaixo para agendar seu primeiro treino no CT BORÜ.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

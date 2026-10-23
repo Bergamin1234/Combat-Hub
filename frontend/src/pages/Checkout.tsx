@@ -56,8 +56,8 @@ export default function Checkout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0B0C] text-zinc-100 p-4 font-sans z-[9999] relative">
-      <div className="max-w-4xl mx-auto py-8">
+    <div className="min-h-screen bg-[#0B0B0C]/80 backdrop-blur-[2px] text-zinc-100 p-4 font-sans z-[9999] relative overflow-hidden">
+      <div className="max-w-4xl mx-auto py-8 relative z-10">
         
         {/* Header Voltar */}
         <div className="mb-6 flex justify-between items-center flex-wrap gap-2">
@@ -73,9 +73,12 @@ export default function Checkout() {
           
           {/* Lado Esquerdo: Formulário */}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-wider mb-5">
-              Matrícula <span className="text-red-600">Borü</span>
-            </h1>
+            <div className="flex items-center gap-3 mb-5">
+              <img src="/logo-boru.jpg" alt="BORÜ" className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover" />
+              <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-wider">
+                Matrícula <span className="text-red-600">Borü</span>
+              </h1>
+            </div>
             
             <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-xl">
               
