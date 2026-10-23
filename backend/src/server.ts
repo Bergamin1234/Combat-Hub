@@ -749,7 +749,7 @@ app.post('/api/admin/alunos', async (req, res) => {
   }
 });
 
-// Dashboard Geral
+// Dashboard Geral com Métricas de Presença e Assiduidade
 app.get('/api/admin/dashboard', async (req, res) => {
   try {
     const totalAlunos = await prisma.aluno.count();
@@ -762,12 +762,37 @@ app.get('/api/admin/dashboard', async (req, res) => {
       }
     });
 
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1, 0, 0, 0, 0);
+    const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const inicioHoje = new Date(agora);
+    inicioHoje.setHours(0, 0, 0, 0);
+    const fimHoje = new Date(agora);
+    fimHoje.setHours(23, 59, 59, 999);
+
+    // Início e fim da semana atual (Segunda a Domingo)
+    const diaDaSemanaHoje = agora.getDay();
+    const diffSegunda = agora.getDate() - (diaDaSemanaHoje === 0 ? 6 : diaDaSemanaHoje - 1);
+    const inicioSemana = new Date(agora);
+    inicioSemana.setDate(diffSegunda);
+    inicioSemana.setHours(0, 0, 0, 0);
+    const fimSemana = new Date(inicioSemana);
+    fimSemana.setDate(fimSemana.getDate() + 6);
+    fimSemana.setHours(23, 59, 59, 999);
+
     const alunos = await prisma.aluno.findMany({
       include: {
-        mensalidades: { orderBy: { dataVencimento: 'desc' }, take: 1 }
+        mensalidades: { orderBy: { dataVencimento: 'desc' }, take: 1 },
+        presencas: {
+          where: { data: { gte: inicioMes, lte: fimMes } }
+        }
       },
       orderBy: { nome: 'asc' }
     });
+
+    let somaPorcentagens = 0;
+    let totalMensalistas = 0;
+    let alunosEmRiscoCount = 0;
 
     const alunosFormatados = alunos.map(aluno => {
       const ultimaMensalidade = aluno.mensalidades[0];
@@ -783,6 +808,41 @@ app.get('/api/admin/dashboard', async (req, res) => {
         }
       }
 
+      const planoLower = (aluno.plano || '').toLowerCase();
+      const isDiariaOuConvenio = planoLower.includes('diária') || planoLower.includes('diaria') || planoLower.includes('wellhub') || planoLower.includes('totalpass') || planoLower.includes('gympass');
+
+      // Frequência no mês
+      const presencasMes = aluno.presencas.filter(p => p.status === 'PRESENTE').length;
+      const doencaMes = aluno.presencas.filter(p => p.status === 'DOENCA' || p.tipoJustificativa === 'DOENCA').length;
+      const faltasMes = aluno.presencas.filter(p => p.status === 'FALTA' || p.status === 'AUSENTE').length;
+      const treinosSemana = aluno.presencas.filter(p => p.data >= inicioSemana && p.data <= fimSemana && ['PRESENTE', 'DOENCA', 'JUSTIFICADO'].includes(p.status)).length;
+
+      let aulasEsperadas = 8;
+      if (planoLower.includes('3x')) aulasEsperadas = 12;
+      else if (planoLower.includes('todos') || planoLower.includes('livre')) aulasEsperadas = 20;
+      else if (isDiariaOuConvenio) aulasEsperadas = 4;
+
+      let porcentagemPresenca: number | null = null;
+      let statusAssiduidade = 'REGULAR';
+
+      if (isDiariaOuConvenio) {
+        statusAssiduidade = treinosSemana > 0 ? 'ATIVO_SEMANA' : 'SEM_TREINO_SEMANA';
+      } else {
+        totalMensalistas++;
+        const base = Math.max(aulasEsperadas, aluno.presencas.length || 1);
+        porcentagemPresenca = Math.min(100, Math.round(((presencasMes + doencaMes) / base) * 100));
+        somaPorcentagens += porcentagemPresenca;
+
+        if (porcentagemPresenca >= 75) {
+          statusAssiduidade = 'ALTA';
+        } else if (porcentagemPresenca >= 50) {
+          statusAssiduidade = 'REGULAR';
+        } else {
+          statusAssiduidade = 'RISCO';
+          alunosEmRiscoCount++;
+        }
+      }
+
       return {
         id: aluno.id,
         nome: aluno.nome,
@@ -790,17 +850,37 @@ app.get('/api/admin/dashboard', async (req, res) => {
         cpf: aluno.cpf,
         email: aluno.email,
         telefone: aluno.telefone,
-        status: statusMensalidade,
-        diasVencimento,
-        prajied: aluno.prajied
+        status: isDiariaOuConvenio ? 'LIBERADO' : statusMensalidade,
+        diasVencimento: isDiariaOuConvenio ? null : diasVencimento,
+        prajied: aluno.prajied,
+        modalidade: aluno.modalidade || 'Muay Thai',
+        isDiariaOuConvenio,
+        presencasMes,
+        doencaMes,
+        faltasMes,
+        treinosSemana,
+        aulasEsperadas,
+        porcentagemPresenca,
+        statusAssiduidade
       };
+    });
+
+    const taxaPresencaMedia = totalMensalistas > 0 ? Math.round(somaPorcentagens / totalMensalistas) : 100;
+    const presencasHoje = await prisma.agendamentoPresenca.count({
+      where: {
+        data: { gte: inicioHoje, lte: fimHoje },
+        status: 'PRESENTE'
+      }
     });
 
     res.json({
       metricas: {
         totalAlunos,
         assinaturasAtivas: totalAlunos - inadimplentesCount,
-        inadimplentes: inadimplentesCount
+        inadimplentes: inadimplentesCount,
+        taxaPresencaMedia,
+        alunosEmRisco: alunosEmRiscoCount,
+        presencasHoje
       },
       alunos: alunosFormatados
     });
@@ -919,6 +999,133 @@ app.patch('/api/admin/presencas/:id/status', async (req, res) => {
     res.json({ mensagem: 'Status da chamada atualizado!', presenca });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao atualizar presença.' });
+  }
+});
+
+// Marcar presenças em lote (ex: Professor marca todos da lista com 1 clique)
+app.post('/api/admin/presencas/marcar-lote', async (req, res) => {
+  const { presencaIds, status } = req.body;
+
+  if (!Array.isArray(presencaIds) || presencaIds.length === 0 || !status) {
+    return res.status(400).json({ erro: 'Lista de IDs de presenças e status são obrigatórios.' });
+  }
+
+  try {
+    const atualizados = await prisma.agendamentoPresenca.updateMany({
+      where: { id: { in: presencaIds } },
+      data: { status }
+    });
+
+    res.json({ mensagem: `${atualizados.count} presenças atualizadas com sucesso!`, count: atualizados.count });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao atualizar presenças em lote.' });
+  }
+});
+
+// Calendário Geral da Academia & Frequência Coletiva por Data
+app.get('/api/admin/frequencia-geral', async (req, res) => {
+  const agora = new Date();
+  const mes = parseInt(req.query.mes as string) || (agora.getMonth() + 1);
+  const ano = parseInt(req.query.ano as string) || agora.getFullYear();
+
+  try {
+    const dataInicioMes = new Date(ano, mes - 1, 1, 0, 0, 0, 0);
+    const dataFimMes = new Date(ano, mes, 0, 23, 59, 59, 999);
+
+    const presencas = await prisma.agendamentoPresenca.findMany({
+      where: {
+        data: { gte: dataInicioMes, lte: dataFimMes }
+      },
+      include: {
+        aluno: {
+          select: {
+            id: true,
+            nome: true,
+            plano: true,
+            prajied: true,
+            modalidade: true,
+            telefone: true
+          }
+        },
+        evento: {
+          select: {
+            id: true,
+            titulo: true,
+            dataInicio: true
+          }
+        }
+      },
+      orderBy: { data: 'asc' }
+    });
+
+    const mapaDias: Record<string, {
+      total: number;
+      presentes: number;
+      faltas: number;
+      doenca: number;
+      agendados: number;
+      taxaPresenca: number;
+      alunos: any[];
+    }> = {};
+
+    presencas.forEach(p => {
+      const dataIso = new Date(p.data).toISOString().split('T')[0];
+      if (!mapaDias[dataIso]) {
+        mapaDias[dataIso] = {
+          total: 0,
+          presentes: 0,
+          faltas: 0,
+          doenca: 0,
+          agendados: 0,
+          taxaPresenca: 100,
+          alunos: []
+        };
+      }
+      mapaDias[dataIso].total++;
+      if (p.status === 'PRESENTE') mapaDias[dataIso].presentes++;
+      else if (p.status === 'FALTA' || p.status === 'AUSENTE') mapaDias[dataIso].faltas++;
+      else if (p.status === 'DOENCA') mapaDias[dataIso].doenca++;
+      else if (p.status === 'AGENDADO') mapaDias[dataIso].agendados++;
+
+      const efetivos = mapaDias[dataIso].presentes + mapaDias[dataIso].doenca;
+      const base = mapaDias[dataIso].total || 1;
+      mapaDias[dataIso].taxaPresenca = Math.round((efetivos / base) * 100);
+
+      mapaDias[dataIso].alunos.push({
+        id: p.id,
+        alunoId: p.aluno?.id,
+        nome: p.aluno?.nome || 'Aluno',
+        plano: p.aluno?.plano || 'Geral',
+        prajied: p.aluno?.prajied || 'Branco',
+        telefone: p.aluno?.telefone,
+        status: p.status,
+        tipoJustificativa: p.tipoJustificativa,
+        justificativa: p.justificativa,
+        horario: p.evento ? new Date(p.evento.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Horário Livre'
+      });
+    });
+
+    const totalPresentes = presencas.filter(p => p.status === 'PRESENTE').length;
+    const totalFaltas = presencas.filter(p => p.status === 'FALTA' || p.status === 'AUSENTE').length;
+    const totalDoenca = presencas.filter(p => p.status === 'DOENCA').length;
+    const totalRegistros = presencas.length;
+    const taxaGeral = totalRegistros > 0 ? Math.round(((totalPresentes + totalDoenca) / totalRegistros) * 100) : 100;
+
+    res.json({
+      periodo: { mes, ano },
+      resumo: {
+        totalPresentes,
+        totalFaltas,
+        totalDoenca,
+        totalRegistros,
+        taxaGeral,
+        diasComTreino: Object.keys(mapaDias).length
+      },
+      mapaDias
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao carregar frequência geral.' });
   }
 });
 

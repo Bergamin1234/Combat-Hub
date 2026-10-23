@@ -35,6 +35,10 @@ export const adminApi = {
     api.delete(`/admin/alunos/${studentId}/presenca`, { data }),
   updateAttendanceStatus: (attendanceId: string, data: unknown) =>
     api.patch(`/admin/presencas/${attendanceId}/status`, data),
+  batchUpdateAttendance: (data: { presencaIds: string[]; status: string }) =>
+    api.post('/admin/presencas/marcar-lote', data),
+  getGeneralAttendance: (params?: { mes?: number; ano?: number }) =>
+    api.get('/admin/frequencia-geral', { params }),
   updateAppointment: (appointmentId: string, data: unknown) =>
     api.patch(`/admin/agendamentos/${appointmentId}`, data),
   convertAppointment: (appointmentId: string, data: unknown) =>

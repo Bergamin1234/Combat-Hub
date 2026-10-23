@@ -77,7 +77,14 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   
-  const [metricas, setMetricas] = useState({ totalAlunos: 0, assinaturasAtivas: 0, inadimplentes: 0 });
+  const [metricas, setMetricas] = useState<any>({
+    totalAlunos: 0,
+    assinaturasAtivas: 0,
+    inadimplentes: 0,
+    taxaPresencaMedia: 100,
+    alunosEmRisco: 0,
+    presencasHoje: 0
+  });
   const [alunos, setAlunos] = useState<any[]>([]);
   const [agendamentos, setAgendamentos] = useState<any>({ pendentes: [], posAula: [], finalizados: [] });
   const [presencas, setPresencas] = useState<any[]>([]);
@@ -87,9 +94,31 @@ export default function AdminDashboard() {
   const [categoriaFiltroLoja, setCategoriaFiltroLoja] = useState('TODOS');
   const [loading, setLoading] = useState(true);
 
-  // Abas: 'alunos' | 'agendamentos' | 'presencas' | 'avisos' | 'loja' | 'professores'
+  // Abas: 'alunos' | 'calendario_geral' | 'presencas' | 'avisos' | 'loja' | 'agendamentos' | 'professores'
   const [abaAtiva, setAbaAtiva] = useState('alunos');
   const [subAbaExperimental, setSubAbaExperimental] = useState<'pendentes' | 'posAula'>('pendentes');
+
+  // Filtros e busca de Alunos
+  const [buscaAluno, setBuscaAluno] = useState('');
+  const [filtroAssiduidade, setFiltroAssiduidade] = useState<'TODOS' | 'ALTA' | 'REGULAR' | 'RISCO' | 'DIARIA'>('TODOS');
+
+  // Filtros e lote em Chamada & Presenças
+  const [filtroChamada, setFiltroChamada] = useState<'TODOS' | 'PRESENTE' | 'FALTA' | 'DOENCA' | 'AGENDADO'>('TODOS');
+  const [selecionadosLote, setSelecionadosLote] = useState<string[]>([]);
+  const [loteLoading, setLoteLoading] = useState(false);
+
+  // Calendário Geral da Academia & Frequência Coletiva
+  const [frequenciaGeral, setFrequenciaGeral] = useState<any>(null);
+  const [loadingFrequenciaGeral, setLoadingFrequenciaGeral] = useState(false);
+  const [mesFrequenciaGeral, setMesFrequenciaGeral] = useState(new Date().getMonth() + 1);
+  const [anoFrequenciaGeral, setAnoFrequenciaGeral] = useState(new Date().getFullYear());
+  const [diaSelecionadoGeral, setDiaSelecionadoGeral] = useState<string>(new Date().toISOString().split('T')[0]);
+
+  // Modal Lançar Aluno no Dia do Calendário Geral
+  const [modalLancarDia, setModalLancarDia] = useState(false);
+  const [alunoLancarDia, setAlunoLancarDia] = useState('');
+  const [statusLancarDia, setStatusLancarDia] = useState('PRESENTE');
+  const [justificativaLancarDia, setJustificativaLancarDia] = useState('');
 
   // Modal Novo Aluno
   const [showModal, setShowModal] = useState(false);
@@ -136,14 +165,14 @@ export default function AdminDashboard() {
     imagemUrl: ''
   });
 
-  // Modal Calendário / Presença Detalhada do Aluno
+  // Modal Calendário / Presença Detalhada do Aluno Individual
   const [alunoSelecionado, setAlunoSelecionado] = useState<any>(null);
   const [calendarioDados, setCalendarioDados] = useState<any>(null);
   const [loadingCalendario, setLoadingCalendario] = useState(false);
   const [mesCalendario, setMesCalendario] = useState(new Date().getMonth() + 1);
   const [anoCalendario, setAnoCalendario] = useState(new Date().getFullYear());
 
-  // Modal de Ação do Dia no Calendário (Marcar presença / Falta / Doença)
+  // Modal de Ação do Dia no Calendário Individual
   const [diaSelecionadoAcao, setDiaSelecionadoAcao] = useState<string | null>(null);
   const [statusAcaoDia, setStatusAcaoDia] = useState('PRESENTE');
   const [justificativaInput, setJustificativaInput] = useState('');
@@ -158,6 +187,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isLoggedIn) {
       carregarDashboard();
+      carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
     }
   }, [isLoggedIn]);
 
@@ -538,7 +568,7 @@ export default function AdminDashboard() {
   };
 
   // ==========================================
-  // CONFIRMAÇÃO DE CHECK-IN RÁPIDO
+  // CONFIRMAÇÃO DE CHECK-IN RÁPIDO & EM LOTE
   // ==========================================
   const handleAlterarStatusPresenca = async (presencaId: string, novoStatus: string) => {
     try {
@@ -549,9 +579,118 @@ export default function AdminDashboard() {
       if (alunoSelecionado) {
         carregarDadosCalendario(alunoSelecionado.id, mesCalendario, anoCalendario);
       }
+      if (frequenciaGeral) {
+        carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+      }
     } catch (error) {
       alert('Erro ao atualizar presença.');
     }
+  };
+
+  const handleMarcarTodosAgendados = async () => {
+    const agendados = presencas.filter(p => p.status === 'AGENDADO');
+    if (agendados.length === 0) {
+      alert('Não há presenças pendentes com status "AGENDADO" para marcar.');
+      return;
+    }
+    if (confirm(`Confirmar presença de TODOS os ${agendados.length} alunos agendados em 1 clique?`)) {
+      setLoteLoading(true);
+      try {
+        await adminApi.batchUpdateAttendance({
+          presencaIds: agendados.map(p => p.id),
+          status: 'PRESENTE'
+        });
+        alert(`Sucesso! ${agendados.length} presenças foram validadas como PRESENTES!`);
+        carregarDashboard();
+        carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+      } catch (error) {
+        alert('Erro ao confirmar lote de presenças.');
+      } finally {
+        setLoteLoading(false);
+      }
+    }
+  };
+
+  const handleMarcarLoteStatus = async (status: string) => {
+    if (selecionadosLote.length === 0) {
+      alert('Selecione pelo menos um registro na tabela.');
+      return;
+    }
+    setLoteLoading(true);
+    try {
+      await adminApi.batchUpdateAttendance({
+        presencaIds: selecionadosLote,
+        status
+      });
+      alert(`${selecionadosLote.length} presenças atualizadas para ${status}!`);
+      setSelecionadosLote([]);
+      carregarDashboard();
+      carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+    } catch (error) {
+      alert('Erro ao atualizar presenças em lote.');
+    } finally {
+      setLoteLoading(false);
+    }
+  };
+
+  // ==========================================
+  // CALENDÁRIO GERAL DA ACADEMIA
+  // ==========================================
+  const carregarFrequenciaGeral = async (mes: number, ano: number) => {
+    setLoadingFrequenciaGeral(true);
+    try {
+      const res = await adminApi.getGeneralAttendance({ mes, ano });
+      setFrequenciaGeral(res.data);
+    } catch (error) {
+      console.error('Erro ao carregar frequência geral da academia', error);
+    } finally {
+      setLoadingFrequenciaGeral(false);
+    }
+  };
+
+  const mudarMesFrequenciaGeral = (delta: number) => {
+    let novoMes = mesFrequenciaGeral + delta;
+    let novoAno = anoFrequenciaGeral;
+    if (novoMes > 12) {
+      novoMes = 1;
+      novoAno += 1;
+    } else if (novoMes < 1) {
+      novoMes = 12;
+      novoAno -= 1;
+    }
+    setMesFrequenciaGeral(novoMes);
+    setAnoFrequenciaGeral(novoAno);
+    carregarFrequenciaGeral(novoMes, novoAno);
+  };
+
+  const handleLancarPresencaDiaGeral = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!alunoLancarDia || !diaSelecionadoGeral) return;
+    try {
+      await adminApi.saveStudentAttendance(alunoLancarDia, {
+        data: diaSelecionadoGeral,
+        status: statusLancarDia,
+        justificativa: justificativaLancarDia || null,
+        tipoJustificativa: statusLancarDia === 'DOENCA' ? 'DOENCA' : (statusLancarDia === 'JUSTIFICADO' ? 'TRABALHO' : null)
+      });
+      alert('Presença lançada com sucesso no calendário da academia!');
+      setModalLancarDia(false);
+      setAlunoLancarDia('');
+      setJustificativaLancarDia('');
+      carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+      carregarDashboard();
+    } catch (error) {
+      alert('Erro ao registrar presença no calendário.');
+    }
+  };
+
+  const handleMensagemAssiduidade = (aluno: any) => {
+    if (!aluno.telefone) {
+      alert(`O aluno ${aluno.nome} não possui telefone cadastrado.`);
+      return;
+    }
+    const msg = `Olá ${aluno.nome}, tudo bem? Aqui é da equipe do CT BORÜ Muay Thai! Sentimos sua falta nos treinos recentemente. Tá tudo certinho por aí? Esperamos você de volta ao tatame para continuarmos evoluindo juntos! Se precisar de algum ajuste nos seus horários, estamos à disposição. Oss! 🥊`;
+    window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
 
   // ==========================================
@@ -667,6 +806,28 @@ export default function AdminDashboard() {
     );
   }
 
+  // Coleções filtradas para renderização ágil
+  const alunosFiltrados = alunos.filter(a => {
+    const termo = buscaAluno.trim().toLowerCase();
+    const bateTexto = !termo ||
+      (a.nome && a.nome.toLowerCase().includes(termo)) ||
+      (a.cpf && a.cpf.toLowerCase().includes(termo)) ||
+      (a.telefone && a.telefone.includes(termo));
+    if (!bateTexto) return false;
+
+    if (filtroAssiduidade === 'TODOS') return true;
+    if (filtroAssiduidade === 'DIARIA') return isDiariaOuConvenio(a.plano);
+    if (filtroAssiduidade === 'ALTA') return a.statusAssiduidade === 'ALTA';
+    if (filtroAssiduidade === 'REGULAR') return a.statusAssiduidade === 'REGULAR';
+    if (filtroAssiduidade === 'RISCO') return a.statusAssiduidade === 'RISCO';
+    return true;
+  });
+
+  const presencasFiltradas = presencas.filter(p => {
+    if (filtroChamada === 'TODOS') return true;
+    return p.status === filtroChamada;
+  });
+
   // ==========================================
   // PAINEL LOGADO
   // ==========================================
@@ -724,18 +885,39 @@ export default function AdminDashboard() {
         </header>
 
         {/* CARDS DE MÉTRICAS */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5">
-            <p className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Total de Alunos</p>
-            <p className="text-3xl font-black text-white">{metricas.totalAlunos}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
+            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Total de Alunos</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{metricas.totalAlunos}</p>
+            <span className="text-[10px] text-zinc-500 block mt-0.5">Matriculados ativos</span>
           </div>
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5">
-            <p className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Mensalidades em Dia</p>
-            <p className="text-3xl font-black text-green-500">{metricas.assinaturasAtivas}</p>
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
+            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Em Dia</p>
+            <p className="text-2xl sm:text-3xl font-black text-green-500">{metricas.assinaturasAtivas}</p>
+            <span className="text-[10px] text-zinc-500 block mt-0.5">Mensalidade vigente</span>
           </div>
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5">
-            <p className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Pendentes / Atrasados</p>
-            <p className="text-3xl font-black text-red-500">{metricas.inadimplentes}</p>
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
+            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Atrasados / Pendentes</p>
+            <p className="text-2xl sm:text-3xl font-black text-red-500">{metricas.inadimplentes}</p>
+            <span className="text-[10px] text-zinc-500 block mt-0.5">Vencidas ou sem plano</span>
+          </div>
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Assiduidade Geral</p>
+              <span className="text-xs">📊</span>
+            </div>
+            <p className="text-2xl sm:text-3xl font-black text-cyan-400">{metricas.taxaPresencaMedia ?? 100}%</p>
+            <span className="text-[10px] text-zinc-500 block mt-0.5">Taxa de presença no mês</span>
+          </div>
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4 col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between">
+              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Alunos em Risco</p>
+              <span className="text-xs">⚠️</span>
+            </div>
+            <p className={`text-2xl sm:text-3xl font-black ${(metricas.alunosEmRisco || 0) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+              {metricas.alunosEmRisco || 0}
+            </p>
+            <span className="text-[10px] text-zinc-500 block mt-0.5">Frequência menor que 50%</span>
           </div>
         </div>
 
@@ -750,12 +932,25 @@ export default function AdminDashboard() {
             👥 Alunos ({alunos.length})
           </button>
           <button 
+            onClick={() => {
+              setAbaAtiva('calendario_geral');
+              if (!frequenciaGeral) {
+                carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+              }
+            }}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'calendario_geral' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+            }`}
+          >
+            📅 Calendário & Frequência Geral
+          </button>
+          <button 
             onClick={() => setAbaAtiva('presencas')}
             className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
               abaAtiva === 'presencas' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
             }`}
           >
-            📋 Chamada & Presenças
+            📋 Chamada Rápida ({presencas.length})
           </button>
           <button 
             onClick={() => setAbaAtiva('avisos')}
@@ -795,133 +990,667 @@ export default function AdminDashboard() {
 
         {/* CONTEÚDO DA ABA: ALUNOS */}
         {abaAtiva === 'alunos' && (
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
-            <div className="p-4 border-b border-zinc-800 flex justify-between items-center flex-wrap gap-2">
-              <h2 className="text-base sm:text-lg font-bold text-white">Alunos Matriculados</h2>
-              <span className="text-xs text-zinc-400">Clique em "Frequência" para ver % de falta, presença e doença.</span>
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl space-y-4 p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <span>👥 Alunos Matriculados</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300">
+                    {alunosFiltrados.length} de {alunos.length}
+                  </span>
+                </h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Acompanhe frequência individual mensal, retenção de alunos e planos ativos.
+                </p>
+              </div>
+
+              {/* BARRA DE PESQUISA RÁPIDA */}
+              <div className="w-full sm:w-72">
+                <input
+                  type="text"
+                  value={buscaAluno}
+                  onChange={(e) => setBuscaAluno(e.target.value)}
+                  placeholder="🔍 Buscar aluno por nome, CPF ou telefone..."
+                  className="w-full bg-[#1A1A1E] border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500 transition"
+                />
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* FILTROS DE ASSIDUIDADE E CATEGORIA */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+              <button
+                onClick={() => setFiltroAssiduidade('TODOS')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                  filtroAssiduidade === 'TODOS'
+                    ? 'bg-zinc-700 text-white'
+                    : 'bg-[#1A1A1E] text-zinc-400 hover:text-white border border-zinc-800'
+                }`}
+              >
+                Todos ({alunos.length})
+              </button>
+              <button
+                onClick={() => setFiltroAssiduidade('ALTA')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  filtroAssiduidade === 'ALTA'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-[#1A1A1E] text-green-400 hover:text-white border border-green-900/40'
+                }`}
+              >
+                <span>🟢 Alta Presença (≥ 75%)</span>
+                <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded-full">
+                  {alunos.filter(a => a.statusAssiduidade === 'ALTA').length}
+                </span>
+              </button>
+              <button
+                onClick={() => setFiltroAssiduidade('REGULAR')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  filtroAssiduidade === 'REGULAR'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-[#1A1A1E] text-amber-400 hover:text-white border border-amber-900/40'
+                }`}
+              >
+                <span>🟡 Regular (50% a 74%)</span>
+                <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded-full">
+                  {alunos.filter(a => a.statusAssiduidade === 'REGULAR').length}
+                </span>
+              </button>
+              <button
+                onClick={() => setFiltroAssiduidade('RISCO')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  filtroAssiduidade === 'RISCO'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-[#1A1A1E] text-red-400 hover:text-white border border-red-900/40'
+                }`}
+              >
+                <span>🔴 Em Risco (&lt; 50%)</span>
+                <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded-full">
+                  {alunos.filter(a => a.statusAssiduidade === 'RISCO').length}
+                </span>
+              </button>
+              <button
+                onClick={() => setFiltroAssiduidade('DIARIA')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  filtroAssiduidade === 'DIARIA'
+                    ? 'bg-cyan-600 text-white'
+                    : 'bg-[#1A1A1E] text-cyan-400 hover:text-white border border-cyan-900/40'
+                }`}
+              >
+                <span>⚡ Diárias & Passes</span>
+                <span className="text-[10px] bg-black/40 px-1.5 py-0.2 rounded-full">
+                  {alunos.filter(a => isDiariaOuConvenio(a.plano)).length}
+                </span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-zinc-800">
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider border-b border-zinc-800">
                   <tr>
                     <th className="p-3 sm:p-4">Aluno</th>
                     <th className="p-3 sm:p-4">Plano</th>
-                    <th className="p-3 sm:p-4">Graduação (Prajied)</th>
+                    <th className="p-3 sm:p-4">Prajied</th>
                     <th className="p-3 sm:p-4">Mensalidade</th>
-                    <th className="p-3 sm:p-4 text-right">Ações</th>
+                    <th className="p-3 sm:p-4">Frequência no Mês</th>
+                    <th className="p-3 sm:p-4 text-right">Ações Rápidas</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/60">
-                  {alunos.map(aluno => (
-                    <tr key={aluno.id} className="hover:bg-zinc-800/30 transition">
-                      <td className="p-3 sm:p-4 font-bold text-white">
-                        <div>{aluno.nome}</div>
-                        <div className="text-[11px] text-zinc-500 font-normal">{aluno.telefone || 'Sem telefone'}</div>
-                      </td>
-                      <td className="p-3 sm:p-4 text-zinc-300 font-medium">
-                        <select 
-                          value={aluno.plano || '2x na semana'}
-                          onChange={(e) => atualizarPlanoAluno(aluno.id, e.target.value)}
-                          className="bg-[#1A1A1E] border border-zinc-700 text-white text-xs rounded-lg px-2 py-1 font-semibold focus:border-red-500 outline-none"
-                        >
-                          <option value="2x na semana">2x na semana (R$ 130)</option>
-                          <option value="3x na semana">3x na semana (R$ 160)</option>
-                          <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
-                          <option value="Diária">Diária Avulsa (R$ 40/aula)</option>
-                          <option value="Wellhub">Wellhub / Gympass</option>
-                          <option value="TotalPass">TotalPass</option>
-                        </select>
-                      </td>
-                      <td className="p-3 sm:p-4">
-                        <select 
-                          value={aluno.prajied || 'Branco'}
-                          onChange={(e) => atualizarPrajied(aluno.id, e.target.value)}
-                          className="bg-[#1A1A1E] border border-zinc-700 text-white text-xs rounded-lg px-2 py-1 font-semibold focus:border-red-500 outline-none"
-                        >
-                          <option value="Branco">Branco</option>
-                          <option value="Branco e Vermelho">Branco e Vermelho</option>
-                          <option value="Vermelho">Vermelho</option>
-                          <option value="Vermelho e Azul">Vermelho e Azul</option>
-                          <option value="Azul Claro">Azul Claro</option>
-                          <option value="Azul Escuro">Azul Escuro</option>
-                          <option value="Preto">Preto</option>
-                        </select>
-                      </td>
-                      <td className="p-3 sm:p-4">
-                        {isDiariaOuConvenio(aluno.plano) ? (
-                          <>
-                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                              ⚡ Diária / Convênio
-                            </span>
-                            <span className="block text-[10px] text-zinc-400 mt-0.5 font-medium">
-                              {aluno.plano?.toLowerCase().includes('wellhub') ? 'Check-in Wellhub' :
-                               aluno.plano?.toLowerCase().includes('totalpass') ? 'Check-in TotalPass' :
-                               'R$ 40 avulso p/ treino'}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                              aluno.status === 'PAGO' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                            }`}>
-                              {aluno.status}
-                            </span>
-                            {aluno.diasVencimento !== null && (
-                              <span className="block text-[10px] text-zinc-400 mt-0.5">
-                                {aluno.diasVencimento < 0 ? `Venceu há ${Math.abs(aluno.diasVencimento)}d` : `Vence em ${aluno.diasVencimento}d`}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </td>
-                      <td className="p-3 sm:p-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                          <button 
-                            onClick={() => abrirCalendarioAluno(aluno)}
-                            className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-xs font-bold transition"
-                            title="Ver frequência e calendário detalhado"
-                          >
-                            📅 Frequência
-                          </button>
-                          <button 
-                            onClick={() => handleRegistrarPagamento(aluno)}
-                            className="px-2.5 py-1 rounded bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 text-xs font-bold transition"
-                            title="Confirmar pagamento presencial (balcão)"
-                          >
-                            💵 Pago (+30d)
-                          </button>
-                          <button 
-                            onClick={() => handleCobrar(aluno)}
-                            className="px-2.5 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700 text-xs font-bold transition"
-                            title="Enviar cobrança via WhatsApp"
-                          >
-                            📲 WhatsApp
-                          </button>
-                        </div>
+                  {alunosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-zinc-500">
+                        Nenhum aluno encontrado para os filtros selecionados.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    alunosFiltrados.map(aluno => (
+                      <tr key={aluno.id} className="hover:bg-zinc-800/30 transition">
+                        <td className="p-3 sm:p-4 font-bold text-white">
+                          <div className="flex items-center gap-2">
+                            <span>{aluno.nome}</span>
+                            {aluno.statusAssiduidade === 'RISCO' && !isDiariaOuConvenio(aluno.plano) && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-red-950 text-red-400 border border-red-500/40" title="Aluno com frequência menor que 50%">
+                                RISCO
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 font-normal mt-0.5">
+                            {aluno.telefone || 'Sem telefone'} {aluno.cpf ? `• CPF: ${aluno.cpf}` : ''}
+                          </div>
+                        </td>
+                        <td className="p-3 sm:p-4 text-zinc-300 font-medium">
+                          <select 
+                            value={aluno.plano || '2x na semana'}
+                            onChange={(e) => atualizarPlanoAluno(aluno.id, e.target.value)}
+                            className="bg-[#1A1A1E] border border-zinc-700 text-white text-xs rounded-lg px-2 py-1 font-semibold focus:border-red-500 outline-none"
+                          >
+                            <option value="2x na semana">2x na semana (R$ 130)</option>
+                            <option value="3x na semana">3x na semana (R$ 160)</option>
+                            <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
+                            <option value="Diária">Diária Avulsa (R$ 40/aula)</option>
+                            <option value="Wellhub">Wellhub / Gympass</option>
+                            <option value="TotalPass">TotalPass</option>
+                          </select>
+                        </td>
+                        <td className="p-3 sm:p-4">
+                          <select 
+                            value={aluno.prajied || 'Branco'}
+                            onChange={(e) => atualizarPrajied(aluno.id, e.target.value)}
+                            className="bg-[#1A1A1E] border border-zinc-700 text-white text-xs rounded-lg px-2 py-1 font-semibold focus:border-red-500 outline-none"
+                          >
+                            <option value="Branco">Branco</option>
+                            <option value="Branco e Vermelho">Branco e Vermelho</option>
+                            <option value="Vermelho">Vermelho</option>
+                            <option value="Vermelho e Azul">Vermelho e Azul</option>
+                            <option value="Azul Claro">Azul Claro</option>
+                            <option value="Azul Escuro">Azul Escuro</option>
+                            <option value="Preto">Preto</option>
+                          </select>
+                        </td>
+                        <td className="p-3 sm:p-4">
+                          {isDiariaOuConvenio(aluno.plano) ? (
+                            <>
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                                ⚡ Diária / Convênio
+                              </span>
+                              <span className="block text-[10px] text-zinc-400 mt-0.5 font-medium">
+                                {aluno.plano?.toLowerCase().includes('wellhub') ? 'Check-in Wellhub' :
+                                 aluno.plano?.toLowerCase().includes('totalpass') ? 'Check-in TotalPass' :
+                                 'R$ 40 avulso p/ treino'}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                                aluno.status === 'PAGO' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                              }`}>
+                                {aluno.status}
+                              </span>
+                              {aluno.diasVencimento !== null && (
+                                <span className="block text-[10px] text-zinc-400 mt-0.5">
+                                  {aluno.diasVencimento < 0 ? `Venceu há ${Math.abs(aluno.diasVencimento)}d` : `Vence em ${aluno.diasVencimento}d`}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </td>
+                        {/* FREQUÊNCIA & PORCENTAGEM DE PRESENÇA NO MÊS */}
+                        <td className="p-3 sm:p-4">
+                          {isDiariaOuConvenio(aluno.plano) ? (
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-black text-cyan-300">
+                                  ⚡ {aluno.treinosSemana || 0} treino(s)
+                                </span>
+                                <span className="text-[10px] text-zinc-500 font-medium">esta semana</span>
+                              </div>
+                              <span className="block text-[10px] text-zinc-400 mt-0.5">
+                                Total no mês: <strong className="text-zinc-200">{aluno.presencasMes || 0}</strong>
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[11px] font-bold">
+                                <span className={
+                                  aluno.statusAssiduidade === 'RISCO' ? 'text-red-400' :
+                                  aluno.statusAssiduidade === 'REGULAR' ? 'text-amber-400' : 'text-green-400'
+                                }>
+                                  {aluno.porcentagemPresenca ?? 100}%
+                                </span>
+                                <span className="text-[10px] text-zinc-400 font-normal">
+                                  {aluno.presencasMes || 0} presenças
+                                  {aluno.faltasMes > 0 && <span className="text-red-400 ml-1">({aluno.faltasMes} faltas)</span>}
+                                </span>
+                              </div>
+                              <div className="w-28 sm:w-32 bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    aluno.statusAssiduidade === 'RISCO' ? 'bg-red-500' :
+                                    aluno.statusAssiduidade === 'REGULAR' ? 'bg-amber-500' : 'bg-green-500'
+                                  }`}
+                                  style={{ width: `${Math.min(aluno.porcentagemPresenca ?? 100, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3 sm:p-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            <button 
+                              onClick={() => abrirCalendarioAluno(aluno)}
+                              className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-xs font-bold transition flex items-center gap-1"
+                              title="Ver frequência e calendário detalhado"
+                            >
+                              <span>📅 Calendário</span>
+                            </button>
+                            <button 
+                              onClick={() => handleRegistrarPagamento(aluno)}
+                              className="px-2.5 py-1 rounded bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 text-xs font-bold transition"
+                              title="Confirmar pagamento presencial (balcão)"
+                            >
+                              💵 Pago (+30d)
+                            </button>
+                            {aluno.statusAssiduidade === 'RISCO' && !isDiariaOuConvenio(aluno.plano) ? (
+                              <button 
+                                onClick={() => handleMensagemAssiduidade(aluno)}
+                                className="px-2.5 py-1 rounded bg-red-600/20 text-red-300 hover:bg-red-600 hover:text-white border border-red-500/40 text-xs font-bold transition flex items-center gap-1"
+                                title="Enviar mensagem de incentivo e reengajamento via WhatsApp"
+                              >
+                                <span>⚠️ Resgatar</span>
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => handleCobrar(aluno)}
+                                className="px-2.5 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700 text-xs font-bold transition"
+                                title="Enviar lembrete via WhatsApp"
+                              >
+                                📲 WhatsApp
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {/* CONTEÚDO DA ABA: CHAMADA & PRESENÇAS */}
-        {abaAtiva === 'presencas' && (
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
-            <div className="p-4 border-b border-zinc-800 flex justify-between items-center flex-wrap gap-2">
+        {/* CONTEÚDO DA ABA: CALENDÁRIO DA ACADEMIA & FREQUÊNCIA GERAL */}
+        {abaAtiva === 'calendario_geral' && (
+          <div className="space-y-5">
+            {/* CABEÇALHO DO CALENDÁRIO GERAL */}
+            <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white">Chamada de Treinos Recentes</h2>
-                <p className="text-xs text-zinc-400">Valide os check-ins ou registre faltas e ausências por doença.</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                    <span>📅 Calendário Geral da Academia</span>
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">
+                    Visão Coletiva
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Acompanhe a assiduidade diária de todas as turmas, faltas coletivas e confirme presenças em lote.
+                </p>
+              </div>
+
+              {/* SELETOR DE MÊS & AÇÃO RÁPIDA */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center bg-[#1A1A1E] border border-zinc-700 rounded-lg overflow-hidden">
+                  <button 
+                    onClick={() => mudarMesFrequenciaGeral(-1)}
+                    className="px-3 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 font-bold text-xs transition"
+                  >
+                    ← Mês Anterior
+                  </button>
+                  <span className="px-3 py-2 text-white font-black text-xs border-x border-zinc-700">
+                    {new Date(anoFrequenciaGeral, mesFrequenciaGeral - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}
+                  </span>
+                  <button 
+                    onClick={() => mudarMesFrequenciaGeral(1)}
+                    className="px-3 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 font-bold text-xs transition"
+                  >
+                    Próximo Mês →
+                  </button>
+                </div>
+
+                <button 
+                  onClick={() => setModalLancarDia(true)}
+                  className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
+                >
+                  <span>➕ Lançar Aluno neste Dia</span>
+                </button>
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* BANNER DE RESUMO DO MÊS COLETIVO */}
+            {frequenciaGeral?.resumo && (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3.5">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Aulas Realizadas</p>
+                  <p className="text-2xl font-black text-green-400 mt-0.5">{frequenciaGeral.resumo.totalPresentes}</p>
+                  <span className="text-[10px] text-zinc-500">Presenças confirmadas</span>
+                </div>
+                <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3.5">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Taxa de Assiduidade</p>
+                  <p className="text-2xl font-black text-cyan-400 mt-0.5">{frequenciaGeral.resumo.taxaGeral}%</p>
+                  <span className="text-[10px] text-zinc-500">Média geral do mês</span>
+                </div>
+                <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3.5">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Faltas no Mês</p>
+                  <p className="text-2xl font-black text-red-400 mt-0.5">{frequenciaGeral.resumo.totalFaltas}</p>
+                  <span className="text-[10px] text-zinc-500">Ausências sem atestado</span>
+                </div>
+                <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3.5">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Atestados Médicos</p>
+                  <p className="text-2xl font-black text-blue-400 mt-0.5">{frequenciaGeral.resumo.totalDoenca}</p>
+                  <span className="text-[10px] text-zinc-500">Doença / justificados</span>
+                </div>
+                <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3.5 col-span-2 sm:col-span-1">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Dias com Treino</p>
+                  <p className="text-2xl font-black text-amber-400 mt-0.5">{frequenciaGeral.resumo.diasComTreino}</p>
+                  <span className="text-[10px] text-zinc-500">Dias ativos na academia</span>
+                </div>
+              </div>
+            )}
+
+            {/* GRID DO CALENDÁRIO COLETIVO + PAINEL DO DIA SELECIONADO */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* COLUNA ESQUERDA: GRADE MENSAL (2/3) */}
+              <div className="lg:col-span-2 bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5 shadow-xl">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>Grade do Mês</span>
+                    <span className="text-xs text-zinc-400 font-normal">
+                      (Clique em qualquer dia para ver a lista de presença e lançar notas)
+                    </span>
+                  </h3>
+                </div>
+
+                {loadingFrequenciaGeral ? (
+                  <div className="py-16 text-center text-zinc-400 text-sm">
+                    Carregando frequência do mês...
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                      <div className="text-red-400">Dom</div>
+                      <div>Seg</div>
+                      <div>Ter</div>
+                      <div>Qua</div>
+                      <div>Qui</div>
+                      <div>Sex</div>
+                      <div>Sáb</div>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {Array.from({ length: new Date(anoFrequenciaGeral, mesFrequenciaGeral - 1, 1).getDay() }).map((_, i) => (
+                        <div key={`emp-g-${i}`} className="min-h-[75px] rounded-lg bg-zinc-900/30 border border-zinc-900"></div>
+                      ))}
+
+                      {Array.from({ length: new Date(anoFrequenciaGeral, mesFrequenciaGeral, 0).getDate() }).map((_, i) => {
+                        const dia = i + 1;
+                        const dataIso = `${anoFrequenciaGeral}-${String(mesFrequenciaGeral).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                        const diaInfo = frequenciaGeral?.mapaDias?.[dataIso];
+                        const hojeIso = new Date().toISOString().split('T')[0];
+                        const ehHoje = dataIso === hojeIso;
+                        const estaSelecionado = diaSelecionadoGeral === dataIso;
+
+                        return (
+                          <button
+                            key={`dia-g-${dia}`}
+                            onClick={() => setDiaSelecionadoGeral(dataIso)}
+                            className={`min-h-[78px] p-2 rounded-lg border text-left flex flex-col justify-between transition group relative ${
+                              estaSelecionado
+                                ? 'bg-red-950/40 border-red-500 shadow-md shadow-red-950/50 ring-1 ring-red-500'
+                                : diaInfo?.total && diaInfo.total > 0
+                                  ? 'bg-[#1A1A1E] border-zinc-700/80 hover:border-zinc-500'
+                                  : 'bg-[#141416] border-zinc-800/80 hover:border-zinc-700 text-zinc-600'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className={`text-xs font-black ${
+                                estaSelecionado ? 'text-white' : ehHoje ? 'text-red-400' : 'text-zinc-300'
+                              }`}>
+                                {dia}
+                              </span>
+                              {ehHoje && (
+                                <span className="text-[9px] font-black bg-red-600 text-white px-1 py-0.2 rounded">
+                                  Hoje
+                                </span>
+                              )}
+                            </div>
+
+                            {diaInfo?.total && diaInfo.total > 0 ? (
+                              <div className="space-y-1 w-full mt-1">
+                                <div className="flex items-center justify-between text-[10px] font-bold">
+                                  <span className="text-green-400">✓ {diaInfo.presentes}</span>
+                                  {diaInfo.faltas > 0 && <span className="text-red-400">✗ {diaInfo.faltas}</span>}
+                                  {diaInfo.doenca > 0 && <span className="text-blue-400">🩺 {diaInfo.doenca}</span>}
+                                </div>
+                                <div className="flex items-center justify-between text-[9px] text-zinc-400">
+                                  <span>{diaInfo.taxaPresenca}% freq.</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-[10px] text-zinc-600 italic mt-auto">
+                                Sem registros
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* COLUNA DIREITA: ROSTER DO DIA SELECIONADO (1/3) */}
+              <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4 sm:p-5 shadow-xl flex flex-col">
+                <div className="border-b border-zinc-800 pb-3 mb-4 flex justify-between items-start gap-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-red-500 block">Chamada do Dia</span>
+                    <h3 className="text-base font-black text-white">
+                      {new Date(diaSelecionadoGeral + 'T12:00:00').toLocaleDateString('pt-BR', {
+                        weekday: 'long',
+                        day: '2-digit',
+                        month: 'long'
+                      })}
+                    </h3>
+                  </div>
+
+                  <button 
+                    onClick={() => setModalLancarDia(true)}
+                    className="px-2.5 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                  >
+                    <span>➕ Lançar Aluno</span>
+                  </button>
+                </div>
+
+                {/* RESUMO DO DIA */}
+                {frequenciaGeral?.mapaDias?.[diaSelecionadoGeral] ? (
+                  <div className="space-y-3 flex-1 flex flex-col">
+                    <div className="bg-[#1A1A1E] border border-zinc-800 rounded-lg p-2.5 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-zinc-400 block text-[10px]">Total de Treinos</span>
+                        <strong className="text-white text-base">
+                          {frequenciaGeral.mapaDias[diaSelecionadoGeral].total}
+                        </strong>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-zinc-400 block text-[10px]">Presença do Dia</span>
+                        <strong className="text-green-400 text-base">
+                          {frequenciaGeral.mapaDias[diaSelecionadoGeral].taxaPresenca}%
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto max-h-[420px] space-y-2 pr-1">
+                      {frequenciaGeral.mapaDias[diaSelecionadoGeral].alunos.map((item: any) => (
+                        <div 
+                          key={item.id}
+                          className="bg-[#1A1A1E] border border-zinc-800 hover:border-zinc-700 rounded-lg p-3 transition"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                            <div>
+                              <h4 className="text-xs font-bold text-white">{item.nome}</h4>
+                              <p className="text-[10px] text-zinc-400">{item.plano} • Prajied {item.prajied}</p>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              item.status === 'PRESENTE' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                              item.status === 'DOENCA' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                              item.status === 'FALTA' || item.status === 'AUSENTE' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                              'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            }`}>
+                              {item.status}
+                            </span>
+                          </div>
+
+                          {item.justificativa && (
+                            <p className="text-[10px] text-zinc-400 italic mb-2 bg-black/40 p-1.5 rounded">
+                              Motivo: {item.justificativa}
+                            </p>
+                          )}
+
+                          {/* BOTÕES DE AÇÃO RÁPIDA NO ROSTER */}
+                          <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80 gap-1">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleAlterarStatusPresenca(item.id, 'PRESENTE')}
+                                className="px-2 py-0.5 rounded bg-green-950 text-green-300 hover:bg-green-800 text-[10px] font-bold border border-green-700/40"
+                                title="Marcar como presente"
+                              >
+                                ✓ Presente
+                              </button>
+                              <button
+                                onClick={() => handleAlterarStatusPresenca(item.id, 'DOENCA')}
+                                className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 hover:bg-blue-800 text-[10px] font-bold border border-blue-700/40"
+                                title="Falta por doença / atestado"
+                              >
+                                🩺 Doença
+                              </button>
+                              <button
+                                onClick={() => handleAlterarStatusPresenca(item.id, 'FALTA')}
+                                className="px-2 py-0.5 rounded bg-red-950 text-red-300 hover:bg-red-800 text-[10px] font-bold border border-red-700/40"
+                                title="Marcar falta"
+                              >
+                                ✗ Falta
+                              </button>
+                            </div>
+
+                            {item.telefone && (
+                              <button
+                                onClick={() => window.open(formatarWhatsUrl(item.telefone, `Olá ${item.nome}, equipe CT BORÜ entrando em contato sobre o treino do dia ${diaSelecionadoGeral}.`), '_blank')}
+                                className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px]"
+                                title="Enviar WhatsApp"
+                              >
+                                📲
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-zinc-500">
+                    <span className="text-3xl mb-2">🥋</span>
+                    <p className="text-xs font-semibold text-zinc-400">Nenhum treino registrado neste dia.</p>
+                    <p className="text-[11px] text-zinc-500 mt-1 max-w-xs">
+                      Clique no botão abaixo para adicionar a presença de um aluno ou registrar check-ins.
+                    </p>
+                    <button
+                      onClick={() => setModalLancarDia(true)}
+                      className="mt-4 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition"
+                    >
+                      ➕ Lançar Primeiro Check-in
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: CHAMADA RÁPIDA & PRESENÇAS EM LOTE */}
+        {abaAtiva === 'presencas' && (
+          <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl space-y-4 p-4 sm:p-5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <span>📋 Chamada Rápida dos Treinos</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300">
+                    {presencasFiltradas.length} registros
+                  </span>
+                </h2>
+                <p className="text-xs text-zinc-400">
+                  Valide os check-ins individuais ou confirme toda a turma em 1 clique.
+                </p>
+              </div>
+
+              {/* BOTÃO MÁGICO DE 1 CLIQUE: CONFIRMAR TODOS AGENDADOS */}
+              <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+                <button
+                  onClick={handleMarcarTodosAgendados}
+                  disabled={loteLoading}
+                  className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-emerald-900/30 uppercase tracking-wider"
+                >
+                  <span>⚡ Confirmar Todos Agendados (1 Clique)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* FILTROS DE STATUS E AÇÕES EM LOTE SELECIONADOS */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-1 border-t border-zinc-800/80">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+                {['TODOS', 'AGENDADO', 'PRESENTE', 'DOENCA', 'FALTA'].map(st => (
+                  <button
+                    key={st}
+                    onClick={() => setFiltroChamada(st as any)}
+                    className={`px-3 py-1 rounded-lg font-bold transition whitespace-nowrap ${
+                      filtroChamada === st
+                        ? 'bg-red-600 text-white'
+                        : 'bg-[#1A1A1E] text-zinc-400 hover:text-white border border-zinc-800'
+                    }`}
+                  >
+                    {st === 'TODOS' ? `Todos (${presencas.length})` :
+                     st === 'AGENDADO' ? `⏳ Agendados (${presencas.filter(p => p.status === 'AGENDADO').length})` :
+                     st === 'PRESENTE' ? `✓ Presentes (${presencas.filter(p => p.status === 'PRESENTE').length})` :
+                     st === 'DOENCA' ? `🩺 Doença (${presencas.filter(p => p.status === 'DOENCA').length})` :
+                     `✗ Faltas (${presencas.filter(p => p.status === 'FALTA' || p.status === 'AUSENTE').length})`}
+                  </button>
+                ))}
+              </div>
+
+              {/* BARRA DE AÇÃO EM LOTE SE TIVER ITENS MARCADOS */}
+              {selecionadosLote.length > 0 && (
+                <div className="flex items-center gap-2 bg-zinc-800/80 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs">
+                  <span className="text-zinc-300 font-bold">{selecionadosLote.length} selecionado(s):</span>
+                  <button
+                    onClick={() => handleMarcarLoteStatus('PRESENTE')}
+                    disabled={loteLoading}
+                    className="px-2 py-0.5 rounded bg-green-600 hover:bg-green-700 text-white font-bold"
+                  >
+                    ✓ Presente
+                  </button>
+                  <button
+                    onClick={() => handleMarcarLoteStatus('DOENCA')}
+                    disabled={loteLoading}
+                    className="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  >
+                    🩺 Doença
+                  </button>
+                  <button
+                    onClick={() => handleMarcarLoteStatus('FALTA')}
+                    disabled={loteLoading}
+                    className="px-2 py-0.5 rounded bg-red-600 hover:bg-red-700 text-white font-bold"
+                  >
+                    ✗ Falta
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-zinc-800">
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[11px] tracking-wider border-b border-zinc-800">
                   <tr>
+                    <th className="p-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selecionadosLote.length > 0 && selecionadosLote.length === presencasFiltradas.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelecionadosLote(presencasFiltradas.map(p => p.id));
+                          } else {
+                            setSelecionadosLote([]);
+                          }
+                        }}
+                        className="rounded bg-zinc-800 border-zinc-700 text-red-600"
+                      />
+                    </th>
                     <th className="p-3 sm:p-4">Aluno</th>
                     <th className="p-3 sm:p-4">Aula / Data</th>
                     <th className="p-3 sm:p-4">Status Atual</th>
@@ -929,59 +1658,86 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/60">
-                  {presencas.map(p => (
-                    <tr key={p.id} className="hover:bg-zinc-800/30 transition">
-                      <td className="p-3 sm:p-4 font-bold text-white">
-                        {p.aluno?.nome}
-                        <span className="block text-[11px] text-zinc-400 font-normal">{p.aluno?.plano}</span>
-                      </td>
-                      <td className="p-3 sm:p-4 text-zinc-300">
-                        {p.evento?.titulo || 'Treino de Muay Thai'}
-                        <span className="block text-[11px] text-zinc-500">
-                          {new Date(p.data).toLocaleDateString('pt-BR')} às {new Date(p.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </td>
-                      <td className="p-3 sm:p-4">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                          p.status === 'PRESENTE' ? 'bg-green-500/20 text-green-400' :
-                          p.status === 'DOENCA' ? 'bg-blue-500/20 text-blue-400' :
-                          p.status === 'JUSTIFICADO' ? 'bg-cyan-500/20 text-cyan-400' :
-                          p.status === 'FALTA' || p.status === 'AUSENTE' ? 'bg-red-500/20 text-red-400' :
-                          'bg-amber-500/20 text-amber-400'
-                        }`}>
-                          {p.status}
-                        </span>
-                        {p.justificativa && (
-                          <span className="block text-[10px] text-zinc-400 mt-1 italic">
-                            Motivo: {p.justificativa}
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3 sm:p-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                          <button 
-                            onClick={() => handleAlterarStatusPresenca(p.id, 'PRESENTE')}
-                            className="px-2 py-1 rounded bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white border border-green-500/30 text-xs font-bold transition"
-                          >
-                            ✓ Presente
-                          </button>
-                          <button 
-                            onClick={() => handleAlterarStatusPresenca(p.id, 'DOENCA')}
-                            className="px-2 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-xs font-bold transition"
-                            title="Registrar falta por motivo de doença / atestado"
-                          >
-                            🩺 Doença
-                          </button>
-                          <button 
-                            onClick={() => handleAlterarStatusPresenca(p.id, 'FALTA')}
-                            className="px-2 py-1 rounded bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/30 text-xs font-bold transition"
-                          >
-                            ✗ Falta
-                          </button>
-                        </div>
+                  {presencasFiltradas.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-zinc-500">
+                        Nenhuma presença encontrada para este filtro.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    presencasFiltradas.map(p => {
+                      const estaMarcado = selecionadosLote.includes(p.id);
+                      return (
+                        <tr key={p.id} className={`hover:bg-zinc-800/30 transition ${estaMarcado ? 'bg-red-950/20' : ''}`}>
+                          <td className="p-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={estaMarcado}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelecionadosLote(prev => [...prev, p.id]);
+                                } else {
+                                  setSelecionadosLote(prev => prev.filter(id => id !== p.id));
+                                }
+                              }}
+                              className="rounded bg-zinc-800 border-zinc-700 text-red-600"
+                            />
+                          </td>
+                          <td className="p-3 sm:p-4 font-bold text-white">
+                            {p.aluno?.nome}
+                            <span className="block text-[11px] text-zinc-400 font-normal">
+                              {p.aluno?.plano} • Prajied {p.aluno?.prajied || 'Branco'}
+                            </span>
+                          </td>
+                          <td className="p-3 sm:p-4 text-zinc-300">
+                            {p.evento?.titulo || 'Treino de Muay Thai'}
+                            <span className="block text-[11px] text-zinc-500">
+                              {new Date(p.data).toLocaleDateString('pt-BR')} às {new Date(p.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </td>
+                          <td className="p-3 sm:p-4">
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                              p.status === 'PRESENTE' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                              p.status === 'DOENCA' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                              p.status === 'JUSTIFICADO' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' :
+                              p.status === 'FALTA' || p.status === 'AUSENTE' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                              'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            }`}>
+                              {p.status}
+                            </span>
+                            {p.justificativa && (
+                              <span className="block text-[10px] text-zinc-400 mt-1 italic">
+                                Motivo: {p.justificativa}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 sm:p-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              <button 
+                                onClick={() => handleAlterarStatusPresenca(p.id, 'PRESENTE')}
+                                className="px-2 py-1 rounded bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white border border-green-500/30 text-xs font-bold transition"
+                              >
+                                ✓ Presente
+                              </button>
+                              <button 
+                                onClick={() => handleAlterarStatusPresenca(p.id, 'DOENCA')}
+                                className="px-2 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-xs font-bold transition"
+                                title="Registrar falta por motivo de doença / atestado"
+                              >
+                                🩺 Doença
+                              </button>
+                              <button 
+                                onClick={() => handleAlterarStatusPresenca(p.id, 'FALTA')}
+                                className="px-2 py-1 rounded bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/30 text-xs font-bold transition"
+                              >
+                                ✗ Falta
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1968,6 +2724,90 @@ export default function AdminDashboard() {
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setLeadParaConverter(null)} className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
                 <button type="submit" className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">Concluir Matrícula</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LANÇAR ALUNO NO DIA DO CALENDÁRIO GERAL */}
+      {modalLancarDia && (
+        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[999999] overflow-y-auto">
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-white">Lançar Presença na Turma</h3>
+                <p className="text-xs text-zinc-400">
+                  Data: <strong className="text-red-400">
+                    {new Date(diaSelecionadoGeral + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                  </strong>
+                </p>
+              </div>
+              <button 
+                onClick={() => setModalLancarDia(false)}
+                className="text-zinc-500 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleLancarPresencaDiaGeral} className="space-y-4">
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Selecione o Aluno</label>
+                <select
+                  required
+                  value={alunoLancarDia}
+                  onChange={(e) => setAlunoLancarDia(e.target.value)}
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white font-medium"
+                >
+                  <option value="">-- Escolha um aluno --</option>
+                  {alunos.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.nome} ({a.plano || 'Geral'}) - {a.prajied || 'Branco'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Status da Presença</label>
+                <select
+                  value={statusLancarDia}
+                  onChange={(e) => setStatusLancarDia(e.target.value)}
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white font-medium"
+                >
+                  <option value="PRESENTE">🟢 PRESENTE (Treinou normalmente)</option>
+                  <option value="DOENCA">🔵 FALTA POR DOENÇA (Com atestado)</option>
+                  <option value="FALTA">🔴 FALTA NÃO JUSTIFICADA</option>
+                  <option value="JUSTIFICADO">ℹ️ OUTRA JUSTIFICATIVA (Trabalho/Viagem)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Observação / Justificativa (Opcional)</label>
+                <input
+                  type="text"
+                  value={justificativaLancarDia}
+                  onChange={(e) => setJustificativaLancarDia(e.target.value)}
+                  placeholder="Ex: Treino das 18h, Atestado de 2 dias, etc."
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setModalLancarDia(false)}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition"
+                >
+                  Salvar Presença
+                </button>
               </div>
             </form>
           </div>
