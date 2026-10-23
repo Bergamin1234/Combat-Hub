@@ -199,7 +199,7 @@ const INSTRUCTORS_DATA = [
     role: "Head Coach de Muay Thai & Fundador",
     cref: "Prajied Azul Escuro e Preto",
     bio: "Mais de anos dedicados à arte marcial tailandesa. Formando atletas e transformando vidas através da disciplina e excelência técnica do Muay Thai.",
-    image: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=600&q=80",
+    image: "/felipe-boru.jpg",
     specialties: ["Muay Thai Tradicional", "Clinch & Cotovelos", "Defesa Pessoal"],
     achievements: [
       "Prajied Azul Escuro e Preto em Muay Thai",
