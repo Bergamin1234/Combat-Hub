@@ -454,7 +454,14 @@ app.post('/api/alunos/login', async (req, res) => {
       }
     }
 
-    res.json(aluno);
+    const planoLower = (aluno.plano || '').toLowerCase();
+    const isDiariaOuConvenio = planoLower.includes('diária') || planoLower.includes('diaria') || planoLower.includes('wellhub') || planoLower.includes('totalpass') || planoLower.includes('gympass');
+
+    res.json({
+      ...aluno,
+      isDiariaOuConvenio,
+      tipoCobranca: isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE'
+    });
   } catch (error) {
     res.status(500).json({ erro: 'Erro interno no servidor.' });
   }
@@ -711,6 +718,9 @@ app.post('/api/admin/alunos', async (req, res) => {
       }
     }
 
+    const planoLower = (plano || '').toLowerCase();
+    const isDiariaOuConvenio = planoLower.includes('diária') || planoLower.includes('diaria') || planoLower.includes('wellhub') || planoLower.includes('totalpass') || planoLower.includes('gympass');
+
     const novoAluno = await prisma.aluno.create({
       data: {
         nome: nome.trim(),
@@ -720,13 +730,15 @@ app.post('/api/admin/alunos', async (req, res) => {
         plano: plano || '2x na semana',
         senha: senhaTemporaria,
         primeiroAcesso: true,
-        mensalidades: {
-          create: {
-            valor: valorFinal,
-            dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
-            status: 'PENDENTE'
+        ...(!isDiariaOuConvenio ? {
+          mensalidades: {
+            create: {
+              valor: valorFinal,
+              dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
+              status: 'PENDENTE'
+            }
           }
-        }
+        } : {})
       }
     });
 
@@ -810,6 +822,28 @@ app.patch('/api/admin/alunos/:id/prajied', async (req, res) => {
     res.json({ mensagem: 'Prajied atualizado com sucesso!', aluno });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao atualizar Prajied.' });
+  }
+});
+
+// Atualizar Dados Gerais do Aluno (Plano, Prajied, Nome, etc.)
+app.patch('/api/admin/alunos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { plano, prajied, nome, telefone, email } = req.body;
+  try {
+    const dadosAtualizar: any = {};
+    if (plano !== undefined) dadosAtualizar.plano = plano;
+    if (prajied !== undefined) dadosAtualizar.prajied = prajied;
+    if (nome !== undefined) dadosAtualizar.nome = nome.trim();
+    if (telefone !== undefined) dadosAtualizar.telefone = telefone ? telefone.trim() : null;
+    if (email !== undefined) dadosAtualizar.email = email ? email.trim().toLowerCase() : null;
+
+    const aluno = await prisma.aluno.update({
+      where: { id },
+      data: dadosAtualizar
+    });
+    res.json({ mensagem: 'Aluno atualizado com sucesso!', aluno });
+  } catch (error: any) {
+    res.status(500).json({ erro: error.message || 'Erro ao atualizar aluno.' });
   }
 });
 
@@ -933,15 +967,60 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
     const faltasNaoJustificadas = presencas.filter(p => p.status === 'FALTA' || p.status === 'AUSENTE').length;
     const agendadosCount = presencas.filter(p => p.status === 'AGENDADO').length;
 
-    // Frequência esperada
+    // Frequência esperada & Identificação de Diária/Convênio
     const plano = (aluno.plano || '').toLowerCase();
+    const isDiariaOuConvenio = plano.includes('diária') || plano.includes('diaria') || plano.includes('wellhub') || plano.includes('totalpass') || plano.includes('gympass');
+
     let aulasPorSemana = 2;
     if (plano.includes('3x')) aulasPorSemana = 3;
     else if (plano.includes('todos') || plano.includes('livre')) aulasPorSemana = 5;
-    else if (plano.includes('diaria')) aulasPorSemana = 1;
+    else if (isDiariaOuConvenio) aulasPorSemana = 1;
 
     const semanasNoMes = 4;
     const aulasEsperadasNoMes = aulasPorSemana * semanasNoMes;
+
+    // Frequência da semana atual (Segunda-feira a Domingo)
+    const agoraHoje = new Date();
+    const diaDaSemanaHoje = agoraHoje.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+    const diffSegunda = agoraHoje.getDate() - (diaDaSemanaHoje === 0 ? 6 : diaDaSemanaHoje - 1);
+    const inicioSemanaAtual = new Date(agoraHoje);
+    inicioSemanaAtual.setDate(diffSegunda);
+    inicioSemanaAtual.setHours(0, 0, 0, 0);
+
+    const fimSemanaAtual = new Date(inicioSemanaAtual);
+    fimSemanaAtual.setDate(fimSemanaAtual.getDate() + 6);
+    fimSemanaAtual.setHours(23, 59, 59, 999);
+
+    const presencasSemana = await prisma.agendamentoPresenca.findMany({
+      where: {
+        alunoId: id,
+        data: { gte: inicioSemanaAtual, lte: fimSemanaAtual },
+        status: { in: ['PRESENTE', 'DOENCA', 'JUSTIFICADO'] }
+      },
+      orderBy: { data: 'asc' }
+    });
+
+    const nomesDias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    const nomesDiasCurto = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+    const diasFrequentadosNaSemana = presencasSemana.map(p => {
+      const d = new Date(p.data);
+      return {
+        diaSemana: nomesDias[d.getDay()],
+        diaSemanaCurto: nomesDiasCurto[d.getDay()],
+        dataIso: d.toISOString().split('T')[0],
+        dataFormatada: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`,
+        status: p.status
+      };
+    });
+
+    const frequenciaSemanal = {
+      totalNaSemana: presencasSemana.length,
+      diasFrequentados: diasFrequentadosNaSemana,
+      diasFormatadosTexto: diasFrequentadosNaSemana.length > 0 
+        ? diasFrequentadosNaSemana.map(d => `${d.diaSemanaCurto} (${d.dataFormatada})`).join(', ') 
+        : 'Nenhum treino registrado nesta semana'
+    };
 
     // Presenças Efetivas (Presença física + Doença/Atestado que não prejudica a graduação)
     const presencasEfetivas = presentesCount + doencaCount + outrasJustificadasCount;
@@ -954,10 +1033,10 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
     const pctGeralEfetiva = Math.min(100, Math.round((presencasEfetivas / baseCalculo) * 100));
 
     const ultimaMensalidade = aluno.mensalidades[0];
-    let diasParaVencer = null;
-    let statusMensalidade = 'PAGO';
+    let diasParaVencer: number | null = null;
+    let statusMensalidade = isDiariaOuConvenio ? 'LIBERADO' : 'PAGO';
 
-    if (ultimaMensalidade) {
+    if (!isDiariaOuConvenio && ultimaMensalidade) {
       statusMensalidade = ultimaMensalidade.status;
       const diffTime = new Date(ultimaMensalidade.dataVencimento).getTime() - agora.getTime();
       diasParaVencer = Math.ceil(diffTime / (1000 * 3600 * 24));
@@ -974,10 +1053,14 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
         telefone: aluno.telefone,
         email: aluno.email,
         plano: aluno.plano || '2x na semana',
-        prajied: aluno.prajied
+        prajied: aluno.prajied,
+        isDiariaOuConvenio,
+        tipoCobranca: isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE'
       },
       periodo: { mes, ano },
       estatisticas: {
+        isDiariaOuConvenio,
+        frequenciaSemanal,
         aulasPorSemana,
         aulasEsperadasNoMes,
         presentes: presentesCount,
@@ -992,10 +1075,12 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
         porcentagemGeral: pctGeralEfetiva
       },
       mensalidade: {
-        status: statusMensalidade,
-        diasParaVencer,
-        dataVencimento: ultimaMensalidade?.dataVencimento || null,
-        valor: ultimaMensalidade?.valor || 160.00
+        isDiariaOuConvenio,
+        tipoCobranca: isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE',
+        status: isDiariaOuConvenio ? 'LIBERADO' : statusMensalidade,
+        diasParaVencer: isDiariaOuConvenio ? null : diasParaVencer,
+        dataVencimento: isDiariaOuConvenio ? null : (ultimaMensalidade?.dataVencimento || null),
+        valor: isDiariaOuConvenio ? 40.00 : (ultimaMensalidade?.valor || 160.00)
       },
       presencas,
       presencasPorDia

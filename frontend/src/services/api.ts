@@ -23,6 +23,7 @@ export const adminApi = {
   createProduct: (data: unknown) => api.post('/admin/produtos', data),
   deleteProduct: (id: string) => api.delete(`/admin/produtos/${id}`),
   createStudent: (data: unknown) => api.post('/admin/alunos', data),
+  updateStudent: (studentId: string, data: unknown) => api.patch(`/admin/alunos/${studentId}`, data),
   registerPayment: (studentId: string) => api.post(`/admin/alunos/${studentId}/pagar`),
   updateStudentGrade: (studentId: string, data: unknown) =>
     api.patch(`/admin/alunos/${studentId}/prajied`, data),

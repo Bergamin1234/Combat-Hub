@@ -411,6 +411,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const isDiariaOuConvenio = (plano?: string) => {
+    if (!plano) return false;
+    const p = plano.toLowerCase();
+    return p.includes('diária') || p.includes('diaria') || p.includes('wellhub') || p.includes('totalpass') || p.includes('gympass');
+  };
+
+  const atualizarPlanoAluno = async (alunoId: string, plano: string) => {
+    try {
+      await adminApi.updateStudent(alunoId, { plano });
+      alert(`Plano do aluno alterado para "${plano}" com sucesso!`);
+      carregarDashboard();
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao atualizar plano do aluno.');
+    }
+  };
+
   const formatarWhatsUrl = (telefone: string, mensagem: string) => {
     let limpo = (telefone || '').replace(/\D/g, '');
     if (!limpo) return '#';
@@ -427,7 +443,9 @@ export default function AdminDashboard() {
     }
     const dias = aluno.diasVencimento;
     let msg = '';
-    if (dias === null) {
+    if (isDiariaOuConvenio(aluno.plano)) {
+      msg = `Olá ${aluno.nome}, aqui é do CT BORÜ Muay Thai! Tudo bem? Passando para saber quando você vem treinar conosco esta semana! Qualquer dúvida sobre os horários ou validação de passe (Wellhub/TotalPass/Diária), estamos à disposição. Oss!`;
+    } else if (dias === null) {
       msg = `Olá ${aluno.nome}, aqui é do CT BORÜ Muay Thai! Tudo bem? Passando para regularizar sua matrícula presencialmente no balcão.`;
     } else if (dias < 0) {
       msg = `Olá ${aluno.nome}, tudo bem? Aqui é do CT BORÜ. Sua mensalidade venceu há ${Math.abs(dias)} dias. Por favor, acerte presencialmente na recepção ou via PIX (+55 69 9238-4491) para manter seu acesso aos treinos!`;
@@ -801,7 +819,20 @@ export default function AdminDashboard() {
                         <div>{aluno.nome}</div>
                         <div className="text-[11px] text-zinc-500 font-normal">{aluno.telefone || 'Sem telefone'}</div>
                       </td>
-                      <td className="p-3 sm:p-4 text-zinc-300 font-medium">{aluno.plano}</td>
+                      <td className="p-3 sm:p-4 text-zinc-300 font-medium">
+                        <select 
+                          value={aluno.plano || '2x na semana'}
+                          onChange={(e) => atualizarPlanoAluno(aluno.id, e.target.value)}
+                          className="bg-[#1A1A1E] border border-zinc-700 text-white text-xs rounded-lg px-2 py-1 font-semibold focus:border-red-500 outline-none"
+                        >
+                          <option value="2x na semana">2x na semana (R$ 130)</option>
+                          <option value="3x na semana">3x na semana (R$ 160)</option>
+                          <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
+                          <option value="Diária">Diária Avulsa (R$ 40/aula)</option>
+                          <option value="Wellhub">Wellhub / Gympass</option>
+                          <option value="TotalPass">TotalPass</option>
+                        </select>
+                      </td>
                       <td className="p-3 sm:p-4">
                         <select 
                           value={aluno.prajied || 'Branco'}
@@ -818,15 +849,30 @@ export default function AdminDashboard() {
                         </select>
                       </td>
                       <td className="p-3 sm:p-4">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                          aluno.status === 'PAGO' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          {aluno.status}
-                        </span>
-                        {aluno.diasVencimento !== null && (
-                          <span className="block text-[10px] text-zinc-400 mt-0.5">
-                            {aluno.diasVencimento < 0 ? `Venceu há ${Math.abs(aluno.diasVencimento)}d` : `Vence em ${aluno.diasVencimento}d`}
-                          </span>
+                        {isDiariaOuConvenio(aluno.plano) ? (
+                          <>
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                              ⚡ Diária / Convênio
+                            </span>
+                            <span className="block text-[10px] text-zinc-400 mt-0.5 font-medium">
+                              {aluno.plano?.toLowerCase().includes('wellhub') ? 'Check-in Wellhub' :
+                               aluno.plano?.toLowerCase().includes('totalpass') ? 'Check-in TotalPass' :
+                               'R$ 40 avulso p/ treino'}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                              aluno.status === 'PAGO' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                            }`}>
+                              {aluno.status}
+                            </span>
+                            {aluno.diasVencimento !== null && (
+                              <span className="block text-[10px] text-zinc-400 mt-0.5">
+                                {aluno.diasVencimento < 0 ? `Venceu há ${Math.abs(aluno.diasVencimento)}d` : `Vence em ${aluno.diasVencimento}d`}
+                              </span>
+                            )}
+                          </>
                         )}
                       </td>
                       <td className="p-3 sm:p-4 text-right">
@@ -1295,11 +1341,13 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">Plano</label>
-                  <select value={novoAluno.plano} onChange={(e) => setNovoAluno({...novoAluno, plano: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                    <option value="2x na semana">2x na semana (R$ 130)</option>
-                    <option value="3x na semana">3x na semana (R$ 160)</option>
-                    <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
-                    <option value="Diária">Diária (R$ 40)</option>
+                  <select value={novoAluno.plano} onChange={(e) => setNovoAluno({...novoAluno, plano: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white">
+                    <option value="2x na semana">2x na semana (R$ 130/mês)</option>
+                    <option value="3x na semana">3x na semana (R$ 160/mês)</option>
+                    <option value="Todos os Horários">Todos os Horários (R$ 280/mês)</option>
+                    <option value="Diária">Diária Avulsa (R$ 40/treino)</option>
+                    <option value="Wellhub">Wellhub / Gympass (Individual)</option>
+                    <option value="TotalPass">TotalPass (Individual)</option>
                   </select>
                 </div>
               </div>
@@ -1744,6 +1792,33 @@ export default function AdminDashboard() {
               </button>
             </div>
 
+            {/* DESTAQUE DE FREQUÊNCIA SEMANAL PARA ALUNOS DE DIÁRIA OU CONVÊNIO */}
+            {isDiariaOuConvenio(alunoSelecionado.plano) && (
+              <div className="bg-gradient-to-r from-red-950/40 via-[#1A1A1E] to-[#141416] border border-red-500/30 rounded-xl p-4 mb-5 shadow-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">⚡</span>
+                      <h4 className="text-sm font-bold text-white">Frequência Individual da Semana Atual</h4>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                        {alunoSelecionado.plano}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      Dias frequentados nesta semana: <strong className="text-zinc-200">{calendarioDados.estatisticas?.frequenciaSemanal?.diasFormatadosTexto || 'Nenhum treino registrado'}</strong>
+                    </p>
+                  </div>
+                  <div className="bg-black/50 px-4 py-2 rounded-lg border border-zinc-800 text-center sm:text-right min-w-[120px]">
+                    <span className="text-[10px] uppercase font-bold text-zinc-400 block">Nesta Semana</span>
+                    <span className="text-2xl font-black text-amber-400">
+                      {calendarioDados.estatisticas?.frequenciaSemanal?.totalNaSemana || 0}
+                    </span>
+                    <span className="text-xs text-zinc-400 ml-1">treino(s)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* CARDS COM AS PORCENTAGENS REQUISITADAS */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
               <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-3">
@@ -1878,10 +1953,12 @@ export default function AdminDashboard() {
               <div>
                 <label className="block text-zinc-400 text-xs font-semibold mb-1">Plano Escolhido</label>
                 <select value={planoConversao} onChange={(e) => setPlanoConversao(e.target.value)} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white">
-                  <option value="2x na semana">2x na semana (R$ 130)</option>
-                  <option value="3x na semana">3x na semana (R$ 160)</option>
-                  <option value="Todos os Horários">Todos os Horários (R$ 280)</option>
-                  <option value="Diária">Diária (R$ 40)</option>
+                  <option value="2x na semana">2x na semana (R$ 130/mês)</option>
+                  <option value="3x na semana">3x na semana (R$ 160/mês)</option>
+                  <option value="Todos os Horários">Todos os Horários (R$ 280/mês)</option>
+                  <option value="Diária">Diária Avulsa (R$ 40/treino)</option>
+                  <option value="Wellhub">Wellhub / Gympass (Individual)</option>
+                  <option value="TotalPass">TotalPass (Individual)</option>
                 </select>
               </div>
               <div>

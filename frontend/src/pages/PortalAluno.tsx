@@ -270,7 +270,14 @@ export default function PortalAluno() {
     }
   };
 
+  const isDiariaOuConvenio = (plano?: string) => {
+    if (!plano) return false;
+    const p = plano.toLowerCase();
+    return p.includes('diária') || p.includes('diaria') || p.includes('wellhub') || p.includes('totalpass') || p.includes('gympass');
+  };
+
   const calcularDiasVencimento = () => {
+    if (isDiariaOuConvenio(alunoLogado?.plano)) return null;
     if (!alunoLogado?.mensalidades || alunoLogado.mensalidades.length === 0) return null;
     const ultima = alunoLogado.mensalidades[0];
     const agora = new Date();
@@ -508,7 +515,7 @@ export default function PortalAluno() {
               abaAtiva === 'financeiro' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
             }`}
           >
-            💳 Mensalidade
+            {isDiariaOuConvenio(alunoLogado?.plano) ? '🎫 Status do Acesso (Diária/Convênio)' : '💳 Mensalidade'}
           </button>
         </div>
 
@@ -542,12 +549,22 @@ export default function PortalAluno() {
               {/* Card Plano & Status */}
               <div className="bg-[#141416] border border-zinc-800 rounded-xl p-5 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Plano Atual</span>
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                    {isDiariaOuConvenio(alunoLogado?.plano) ? 'Tipo de Acesso' : 'Plano Atual'}
+                  </span>
                   <h3 className="text-lg font-black text-red-500">{alunoLogado?.plano || '2x na semana'}</h3>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Pagamento presencial na recepção</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    {isDiariaOuConvenio(alunoLogado?.plano)
+                      ? (alunoLogado?.plano?.toLowerCase().includes('wellhub') || alunoLogado?.plano?.toLowerCase().includes('gympass')
+                          ? 'Validação de check-in via app parceiro'
+                          : alunoLogado?.plano?.toLowerCase().includes('totalpass')
+                          ? 'Validação de check-in via app TotalPass'
+                          : 'R$ 40,00 por treino presencial')
+                      : 'Pagamento presencial na recepção'}
+                  </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30">
-                  Matrícula Ativa
+                  {isDiariaOuConvenio(alunoLogado?.plano) ? '⚡ Acesso Liberado' : 'Matrícula Ativa'}
                 </span>
               </div>
             </div>
@@ -686,32 +703,110 @@ export default function PortalAluno() {
           <div className="space-y-6">
             {dadosFrequencia && (
               <>
-                {/* 4 CARDS COM AS PORCENTAGENS ESPECÍFICAS REQUISITADAS */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
-                    <p className="text-[10px] uppercase font-bold text-green-400 mb-0.5">🟢 Presença Real</p>
-                    <p className="text-2xl font-black text-white">{dadosFrequencia.estatisticas.porcentagemPresenca}%</p>
-                    <span className="text-[10px] text-zinc-500">{dadosFrequencia.estatisticas.presentes} de {dadosFrequencia.estatisticas.aulasEsperadasNoMes} aulas</span>
-                  </div>
+                {/* DESTAQUE DE FREQUÊNCIA SEMANAL PARA ALUNOS DE DIÁRIA OU CONVÊNIO */}
+                {isDiariaOuConvenio(alunoLogado?.plano) ? (
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-red-950/40 via-[#141416] to-[#1A1A1E] border border-red-500/30 rounded-2xl p-5 space-y-4 shadow-xl">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">⚡</span>
+                            <h3 className="text-lg font-black text-white">Frequência Individual da Semana</h3>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                              {alunoLogado?.plano}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-300 mt-1">
+                            Seu acesso é individual por aula/diária. Acompanhe a quantidade e os dias que você compareceu nesta semana:
+                          </p>
+                        </div>
+                        <div className="bg-black/50 border border-zinc-800 rounded-xl px-4 py-2.5 text-center sm:text-right min-w-[140px]">
+                          <span className="text-[10px] uppercase font-bold text-zinc-400 block">Treinos Esta Semana</span>
+                          <span className="text-3xl font-black text-amber-400">
+                            {dadosFrequencia.estatisticas?.frequenciaSemanal?.totalNaSemana || 0}
+                          </span>
+                          <span className="text-xs text-zinc-400 ml-1">treino(s)</span>
+                        </div>
+                      </div>
 
-                  <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
-                    <p className="text-[10px] uppercase font-bold text-blue-400 mb-0.5">🔵 Ausência Doença</p>
-                    <p className="text-2xl font-black text-blue-400">{dadosFrequencia.estatisticas.porcentagemDoenca}%</p>
-                    <span className="text-[10px] text-zinc-500">{dadosFrequencia.estatisticas.doenca} aula(s) c/ atestado</span>
-                  </div>
+                      {/* Dias frequentados na semana */}
+                      <div className="pt-3 border-t border-zinc-800">
+                        <span className="text-xs font-bold text-zinc-300 block mb-2">
+                          Dias Frequentados Nesta Semana (Segunda a Domingo):
+                        </span>
+                        {dadosFrequencia.estatisticas?.frequenciaSemanal?.diasFrequentados && dadosFrequencia.estatisticas.frequenciaSemanal.diasFrequentados.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {dadosFrequencia.estatisticas.frequenciaSemanal.diasFrequentados.map((d: any, idx: number) => (
+                              <span key={idx} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                                <span>✓</span>
+                                <span>{d.diaSemana}</span>
+                                <span className="text-zinc-400 text-[11px]">({d.dataFormatada})</span>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-zinc-500 italic">
+                            Nenhum treino realizado ainda nesta semana. Garanta sua vaga agendando seu treino na aba "Treinos"!
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
-                  <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
-                    <p className="text-[10px] uppercase font-bold text-red-400 mb-0.5">🔴 Falta Comum</p>
-                    <p className="text-2xl font-black text-red-500">{dadosFrequencia.estatisticas.porcentagemFalta}%</p>
-                    <span className="text-[10px] text-zinc-500">{dadosFrequencia.estatisticas.faltasNaoJustificadas} sem justificativa</span>
-                  </div>
+                    {/* CARDS RESUMO DO ALUNO DE DIÁRIA */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] uppercase font-bold text-amber-400 mb-0.5">⚡ Treinos Esta Semana</p>
+                        <p className="text-2xl font-black text-white">{dadosFrequencia.estatisticas?.frequenciaSemanal?.totalNaSemana || 0}</p>
+                        <span className="text-[10px] text-zinc-500">Semana atual</span>
+                      </div>
 
-                  <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
-                    <p className="text-[10px] uppercase font-bold text-amber-400 mb-0.5">⭐ Presença Efetiva</p>
-                    <p className="text-2xl font-black text-amber-400">{dadosFrequencia.estatisticas.porcentagemGeral}%</p>
-                    <span className="text-[10px] text-zinc-500">Base para Prajied</span>
+                      <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] uppercase font-bold text-green-400 mb-0.5">🟢 Treinos no Mês</p>
+                        <p className="text-2xl font-black text-green-400">{dadosFrequencia.estatisticas.presentes}</p>
+                        <span className="text-[10px] text-zinc-500">Presenças confirmadas</span>
+                      </div>
+
+                      <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] uppercase font-bold text-blue-400 mb-0.5">🔵 Ausências Informadas</p>
+                        <p className="text-2xl font-black text-blue-400">{dadosFrequencia.estatisticas.doenca}</p>
+                        <span className="text-[10px] text-zinc-500">Com atestado / aviso</span>
+                      </div>
+
+                      <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                        <p className="text-[10px] uppercase font-bold text-red-400 mb-0.5">🥋 Graduação Prajied</p>
+                        <p className="text-xl font-black text-white truncate">{alunoLogado?.prajied || 'Branco'}</p>
+                        <span className="text-[10px] text-zinc-500">Nível reconhecido</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* 4 CARDS COM AS PORCENTAGENS ESPECÍFICAS REQUISITADAS PARA MENSALISTAS */
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                      <p className="text-[10px] uppercase font-bold text-green-400 mb-0.5">🟢 Presença Real</p>
+                      <p className="text-2xl font-black text-white">{dadosFrequencia.estatisticas.porcentagemPresenca}%</p>
+                      <span className="text-[10px] text-zinc-500">{dadosFrequencia.estatisticas.presentes} de {dadosFrequencia.estatisticas.aulasEsperadasNoMes} aulas</span>
+                    </div>
+
+                    <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                      <p className="text-[10px] uppercase font-bold text-blue-400 mb-0.5">🔵 Ausência Doença</p>
+                      <p className="text-2xl font-black text-blue-400">{dadosFrequencia.estatisticas.porcentagemDoenca}%</p>
+                      <span className="text-[10px] text-zinc-500">{dadosFrequencia.estatisticas.doenca} aula(s) c/ atestado</span>
+                    </div>
+
+                    <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                      <p className="text-[10px] uppercase font-bold text-red-400 mb-0.5">🔴 Falta Comum</p>
+                      <p className="text-2xl font-black text-red-500">{dadosFrequencia.estatisticas.porcentagemFalta}%</p>
+                      <span className="text-[10px] text-zinc-500">{dadosFrequencia.estatisticas.faltasNaoJustificadas} sem justificativa</span>
+                    </div>
+
+                    <div className="bg-[#141416] border border-zinc-800 rounded-xl p-4">
+                      <p className="text-[10px] uppercase font-bold text-amber-400 mb-0.5">⭐ Presença Efetiva</p>
+                      <p className="text-2xl font-black text-amber-400">{dadosFrequencia.estatisticas.porcentagemGeral}%</p>
+                      <span className="text-[10px] text-zinc-500">Base para Prajied</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* CALENDÁRIO */}
                 <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4">
@@ -899,70 +994,173 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* CONTEÚDO DA ABA: MENSALIDADE (REMOVIDO PAGAMENTO ONLINE - APENAS PRESENCIAL) */}
+        {/* CONTEÚDO DA ABA: MENSALIDADE OU STATUS DE ACESSO (DIÁRIA / CONVÊNIO) */}
         {abaAtiva === 'financeiro' && (
-          <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-6 space-y-6">
-            <div className="border-b border-zinc-800 pb-4">
-              <h2 className="text-xl font-bold text-white">Status da Mensalidade</h2>
-              <p className="text-xs text-zinc-400">Acompanhe sua vigência e datas de renovação.</p>
-            </div>
+          isDiariaOuConvenio(alunoLogado?.plano) ? (
+            <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-6 shadow-xl">
+              <div className="border-b border-zinc-800 pb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎫</span>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white">Status de Acesso / Diária & Convênio</h2>
+                    <p className="text-xs text-zinc-400">Modalidade com cobrança individual por treino (sem renovação ou fatura mensal fixa).</p>
+                  </div>
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5">
-                <span className="text-xs text-zinc-400 font-semibold uppercase">Situação Atual</span>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className={`text-3xl font-black ${
-                    dias !== null && dias >= 0 ? 'text-green-500' : 'text-red-500'
-                  }`}>
-                    {dias !== null && dias >= 0 ? 'EM DIA' : 'PENDENTE'}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5">
+                  <span className="text-xs text-zinc-400 font-semibold uppercase">Situação do Seu Acesso</span>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl font-black text-emerald-400">
+                      ACESSO LIBERADO
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-2">
+                    Seu cadastro está ativo. Você tem acesso liberado para reservar horários e treinar normalmente.
+                  </p>
+                </div>
+
+                <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5">
+                  <span className="text-xs text-zinc-400 font-semibold uppercase">Tipo de Ingresso / Passe</span>
+                  <p className="text-2xl sm:text-3xl font-black text-white mt-2">
+                    {alunoLogado?.plano?.toLowerCase().includes('wellhub') ? 'Wellhub (Gympass)' :
+                     alunoLogado?.plano?.toLowerCase().includes('totalpass') ? 'TotalPass' :
+                     alunoLogado?.plano?.toLowerCase().includes('gympass') ? 'Gympass' :
+                     'R$ 40,00'}
+                    {!alunoLogado?.plano?.toLowerCase().includes('wellhub') && 
+                     !alunoLogado?.plano?.toLowerCase().includes('totalpass') && 
+                     !alunoLogado?.plano?.toLowerCase().includes('gympass') && (
+                      <span className="text-xs font-normal text-zinc-400 ml-1.5">/treino</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-2">
+                    {alunoLogado?.plano?.toLowerCase().includes('wellhub') || alunoLogado?.plano?.toLowerCase().includes('gympass')
+                      ? 'Validação de check-in diário através do app parceiro na recepção.'
+                      : alunoLogado?.plano?.toLowerCase().includes('totalpass')
+                      ? 'Validação de check-in diário através do app TotalPass na recepção.'
+                      : 'Pagamento avulso acertado diretamente na recepção a cada treino realizado.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Frequência da semana no painel financeiro */}
+              <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5 space-y-3">
+                <div className="flex justify-between items-center flex-wrap gap-2">
+                  <div>
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Frequência da Semana Atual</span>
+                    <h4 className="text-base font-black text-white mt-0.5">
+                      {dadosFrequencia?.estatisticas?.frequenciaSemanal?.totalNaSemana || 0} treino(s) nesta semana
+                    </h4>
+                  </div>
+                  <span className="px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 text-xs font-bold text-zinc-300">
+                    Sem cobrança mensal recorrente
                   </span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-2">
-                  {dias === null ? 'Nenhum registro encontrado.' :
-                   dias < 0 ? `Vencimento expirado há ${Math.abs(dias)} dias.` :
-                   `Restam ${dias} dias para a próxima renovação.`}
+                <p className="text-xs text-zinc-400">
+                  Dias frequentados: <strong className="text-zinc-200">{dadosFrequencia?.estatisticas?.frequenciaSemanal?.diasFormatadosTexto || 'Nenhum treino registrado nesta semana'}</strong>
                 </p>
               </div>
 
-              <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5">
-                <span className="text-xs text-zinc-400 font-semibold uppercase">Valor do Seu Plano</span>
-                <p className="text-3xl font-black text-white mt-2">
-                  {alunoLogado?.plano === 'Todos os Horários' ? 'R$ 280,00' :
-                   alunoLogado?.plano === '3x na semana' ? 'R$ 160,00' :
-                   alunoLogado?.plano === 'Diária' ? 'R$ 40,00' : 'R$ 130,00'}
-                  <span className="text-xs font-normal text-zinc-500 ml-1">/mês</span>
+              {/* Como funciona o acesso */}
+              <div className="p-5 rounded-xl bg-gradient-to-r from-red-950/30 via-[#1A1A1E] to-zinc-900 border border-red-500/30 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🥋</span>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wider">Como Funciona Seu Acesso</h4>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Por ser um formato de diária/passe corporativo, não há cobrança por mês ou vencimento fixo. Cada treino é computado de forma individual:
                 </p>
-                <p className="text-xs text-zinc-400 mt-2">Plano: {alunoLogado?.plano || '2x na semana'}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-xs text-zinc-300">
+                  <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg">
+                    <strong className="text-white block mb-1">1. Agendamento</strong>
+                    Reserve sua vaga no tatame com antecedência na aba <em>Treinos</em>.
+                  </div>
+                  <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg">
+                    <strong className="text-white block mb-1">2. Na Recepção</strong>
+                    Faça o check-in no aplicativo parceiro ou acerte o valor avulso no balcão.
+                  </div>
+                  <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg">
+                    <strong className="text-white block mb-1">3. Graduação</strong>
+                    Todas as presenças registradas somam na sua evolução marcial (Prajied)!
+                  </div>
+                </div>
+                <div className="pt-2">
+                  <a 
+                    href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de tirar uma dúvida sobre meu acesso por diária / passe no CT BORÜ!`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-900/30"
+                  >
+                    <span>📲 Falar com a Recepção no WhatsApp</span>
+                  </a>
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-6 space-y-6">
+              <div className="border-b border-zinc-800 pb-4">
+                <h2 className="text-xl font-bold text-white">Status da Mensalidade</h2>
+                <p className="text-xs text-zinc-400">Acompanhe sua vigência e datas de renovação.</p>
+              </div>
 
-            {/* AVISO EXCLUSIVO DE PAGAMENTO PRESENCIAL CONFORME SOLICITADO */}
-            <div className="p-5 rounded-xl bg-gradient-to-r from-red-950/30 via-[#1A1A1E] to-zinc-900 border border-red-500/30 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🥋</span>
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Pagamento Presencial na Recepção</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5">
+                  <span className="text-xs text-zinc-400 font-semibold uppercase">Situação Atual</span>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className={`text-3xl font-black ${
+                      dias !== null && dias >= 0 ? 'text-green-500' : 'text-red-500'
+                    }`}>
+                      {dias !== null && dias >= 0 ? 'EM DIA' : 'PENDENTE'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-2">
+                    {dias === null ? 'Nenhum registro encontrado.' :
+                     dias < 0 ? `Vencimento expirado há ${Math.abs(dias)} dias.` :
+                     `Restam ${dias} dias para a próxima renovação.`}
+                  </p>
+                </div>
+
+                <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5">
+                  <span className="text-xs text-zinc-400 font-semibold uppercase">Valor do Seu Plano</span>
+                  <p className="text-3xl font-black text-white mt-2">
+                    {alunoLogado?.plano === 'Todos os Horários' ? 'R$ 280,00' :
+                     alunoLogado?.plano === '3x na semana' ? 'R$ 160,00' :
+                     alunoLogado?.plano === 'Diária' ? 'R$ 40,00' : 'R$ 130,00'}
+                    <span className="text-xs font-normal text-zinc-500 ml-1">/mês</span>
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-2">Plano: {alunoLogado?.plano || '2x na semana'}</p>
+                </div>
               </div>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                As mensalidades e diárias são acertadas diretamente no balcão de atendimento da academia com o Professor Felipe ou com a nossa recepção antes do início do seu treino.
-              </p>
-              <div className="flex flex-wrap gap-2 pt-1 text-xs text-zinc-400">
-                <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ PIX Presencial no Balcão</span>
-                <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ Cartão de Débito/Crédito na Maquininha</span>
-                <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ Dinheiro em Espécie</span>
+
+              {/* AVISO EXCLUSIVO DE PAGAMENTO PRESENCIAL CONFORME SOLICITADO */}
+              <div className="p-5 rounded-xl bg-gradient-to-r from-red-950/30 via-[#1A1A1E] to-zinc-900 border border-red-500/30 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🥋</span>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wider">Pagamento Presencial na Recepção</h4>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  As mensalidades são acertadas diretamente no balcão de atendimento da academia com o Professor Felipe ou com a nossa recepção antes do início do seu treino.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1 text-xs text-zinc-400">
+                  <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ PIX Presencial no Balcão</span>
+                  <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ Cartão de Débito/Crédito na Maquininha</span>
+                  <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ Dinheiro em Espécie</span>
+                </div>
+                <div className="pt-2">
+                  <a 
+                    href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de tirar uma dúvida sobre a minha mensalidade do CT BORÜ!`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-900/30"
+                  >
+                    <span>📲 Falar com a Recepção no WhatsApp</span>
+                  </a>
+                </div>
               </div>
-              <div className="pt-2">
-                <a 
-                  href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de tirar uma dúvida sobre a minha mensalidade do CT BORÜ!`)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-900/30"
-                >
-                  <span>📲 Falar com a Recepção no WhatsApp</span>
-                </a>
-              </div>
+
             </div>
-
-          </div>
+          )
         )}
 
       </div>
@@ -1059,8 +1257,8 @@ export default function PortalAluno() {
             abaAtiva === 'financeiro' ? 'text-red-500' : 'text-zinc-500'
           }`}
         >
-          <span className="text-base">💳</span>
-          <span>Plano</span>
+          <span className="text-base">{isDiariaOuConvenio(alunoLogado?.plano) ? '🎫' : '💳'}</span>
+          <span>{isDiariaOuConvenio(alunoLogado?.plano) ? 'Acesso' : 'Plano'}</span>
         </button>
       </nav>
 
