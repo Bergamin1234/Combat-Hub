@@ -17,6 +17,7 @@ export const adminApi = {
   login: (data: unknown) => api.post('/auth/login', data),
   createTeacher: (data: unknown) => api.post('/admin/professores', data),
   updateTeacher: (id: string, data: unknown) => api.patch(`/admin/professores/${id}`, data),
+  resetTeacherPassword: (id: string, novaSenha: string) => api.post(`/admin/professores/${id}/alterar-senha`, { novaSenha }),
   deleteTeacher: (id: string) => api.delete(`/admin/professores/${id}`),
   createNotice: (data: unknown) => api.post('/admin/avisos', data),
   deleteNotice: (id: string) => api.delete(`/admin/avisos/${id}`),

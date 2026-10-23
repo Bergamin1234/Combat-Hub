@@ -16,9 +16,9 @@ async function main() {
   console.log('Criando Usuários (Administrador e Professor)...');
   await prisma.usuario.create({
     data: {
-      nome: 'Administrador Geral',
-      email: 'admin@boru.com',
-      senha: 'admin123',
+      nome: 'Administrador Master',
+      email: 'brgadmin@boru.com',
+      senha: 'BoruCentroDeCombate98490@!',
       cargo: 'ADMIN',
       telefone: '69999999999',
       prajied: 'Prajied Preto'
@@ -29,6 +29,7 @@ async function main() {
     data: {
       nome: 'Felipe Borü',
       email: 'felipe@boru.com',
+      cpf: '12345678900',
       senha: 'boru123',
       cargo: 'PROFESSOR',
       telefone: '6992384491',
@@ -47,6 +48,7 @@ async function main() {
     data: {
       nome: 'Carlos "Gracie" Silva',
       email: 'carlos.bjj@boru.com',
+      cpf: '98765432100',
       senha: 'boru123',
       cargo: 'PROFESSOR',
       telefone: '69991234567',

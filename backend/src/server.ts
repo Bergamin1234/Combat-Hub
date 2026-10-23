@@ -21,52 +21,93 @@ app.post('/api/auth/login', async (req, res) => {
   const { emailOuUsuario, senha } = req.body;
 
   if (!emailOuUsuario || !senha) {
-    return res.status(400).json({ erro: 'Informe o usuário/e-mail e a senha.' });
+    return res.status(400).json({ erro: 'Informe o login e a senha de acesso.' });
   }
 
-  const termo = emailOuUsuario.trim().toLowerCase();
+  const termo = emailOuUsuario.trim();
+  const termoLower = termo.toLowerCase();
+  const cpfLimpo = termo.replace(/\D/g, '');
 
-  // Atalhos práticos para demonstração e segurança rápida
-  if (senha === 'admin123' && (termo === 'admin' || termo === 'admin@boru.com')) {
-    return res.json({
-      usuario: {
-        id: 'admin-master',
-        nome: 'Administrador Geral',
-        email: 'admin@boru.com',
-        cargo: 'ADMIN',
-        telefone: '(69) 99238-4491',
-        prajied: 'Prajied Preto'
+  // 1. Verificação do Administrador Master (Acesso: BrgAdmin | Senha: BoruCentroDeCombate98490@!)
+  const isAdminLogin = (termoLower === 'brgadmin' || termoLower === 'brgadmin@boru.com' || termoLower === 'admin@boru.com' || termoLower === 'admin');
+
+  if (isAdminLogin) {
+    if (senha !== 'BoruCentroDeCombate98490@!') {
+      return res.status(401).json({ erro: 'Senha incorreta para o Administrador.' });
+    }
+
+    // Garante que o registro no banco exista e esteja com as credenciais oficiais
+    let adminDb = await prisma.usuario.findFirst({
+      where: {
+        OR: [
+          { email: 'brgadmin@boru.com' },
+          { email: 'admin@boru.com' },
+          { cargo: 'ADMIN' }
+        ]
       }
     });
-  }
 
-  if (senha === 'boru123' && (termo === 'felipe' || termo === 'felipe@boru.com' || termo === 'professor')) {
+    if (!adminDb) {
+      adminDb = await prisma.usuario.create({
+        data: {
+          nome: 'Administrador Master',
+          email: 'brgadmin@boru.com',
+          senha: 'BoruCentroDeCombate98490@!',
+          cargo: 'ADMIN',
+          telefone: '(69) 99238-4491',
+          prajied: 'Prajied Preto'
+        }
+      });
+    } else if (adminDb.senha !== 'BoruCentroDeCombate98490@!') {
+      adminDb = await prisma.usuario.update({
+        where: { id: adminDb.id },
+        data: {
+          email: 'brgadmin@boru.com',
+          senha: 'BoruCentroDeCombate98490@!'
+        }
+      });
+    }
+
     return res.json({
       usuario: {
-        id: 'felipe-boru',
-        nome: 'Felipe Borü',
-        email: 'felipe@boru.com',
-        cargo: 'PROFESSOR',
-        telefone: '(69) 99238-4491',
-        prajied: 'Prajied Azul Escuro e Preto'
+        id: adminDb.id,
+        nome: adminDb.nome,
+        email: adminDb.email,
+        cargo: 'ADMIN',
+        telefone: adminDb.telefone,
+        prajied: adminDb.prajied || 'Prajied Preto'
       }
     });
   }
 
   try {
+    // 2. Busca do usuário (Professor através do CPF ou E-mail)
+    const condicoes: any[] = [
+      { email: termoLower }
+    ];
+
+    if (cpfLimpo.length >= 11) {
+      condicoes.push({ cpf: cpfLimpo });
+      condicoes.push({ cpf: termo });
+    }
+
     const usuario = await prisma.usuario.findFirst({
       where: {
-        OR: [
-          { email: termo },
-          { nome: { contains: emailOuUsuario.trim() } }
-        ],
-        senha: senha,
+        OR: condicoes,
         ativo: true
       }
     });
 
     if (!usuario) {
-      return res.status(401).json({ erro: 'Credenciais inválidas. Verifique seu login e senha.' });
+      return res.status(401).json({
+        erro: 'Usuário não localizado. Professores devem acessar informando o seu CPF e senha cadastrados pelo Administrador.'
+      });
+    }
+
+    if (usuario.senha !== senha) {
+      return res.status(401).json({
+        erro: 'Senha incorreta. A troca de senha de professores é realizada exclusivamente pelo Administrador.'
+      });
     }
 
     res.json({
@@ -74,6 +115,7 @@ app.post('/api/auth/login', async (req, res) => {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
+        cpf: usuario.cpf,
         cargo: usuario.cargo,
         telefone: usuario.telefone,
         modalidade: usuario.modalidade || 'Muay Thai',
@@ -87,8 +129,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro interno na autenticação.' });
+    console.error('Erro na autenticação de equipe', error);
+    res.status(500).json({ erro: 'Erro interno ao validar credenciais.' });
   }
 });
 
@@ -113,6 +155,7 @@ app.post('/api/admin/professores', async (req, res) => {
   const { 
     nome, 
     email, 
+    cpf,
     senha, 
     cargo, 
     telefone, 
@@ -126,18 +169,35 @@ app.post('/api/admin/professores', async (req, res) => {
     prajied 
   } = req.body;
 
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ erro: 'Nome, E-mail e Senha são obrigatórios.' });
+  if (!nome || !senha) {
+    return res.status(400).json({ erro: 'Nome e Senha são obrigatórios.' });
   }
 
-  const emailLimpo = email.trim().toLowerCase();
+  const cargoFinal = cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR';
+  const cpfLimpo = cpf ? cpf.replace(/\D/g, '') : null;
+  const emailFinal = email ? email.trim().toLowerCase() : (cpfLimpo ? `${cpfLimpo}@boru.com` : `professor_${Date.now()}@boru.com`);
+
+  if (cargoFinal === 'PROFESSOR' && (!cpfLimpo || cpfLimpo.length < 11)) {
+    return res.status(400).json({ erro: 'CPF válido (11 dígitos) é obrigatório para cadastrar o professor. O professor usará este CPF para fazer login no sistema.' });
+  }
 
   try {
-    const existente = await prisma.usuario.findUnique({
-      where: { email: emailLimpo }
+    if (cpfLimpo) {
+      const existenteCpf = await prisma.usuario.findFirst({
+        where: {
+          OR: [{ cpf: cpfLimpo }, { cpf }]
+        }
+      });
+      if (existenteCpf) {
+        return res.status(400).json({ erro: `Já existe um professor/usuário cadastrado com este CPF (${cpfLimpo}).` });
+      }
+    }
+
+    const existenteEmail = await prisma.usuario.findUnique({
+      where: { email: emailFinal }
     });
 
-    if (existente) {
+    if (existenteEmail) {
       return res.status(400).json({ erro: 'Já existe um usuário cadastrado com este e-mail.' });
     }
 
@@ -147,9 +207,10 @@ app.post('/api/admin/professores', async (req, res) => {
     const novo = await prisma.usuario.create({
       data: {
         nome: nome.trim(),
-        email: emailLimpo,
+        email: emailFinal,
+        cpf: cpfLimpo,
         senha: senha.trim(),
-        cargo: cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR',
+        cargo: cargoFinal,
         telefone: telefone ? telefone.trim() : null,
         modalidade: modalidadeFinal,
         graduacao: graduacaoFinal,
@@ -158,15 +219,36 @@ app.post('/api/admin/professores', async (req, res) => {
         tempoAula: tempoAula || '60 min',
         horariosAula: horariosAula ? horariosAula.trim() : null,
         cargaHorariaSemanal: cargaHorariaSemanal ? cargaHorariaSemanal.trim() : null,
-        prajied: graduacaoFinal, // retrocompatibilidade
+        prajied: graduacaoFinal,
         ativo: true
       }
     });
 
-    res.json({ mensagem: 'Professor/Usuário cadastrado com sucesso!', professor: novo });
+    res.json({ mensagem: 'Professor cadastrado com sucesso! Ele já pode acessar informando seu CPF e senha.', professor: novo });
   } catch (error: any) {
     console.error(error);
-    res.status(500).json({ erro: 'Erro ao cadastrar professor.' });
+    res.status(500).json({ erro: error.message || 'Erro ao cadastrar professor.' });
+  }
+});
+
+// Alterar senha de um professor manualmente (Exclusivo para o Administrador)
+app.post('/api/admin/professores/:id/alterar-senha', async (req, res) => {
+  const { id } = req.params;
+  const { novaSenha } = req.body;
+
+  if (!novaSenha || novaSenha.trim().length < 4) {
+    return res.status(400).json({ erro: 'A nova senha deve ter no mínimo 4 caracteres.' });
+  }
+
+  try {
+    const professor = await prisma.usuario.update({
+      where: { id },
+      data: { senha: novaSenha.trim() }
+    });
+
+    res.json({ mensagem: `Senha do professor ${professor.nome} alterada com sucesso pelo Administrador!` });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao alterar senha do professor.' });
   }
 });
 
@@ -175,6 +257,8 @@ app.patch('/api/admin/professores/:id', async (req, res) => {
   const { id } = req.params;
   const { 
     nome, 
+    email,
+    cpf,
     telefone, 
     prajied, 
     cargo, 
@@ -192,9 +276,11 @@ app.patch('/api/admin/professores/:id', async (req, res) => {
   try {
     const dataUpdate: any = {};
     if (nome) dataUpdate.nome = nome.trim();
+    if (email) dataUpdate.email = email.trim().toLowerCase();
+    if (cpf !== undefined) dataUpdate.cpf = cpf ? cpf.replace(/\D/g, '') : null;
     if (telefone !== undefined) dataUpdate.telefone = telefone;
     if (cargo) dataUpdate.cargo = cargo;
-    if (senha) dataUpdate.senha = senha.trim();
+    if (senha && senha.trim()) dataUpdate.senha = senha.trim();
     if (modalidade) dataUpdate.modalidade = modalidade;
     if (graduacao) {
       dataUpdate.graduacao = graduacao;
@@ -215,7 +301,7 @@ app.patch('/api/admin/professores/:id', async (req, res) => {
       data: dataUpdate
     });
 
-    res.json({ mensagem: 'Dados atualizados com sucesso!', professor: atualizado });
+    res.json({ mensagem: 'Dados do professor atualizados com sucesso!', professor: atualizado });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao atualizar professor.' });
   }

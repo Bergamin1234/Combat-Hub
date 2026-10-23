@@ -129,6 +129,7 @@ export default function AdminDashboard() {
   const [novoProfessor, setNovoProfessor] = useState({
     nome: '',
     email: '',
+    cpf: '',
     senha: '',
     cargo: 'PROFESSOR',
     telefone: '',
@@ -236,34 +237,23 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleQuickLogin = async (cargo: 'ADMIN' | 'PROFESSOR') => {
-    setLoginLoading(true);
-    try {
-      const payload = cargo === 'ADMIN'
-        ? { emailOuUsuario: 'admin@boru.com', senha: 'admin123' }
-        : { emailOuUsuario: 'felipe@boru.com', senha: 'boru123' };
-      const response = await adminApi.login(payload);
-      setUsuarioLogado(response.data.usuario);
-      setIsLoggedIn(true);
-    } catch (error: any) {
-      alert('Erro ao realizar login rápido.');
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
   // ==========================================
   // PROFESSORES (Exclusivo Admin)
   // ==========================================
   const criarProfessor = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (novoProfessor.cargo === 'PROFESSOR' && !novoProfessor.cpf) {
+      alert('O CPF do professor é obrigatório para que ele possa acessar o sistema.');
+      return;
+    }
     try {
       await adminApi.createTeacher(novoProfessor);
-      alert(`Professor ${novoProfessor.nome} cadastrado com sucesso!`);
+      alert(`Professor ${novoProfessor.nome} cadastrado com sucesso!\n\nEle poderá acessar o painel informando o CPF e a senha cadastrada.`);
       setShowModalProf(false);
       setNovoProfessor({
         nome: '',
         email: '',
+        cpf: '',
         senha: '',
         cargo: 'PROFESSOR',
         telefone: '',
@@ -281,12 +271,29 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleRedefinirSenhaProfessor = async (prof: any) => {
+    const nova = prompt(`Definir NOVA SENHA para o professor ${prof.nome} (Login CPF: ${prof.cpf || 'Não informado'}):\n\n(Apenas o Administrador pode redefinir esta senha caso o professor tenha esquecido)`);
+    if (!nova) return;
+    if (nova.trim().length < 4) {
+      alert('A senha deve conter no mínimo 4 caracteres.');
+      return;
+    }
+    try {
+      await adminApi.resetTeacherPassword(prof.id, nova.trim());
+      alert(`Senha do professor ${prof.nome} alterada com sucesso para: "${nova.trim()}"!\nInforme ao professor para ele acessar com seu CPF.`);
+      carregarDashboard();
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao redefinir senha do professor.');
+    }
+  };
+
   const abrirModalEdicaoProf = (prof: any) => {
     const mod = prof.modalidade || 'Muay Thai';
     setProfessorParaEditar({
       id: prof.id,
       nome: prof.nome,
       email: prof.email,
+      cpf: prof.cpf || '',
       telefone: prof.telefone || '',
       cargo: prof.cargo || 'PROFESSOR',
       modalidade: mod,
@@ -307,6 +314,7 @@ export default function AdminDashboard() {
     try {
       const payload: any = {
         nome: professorParaEditar.nome,
+        cpf: professorParaEditar.cpf,
         telefone: professorParaEditar.telefone,
         cargo: professorParaEditar.cargo,
         modalidade: professorParaEditar.modalidade,
@@ -745,15 +753,18 @@ export default function AdminDashboard() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail ou Usuário</label>
+              <label className="block text-zinc-400 text-xs font-semibold mb-1">Login de Acesso</label>
               <input 
                 type="text" 
                 value={loginInput}
                 onChange={(e) => setLoginInput(e.target.value)}
                 className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
-                placeholder="Ex: admin@boru.com ou felipe@boru.com"
+                placeholder="Usuário (BrgAdmin) ou CPF do Professor"
                 required
               />
+              <p className="text-[11px] text-zinc-500 mt-1">
+                * Professores acessam informando o seu <strong>CPF</strong> (com ou sem pontuação) e senha cadastrada.
+              </p>
             </div>
             <div>
               <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha de Acesso</label>
@@ -762,7 +773,7 @@ export default function AdminDashboard() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
-                placeholder="Sua senha"
+                placeholder="Sua senha de acesso"
                 required
               />
             </div>
@@ -773,30 +784,10 @@ export default function AdminDashboard() {
             >
               {loginLoading ? 'Verificando...' : 'Entrar no Painel'}
             </button>
+            <p className="text-[11px] text-zinc-500 text-center mt-3">
+              Esqueceu a senha de professor? A redefinição de senha é feita diretamente com a Administração.
+            </p>
           </form>
-
-          {/* Atalhos rápidos para apresentação */}
-          <div className="mt-6 pt-5 border-t border-zinc-800/80">
-            <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider text-center mb-2">Acesso Rápido de Demonstração:</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                type="button"
-                onClick={() => handleQuickLogin('ADMIN')}
-                className="p-2.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 text-xs text-white font-bold transition flex flex-col items-center justify-center gap-0.5"
-              >
-                <span>👑 Administrador</span>
-                <span className="text-[10px] text-zinc-400 font-normal">Acesso Master</span>
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleQuickLogin('PROFESSOR')}
-                className="p-2.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 text-xs text-red-400 font-bold transition flex flex-col items-center justify-center gap-0.5"
-              >
-                <span>🥋 Prof. Felipe Borü</span>
-                <span className="text-[10px] text-zinc-400 font-normal">Acesso Instrutor</span>
-              </button>
-            </div>
-          </div>
 
           <Link to="/" className="block text-center mt-5 text-zinc-500 hover:text-white text-xs transition">
             ← Voltar ao site principal
@@ -1897,9 +1888,13 @@ export default function AdminDashboard() {
                             {prof.nome.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <span>{prof.nome}</span>
-                            <span className="block text-[11px] text-zinc-400 font-normal">{prof.email}</span>
-                            <span className="block text-[10px] text-zinc-500 font-normal">{prof.telefone || 'Sem telefone'}</span>
+                            <span className="text-white font-bold">{prof.nome}</span>
+                            <span className="block text-[11px] text-amber-400 font-bold">
+                              CPF Login: {prof.cpf || 'Não cadastrado'}
+                            </span>
+                            <span className="block text-[10px] text-zinc-500 font-normal">
+                              {prof.telefone || 'Sem telefone'} • {prof.email}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -1952,7 +1947,14 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="p-3 sm:p-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          <button
+                            onClick={() => handleRedefinirSenhaProfessor(prof)}
+                            className="px-2.5 py-1 rounded bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 text-xs font-semibold transition border border-amber-800/40 flex items-center gap-1"
+                            title="Redefinir Senha do Professor"
+                          >
+                            <span>🔑</span> Trocar Senha
+                          </button>
                           <button
                             onClick={() => abrirModalEdicaoProf(prof)}
                             className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition border border-zinc-700 flex items-center gap-1"
@@ -2131,8 +2133,8 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail para Login</label>
-                  <input required type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="professor@boru.com" />
+                  <label className="block text-amber-400 text-xs font-bold mb-1">CPF (Login do Professor - Obrigatório)</label>
+                  <input required type="text" value={novoProfessor.cpf} onChange={(e) => setNovoProfessor({...novoProfessor, cpf: e.target.value})} className="w-full bg-[#1A1A1E] border border-amber-500/50 rounded-lg p-2.5 text-sm text-white font-mono" placeholder="000.000.000-00" />
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
@@ -2142,16 +2144,21 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha de Acesso</label>
-                  <input required type="password" value={novoProfessor.senha} onChange={(e) => setNovoProfessor({...novoProfessor, senha: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Mínimo 6 caracteres" />
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail (Contato / Opcional)</label>
+                  <input type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="professor@boru.com" />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo no Sistema</label>
-                  <select value={novoProfessor.cargo} onChange={(e) => setNovoProfessor({...novoProfessor, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                    <option value="PROFESSOR">Professor / Instrutor</option>
-                    <option value="ADMIN">Administrador Geral</option>
-                  </select>
+                  <label className="block text-amber-400 text-xs font-bold mb-1">Senha Inicial (Registrada pelo Admin)</label>
+                  <input required type="password" value={novoProfessor.senha} onChange={(e) => setNovoProfessor({...novoProfessor, senha: e.target.value})} className="w-full bg-[#1A1A1E] border border-amber-500/50 rounded-lg p-2.5 text-sm text-white" placeholder="Senha do professor" />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo no Sistema</label>
+                <select value={novoProfessor.cargo} onChange={(e) => setNovoProfessor({...novoProfessor, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                  <option value="PROFESSOR">Professor / Instrutor</option>
+                  <option value="ADMIN">Administrador Geral</option>
+                </select>
               </div>
 
               {/* SELEÇÃO DA ARTE MARCIAL E DURAÇÃO */}
@@ -2298,16 +2305,21 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
+                  <label className="block text-amber-400 text-xs font-bold mb-1">CPF (Login do Professor - Obrigatório)</label>
+                  <input required type="text" value={professorParaEditar.cpf || ''} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cpf: e.target.value})} className="w-full bg-[#1A1A1E] border border-amber-500/50 rounded-lg p-2.5 text-sm text-white font-mono" placeholder="000.000.000-00" />
+                </div>
+                <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
                   <input type="text" value={professorParaEditar.telefone} onChange={(e) => setProfessorParaEditar({...professorParaEditar, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
                 </div>
-                <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
-                  <select value={professorParaEditar.cargo} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                    <option value="PROFESSOR">Professor / Instrutor</option>
-                    <option value="ADMIN">Administrador Geral</option>
-                  </select>
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
+                <select value={professorParaEditar.cargo} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                  <option value="PROFESSOR">Professor / Instrutor</option>
+                  <option value="ADMIN">Administrador Geral</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-zinc-800">
@@ -2426,13 +2438,16 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="pt-2">
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">Nova Senha (deixe em branco se não desejar alterar)</label>
+              <div className="pt-2 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                <label className="block text-amber-300 text-xs font-bold mb-1">🔑 Alterar Senha do Professor (Exclusivo Administrador)</label>
+                <p className="text-[11px] text-zinc-400 mb-2 leading-relaxed">
+                  Caso o professor tenha esquecido a senha ou precise de uma nova, digite abaixo. Se deixar em branco, a senha atual continuará a mesma.
+                </p>
                 <input 
                   type="password" 
                   value={professorParaEditar.senha || ''} 
                   onChange={(e) => setProfessorParaEditar({...professorParaEditar, senha: e.target.value})} 
-                  placeholder="Deixe em branco para manter a senha atual"
+                  placeholder="Digite a nova senha (ou deixe em branco)"
                   className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2 text-xs text-white"
                 />
               </div>
