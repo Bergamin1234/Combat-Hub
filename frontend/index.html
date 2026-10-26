@@ -46,12 +46,15 @@
       --color-primary-light: rgba(226, 232, 240, 0.12);
       --color-primary-border: rgba(226, 232, 240, 0.35);
       --color-accent: #94A3B8;
-      --color-bg-main: #090A0B;
-      --color-bg-card: #131416;
-      --color-bg-card-alt: #1B1C20;
+      --color-gradient: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
+      --color-bg-main: #0B0C0E;
+      --color-bg-section-alt: #121418;
+      --color-bg-card: #171920;
+      --color-bg-card-alt: #1F222B;
       --color-text-main: #FFFFFF;
       --color-text-muted: #94A3B8;
-      --color-border: #27272A;
+      --color-border: #2A2E39;
+      --color-btn-text: #0B0C0E;
     }
 
     body {
@@ -60,7 +63,82 @@
       transition: background-color 0.25s ease, color 0.25s ease;
     }
 
-    /* Mapeamento Dinâmico de Classes Tailwind para as Cores do Tema Ativo */
+    /* Classes Semânticas de Fundo de Seção (Substituem classes fixas de Tailwind) */
+    .theme-section-main {
+      background-color: var(--color-bg-main) !important;
+      border-color: var(--color-border) !important;
+      color: var(--color-text-main) !important;
+    }
+
+    .theme-section-alt {
+      background-color: var(--color-bg-section-alt) !important;
+      border-color: var(--color-border) !important;
+      color: var(--color-text-main) !important;
+    }
+
+    .card-combat, .theme-card {
+      background-color: var(--color-bg-card) !important;
+      border-color: var(--color-border) !important;
+      color: var(--color-text-main) !important;
+      transition: all 0.25s ease;
+    }
+
+    /* Gradiente Dinâmico de Texto Baseado na Paleta Ativa */
+    .theme-gradient-text {
+      background: var(--color-gradient) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+      display: inline-block;
+    }
+
+    /* Botões Dinâmicos */
+    .theme-btn-primary {
+      background: var(--color-primary) !important;
+      background-image: none !important;
+      color: var(--color-btn-text) !important;
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 10px 25px -5px var(--color-primary-light) !important;
+      transition: all 0.2s ease !important;
+    }
+    .theme-btn-primary:hover {
+      background: var(--color-primary-hover) !important;
+      box-shadow: 0 14px 28px -5px var(--color-primary-border) !important;
+      transform: translateY(-1px);
+    }
+
+    .theme-btn-secondary {
+      background-color: var(--color-bg-card) !important;
+      background-image: none !important;
+      color: var(--color-text-main) !important;
+      border: 1px solid var(--color-border) !important;
+      transition: all 0.2s ease !important;
+    }
+    .theme-btn-secondary:hover {
+      background-color: var(--color-bg-card-alt) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-primary) !important;
+    }
+
+    .theme-badge {
+      background-color: var(--color-primary-light) !important;
+      border: 1px solid var(--color-primary-border) !important;
+      color: var(--color-primary) !important;
+    }
+
+    .theme-badge-dot {
+      background-color: var(--color-primary) !important;
+    }
+
+    .theme-text-primary {
+      color: var(--color-primary) !important;
+    }
+
+    .theme-border-primary {
+      border-color: var(--color-primary) !important;
+    }
+
+    /* Mapeamento Dinâmico de Classes Tailwind Residuais */
     .text-red-500, .text-red-400, .text-red-600 {
       color: var(--color-primary) !important;
     }
@@ -69,6 +147,8 @@
     }
     .bg-red-600, .bg-red-700 {
       background-color: var(--color-primary) !important;
+      background-image: none !important;
+      color: var(--color-btn-text) !important;
     }
     .hover\:bg-red-700:hover, .hover\:bg-red-600:hover {
       background-color: var(--color-primary-hover) !important;
@@ -89,22 +169,13 @@
       box-shadow: 0 0 25px var(--color-primary-light) !important;
     }
 
-    /* Ajuste de contraste para temas com primary claro no dark mode */
-    [data-theme="neutral-dark"] .bg-red-600,
-    [data-theme="neutral-dark"] .bg-gradient-to-r.from-red-600,
-    [data-theme="gold-dark"] .bg-red-600,
-    [data-theme="gold-dark"] .bg-gradient-to-r.from-red-600 {
-      color: #090A0B !important;
-    }
-
-    /* Estilos para Modo Claro (Paletas com fundo branco) */
-    [data-theme-mode="light"] body {
-      background-color: var(--color-bg-main) !important;
-      color: var(--color-text-main) !important;
+    /* Estilos para Modo Claro (Paletas com fundo branco/clean) */
+    [data-theme-mode="light"] #global-combat-wallpaper {
+      display: none !important;
     }
 
     [data-theme-mode="light"] #main-header {
-      background-color: rgba(255, 255, 255, 0.94) !important;
+      background-color: rgba(255, 255, 255, 0.95) !important;
       border-color: var(--color-border) !important;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
@@ -125,24 +196,52 @@
       color: var(--color-text-main) !important;
     }
 
-    [data-theme-mode="light"] .text-zinc-300,
-    [data-theme-mode="light"] .text-zinc-400 {
+    [data-theme-mode="light"] .text-zinc-100,
+    [data-theme-mode="light"] .text-zinc-200,
+    [data-theme-mode="light"] .text-zinc-300 {
+      color: var(--color-text-main) !important;
+    }
+
+    [data-theme-mode="light"] .text-zinc-400,
+    [data-theme-mode="light"] .text-zinc-500 {
       color: var(--color-text-muted) !important;
     }
 
     [data-theme-mode="light"] .bg-zinc-900,
     [data-theme-mode="light"] .bg-zinc-950,
-    [data-theme-mode="light"] .bg-\[\#141416\],
-    [data-theme-mode="light"] .card-combat {
+    [data-theme-mode="light"] .card-combat,
+    [data-theme-mode="light"] .theme-card {
       background-color: var(--color-bg-card) !important;
       border-color: var(--color-border) !important;
       color: var(--color-text-main) !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
     }
 
-    [data-theme-mode="light"] #global-combat-wallpaper img {
-      opacity: 0.05 !important;
-      filter: invert(1) contrast(1.1);
+    [data-theme-mode="light"] .border-zinc-800,
+    [data-theme-mode="light"] .border-zinc-700,
+    [data-theme-mode="light"] .border-zinc-800\/80 {
+      border-color: var(--color-border) !important;
+    }
+
+    [data-theme-mode="light"] input,
+    [data-theme-mode="light"] select {
+      background-color: var(--color-bg-card) !important;
+      color: var(--color-text-main) !important;
+      border-color: var(--color-border) !important;
+    }
+
+    [data-theme-mode="light"] footer {
+      background-color: var(--color-bg-section-alt) !important;
+      border-color: var(--color-border) !important;
+      color: var(--color-text-muted) !important;
+    }
+
+    [data-theme-mode="light"] footer span,
+    [data-theme-mode="light"] footer a {
+      color: var(--color-text-muted) !important;
+    }
+    [data-theme-mode="light"] footer a:hover {
+      color: var(--color-primary) !important;
     }
 
     /* Wallpaper global de combate no fundo do site inteiro */
@@ -191,14 +290,14 @@
   </div>
 
   <!-- ================= NAVBAR ================= -->
-  <header class="fixed top-0 left-0 right-0 z-50 bg-[#0B0B0C]/90 backdrop-blur-md border-b border-zinc-800 transition-all duration-300" id="main-header">
+  <header class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b theme-section-main transition-all duration-300" id="main-header">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
       
       <!-- Brand Logo -->
       <a href="#hero" class="flex items-center gap-3 group">
-        <img src="/logo-combat.svg" alt="COMBAT HUB" class="w-12 h-12 rounded-full border-2 border-red-600 shadow-lg object-contain group-hover:scale-105 transition" />
+        <img src="/logo-combat.svg" alt="COMBAT HUB" class="w-12 h-12 rounded-full border-2 border-[var(--color-primary)] shadow-lg object-contain group-hover:scale-105 transition" />
         <div class="flex flex-col">
-          <span class="font-display text-2xl sm:text-3xl tracking-widest font-black text-white leading-none group-hover:text-red-500 transition">
+          <span class="font-display text-2xl sm:text-3xl tracking-widest font-black text-white leading-none group-hover:text-[var(--color-primary)] transition">
             COMBAT HUB
           </span>
           <span class="text-[9px] tracking-[0.25em] font-semibold text-zinc-400 uppercase">
@@ -209,148 +308,165 @@
 
       <!-- Desktop Navigation (Modelo Portfólio / CT Completo) -->
       <nav class="hidden xl:flex items-center gap-4 text-sm font-medium text-zinc-300 whitespace-nowrap">
-        <a href="#planos" class="hover:text-red-500 transition">Planos</a>
-        <a href="#horarios" class="hover:text-red-500 transition">Horários</a>
-        <a href="#o-que-e-o-ct" class="hover:text-red-500 transition">O Que É o CT</a>
-        <a href="#estrutura" class="hover:text-red-500 transition">Estrutura</a>
-        <a href="#modalidades" class="hover:text-red-500 transition">Modalidades</a>
-        <a href="#professores" class="hover:text-red-500 transition">Professores</a>
-        <a href="#galeria" class="hover:text-red-500 transition">Galeria</a>
-        <a href="#faq" class="hover:text-red-500 transition">FAQ</a>
+        <a href="#planos" class="hover:text-[var(--color-primary)] transition">Planos</a>
+        <a href="#horarios" class="hover:text-[var(--color-primary)] transition">Horários</a>
+        <a href="#o-que-e-o-ct" class="hover:text-[var(--color-primary)] transition">O Que É o CT</a>
+        <a href="#estrutura" class="hover:text-[var(--color-primary)] transition">Estrutura</a>
+        <a href="#modalidades" class="hover:text-[var(--color-primary)] transition">Modalidades</a>
+        <a href="#professores" class="hover:text-[var(--color-primary)] transition">Professores</a>
+        <a href="#galeria" class="hover:text-[var(--color-primary)] transition">Galeria</a>
+        <a href="#faq" class="hover:text-[var(--color-primary)] transition">FAQ</a>
       </nav>
 
       <!-- Action Buttons -->
       <div class="hidden sm:flex items-center gap-3">
         <!-- Seletor de Paleta / Tema (Topo Direito) -->
         <div class="relative">
-          <button id="theme-menu-btn" type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-700 bg-zinc-900/90 hover:bg-zinc-800 text-xs font-semibold text-zinc-200 hover:text-white transition shadow-sm" title="Trocar Paleta de Cores">
+          <button id="theme-menu-btn" type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-card-alt)] text-xs font-semibold text-[var(--color-text-main)] transition shadow-sm" title="Trocar Paleta de Cores">
             <span id="theme-current-dot" class="w-3 h-3 rounded-full bg-[var(--color-primary)] ring-1 ring-white/30 flex-shrink-0"></span>
             <span id="theme-current-name" class="hidden lg:inline text-xs">Neutro Titânio</span>
             <i data-lucide="palette" class="w-3.5 h-3.5 text-zinc-400"></i>
           </button>
           
-          <!-- Dropdown Container -->
-          <div id="theme-dropdown" class="hidden absolute right-0 mt-2 w-72 p-2.5 rounded-2xl bg-[#141416]/98 border border-zinc-700 shadow-2xl z-50 backdrop-blur-md space-y-1 max-h-96 overflow-y-auto">
-            <div class="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-800 mb-1 flex items-center justify-between">
+          <!-- Dropdown Container Organizado em Grupos -->
+          <div id="theme-dropdown" class="hidden absolute right-0 mt-2 w-80 p-3 rounded-2xl bg-[#141418] border border-zinc-700 shadow-2xl z-[100] backdrop-blur-md space-y-2.5 max-h-[85vh] overflow-y-auto">
+            <div class="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-800 flex items-center justify-between">
               <span>Paleta de Cores da Plataforma</span>
-              <span class="text-[9px] bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300">11 Estilos</span>
+              <span class="text-[9px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-300 font-mono">11 Estilos</span>
             </div>
 
-            <!-- Neutro Titânio (Padrão) -->
-            <button type="button" data-theme-select="neutral-dark" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #E2E8F0;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Neutro Titânio & Carbono</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Padrão</span>
-            </button>
+            <!-- Grupo: Dark / Combate -->
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2 py-1 mb-1">
+                🌙 Estilos Combate (Dark)
+              </p>
+              <div class="space-y-1">
+                <!-- Neutro Titânio (Padrão) -->
+                <button type="button" data-theme-select="neutral-dark" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #E2E8F0;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Neutro Titânio & Carbono</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Padrão</span>
+                </button>
 
-            <!-- Vermelho & Preto -->
-            <button type="button" data-theme-select="red-dark" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #EF4444;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Vermelho & Preto (Combate)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-950/60 text-red-400">Dark</span>
-            </button>
+                <!-- Vermelho & Preto -->
+                <button type="button" data-theme-select="red-dark" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #EF4444;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Vermelho & Preto (Combat)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-950/80 text-red-400">Dark</span>
+                </button>
 
-            <!-- Azul & Preto -->
-            <button type="button" data-theme-select="blue-dark" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #3B82F6;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Azul & Preto (Ocean Night)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-950/60 text-blue-400">Dark</span>
-            </button>
+                <!-- Azul & Preto -->
+                <button type="button" data-theme-select="blue-dark" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #3B82F6;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Azul & Preto (Ocean Night)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-950/80 text-blue-400">Dark</span>
+                </button>
 
-            <!-- Azul & Branco -->
-            <button type="button" data-theme-select="blue-light" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #0284C7;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Azul & Branco (Clean Ocean)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-sky-950/60 text-sky-400">Clean</span>
-            </button>
+                <!-- Dourado & Preto -->
+                <button type="button" data-theme-select="gold-dark" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #F59E0B;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Dourado & Preto (Champion Gold)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-400">Dark</span>
+                </button>
 
-            <!-- Dourado & Preto -->
-            <button type="button" data-theme-select="gold-dark" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #F59E0B;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Dourado & Preto (Champion Gold)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-400">Dark</span>
-            </button>
+                <!-- Verde & Preto -->
+                <button type="button" data-theme-select="green-dark" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #10B981;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Verde & Preto (Viper Combat)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400">Dark</span>
+                </button>
 
-            <!-- Dourado & Branco -->
-            <button type="button" data-theme-select="gold-light" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #B45309;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Dourado & Branco (Gold Luxury)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-300">Clean</span>
-            </button>
+                <!-- Rosa & Preto -->
+                <button type="button" data-theme-select="pink-dark" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #EC4899;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Rosa & Preto (Cyber Sakura)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-pink-950/80 text-pink-400">Dark</span>
+                </button>
 
-            <!-- Verde & Preto -->
-            <button type="button" data-theme-select="green-dark" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #10B981;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Verde & Preto (Viper Combat)</span>
+                <!-- Roxo & Preto -->
+                <button type="button" data-theme-select="purple-dark" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #8B5CF6;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Roxo & Preto (Jiu-Jitsu Stealth)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-400">Dark</span>
+                </button>
               </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400">Dark</span>
-            </button>
+            </div>
 
-            <!-- Verde & Branco -->
-            <button type="button" data-theme-select="green-light" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #059669;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Verde & Branco (Emerald Clean)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-300">Clean</span>
-            </button>
+            <!-- Grupo: Light / Clean -->
+            <div class="border-t border-zinc-800 pt-2">
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2 py-1 mb-1">
+                ☀️ Estilos Clean (Light)
+              </p>
+              <div class="space-y-1">
+                <!-- Azul & Branco -->
+                <button type="button" data-theme-select="blue-light" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #0284C7;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Azul & Branco (Ocean Clean)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-sky-950/80 text-sky-300">Clean</span>
+                </button>
 
-            <!-- Rosa & Preto -->
-            <button type="button" data-theme-select="pink-dark" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #EC4899;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Rosa & Preto (Cyber Sakura)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-pink-950/60 text-pink-400">Dark</span>
-            </button>
+                <!-- Dourado & Branco -->
+                <button type="button" data-theme-select="gold-light" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #B45309;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Dourado & Branco (Gold Luxury)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300">Clean</span>
+                </button>
 
-            <!-- Rosa & Branco -->
-            <button type="button" data-theme-select="pink-light" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #DB2777;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Rosa & Branco (Sakura Blossom)</span>
-              </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-pink-950/60 text-pink-300">Clean</span>
-            </button>
+                <!-- Verde & Branco -->
+                <button type="button" data-theme-select="green-light" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #059669;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Verde & Branco (Emerald Clean)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300">Clean</span>
+                </button>
 
-            <!-- Roxo & Preto -->
-            <button type="button" data-theme-select="purple-dark" class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
-              <div class="flex items-center gap-2">
-                <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #8B5CF6;"></span>
-                <span class="text-zinc-200 group-hover:text-white">Roxo & Preto (Jiu-Jitsu Stealth)</span>
+                <!-- Rosa & Branco -->
+                <button type="button" data-theme-select="pink-light" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium hover:bg-zinc-800 transition text-left group">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full border border-zinc-700" style="background-color: #DB2777;"></span>
+                    <span class="text-zinc-200 group-hover:text-white">Rosa & Branco (Sakura Blossom)</span>
+                  </div>
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-pink-950/80 text-pink-300">Clean</span>
+                </button>
               </div>
-              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-950/60 text-purple-400">Dark</span>
-            </button>
+            </div>
+
           </div>
         </div>
 
         <!-- Admin Link (Discreto) -->
-        <a href="/admin" class="text-xs font-medium text-zinc-500 hover:text-red-500 transition mr-2">
+        <a href="/admin" class="text-xs font-medium text-zinc-500 hover:text-[var(--color-primary)] transition mr-2">
           Acesso Professor
         </a>
 
         <!-- Portal Button -->
-        <a href="/portal" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-700 hover:border-red-500 bg-zinc-900/80 hover:bg-zinc-800 text-xs sm:text-sm font-semibold text-zinc-200 hover:text-white transition">
-          <i data-lucide="monitor-play" class="w-4 h-4 text-red-500"></i>
+        <a href="/portal" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--color-border)] theme-btn-secondary text-xs sm:text-sm font-semibold transition">
+          <i data-lucide="monitor-play" class="w-4 h-4 text-[var(--color-primary)]"></i>
           <span>Área do Aluno</span>
         </a>
 
         <!-- Schedule Trial CTA -->
-        <a href="/agendar" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-red-900/40 hover:shadow-red-700/60 transition transform active:scale-95">
-          <i data-lucide="flame" class="w-4 h-4 text-amber-300 animate-pulse"></i>
+        <a href="/agendar" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg theme-btn-primary font-bold text-xs sm:text-sm shadow-lg transition transform active:scale-95">
+          <i data-lucide="flame" class="w-4 h-4 animate-pulse"></i>
           <span>Aula Experimental</span>
         </a>
       </div>
@@ -362,50 +478,50 @@
     </div>
 
     <!-- Mobile Dropdown Menu -->
-    <div id="mobile-menu" class="hidden xl:hidden bg-[#141416] border-b border-zinc-800 px-6 py-6 space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="mobile-menu" class="hidden xl:hidden theme-section-main border-b px-6 py-6 space-y-4 max-h-[85vh] overflow-y-auto">
       
       <!-- Seletor Rápido de Paleta no Mobile -->
-      <div class="p-3 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2">
-        <div class="flex items-center justify-between text-xs font-bold text-zinc-300">
+      <div class="p-3 rounded-xl card-combat space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold">
           <span>🎨 Paleta de Cores:</span>
           <span class="text-[10px] text-zinc-400">Clique para testar</span>
         </div>
         <div class="flex flex-wrap gap-2 pt-1">
-          <button type="button" data-theme-select="neutral-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-slate-200 shadow-sm" title="Neutro"></button>
-          <button type="button" data-theme-select="red-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-red-500 shadow-sm" title="Vermelho"></button>
-          <button type="button" data-theme-select="blue-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-blue-500 shadow-sm" title="Azul Dark"></button>
-          <button type="button" data-theme-select="blue-light" class="w-7 h-7 rounded-full border border-zinc-600 bg-sky-600 shadow-sm" title="Azul Light"></button>
-          <button type="button" data-theme-select="gold-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-amber-500 shadow-sm" title="Dourado Dark"></button>
-          <button type="button" data-theme-select="gold-light" class="w-7 h-7 rounded-full border border-zinc-600 bg-amber-700 shadow-sm" title="Dourado Light"></button>
-          <button type="button" data-theme-select="green-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-emerald-500 shadow-sm" title="Verde Dark"></button>
-          <button type="button" data-theme-select="green-light" class="w-7 h-7 rounded-full border border-zinc-600 bg-emerald-600 shadow-sm" title="Verde Light"></button>
-          <button type="button" data-theme-select="pink-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-pink-500 shadow-sm" title="Rosa Dark"></button>
-          <button type="button" data-theme-select="pink-light" class="w-7 h-7 rounded-full border border-zinc-600 bg-pink-600 shadow-sm" title="Rosa Light"></button>
-          <button type="button" data-theme-select="purple-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-purple-500 shadow-sm" title="Roxo Dark"></button>
+          <button type="button" data-theme-select="neutral-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-slate-200 shadow-sm" title="Neutro Titânio"></button>
+          <button type="button" data-theme-select="red-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-red-500 shadow-sm" title="Vermelho & Preto"></button>
+          <button type="button" data-theme-select="blue-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-blue-500 shadow-sm" title="Azul & Preto"></button>
+          <button type="button" data-theme-select="gold-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-amber-500 shadow-sm" title="Dourado & Preto"></button>
+          <button type="button" data-theme-select="green-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-emerald-500 shadow-sm" title="Verde & Preto"></button>
+          <button type="button" data-theme-select="pink-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-pink-500 shadow-sm" title="Rosa & Preto"></button>
+          <button type="button" data-theme-select="purple-dark" class="w-7 h-7 rounded-full border border-zinc-600 bg-purple-500 shadow-sm" title="Roxo & Preto"></button>
+          <button type="button" data-theme-select="blue-light" class="w-7 h-7 rounded-full border border-zinc-400 bg-sky-500 shadow-sm" title="Azul & Branco"></button>
+          <button type="button" data-theme-select="gold-light" class="w-7 h-7 rounded-full border border-zinc-400 bg-amber-600 shadow-sm" title="Dourado & Branco"></button>
+          <button type="button" data-theme-select="green-light" class="w-7 h-7 rounded-full border border-zinc-400 bg-emerald-600 shadow-sm" title="Verde & Branco"></button>
+          <button type="button" data-theme-select="pink-light" class="w-7 h-7 rounded-full border border-zinc-400 bg-pink-600 shadow-sm" title="Rosa & Branco"></button>
         </div>
       </div>
 
       <nav class="flex flex-col space-y-3 text-base font-semibold">
-        <a href="#planos" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Planos & Parcerias</a>
-        <a href="#horarios" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Grade de Horários</a>
-        <a href="#o-que-e-o-ct" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">O Que É o Centro de Treinamento</a>
-        <a href="#estrutura" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Estrutura & Espaço</a>
-        <a href="#modalidades" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Modalidades de Luta</a>
-        <a href="#professores" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Nossos Professores / Mestres</a>
-        <a href="#galeria" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Galeria do Tatame</a>
-        <a href="#faq" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Dúvidas Frequentes (FAQ)</a>
-        <a href="#localizacao" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Onde Estamos</a>
+        <a href="#planos" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Planos & Parcerias</a>
+        <a href="#horarios" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Grade de Horários</a>
+        <a href="#o-que-e-o-ct" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">O Que É o Centro de Treinamento</a>
+        <a href="#estrutura" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Estrutura & Espaço</a>
+        <a href="#modalidades" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Modalidades de Luta</a>
+        <a href="#professores" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Nossos Professores / Mestres</a>
+        <a href="#galeria" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Galeria do Tatame</a>
+        <a href="#faq" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Dúvidas Frequentes (FAQ)</a>
+        <a href="#localizacao" class="hover:text-[var(--color-primary)] py-1" onclick="closeMobileMenu()">Onde Estamos</a>
       </nav>
-      <div class="pt-4 border-t border-zinc-800 flex flex-col gap-3">
-        <a href="/portal" onclick="closeMobileMenu()" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-zinc-700 bg-zinc-800 text-white font-semibold text-sm">
-          <i data-lucide="monitor-play" class="w-4 h-4 text-red-500"></i>
+      <div class="pt-4 border-t border-[var(--color-border)] flex flex-col gap-3">
+        <a href="/portal" onclick="closeMobileMenu()" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg theme-btn-secondary font-semibold text-sm">
+          <i data-lucide="monitor-play" class="w-4 h-4 text-[var(--color-primary)]"></i>
           Área do Aluno
         </a>
-        <a href="/admin" onclick="closeMobileMenu()" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white font-semibold text-sm transition">
+        <a href="/admin" onclick="closeMobileMenu()" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card-alt)] text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] font-semibold text-sm transition">
           <i data-lucide="lock" class="w-4 h-4"></i>
           Acesso Professor
         </a>
-        <a href="/agendar" onclick="closeMobileMenu()" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-md transition">
+        <a href="/agendar" onclick="closeMobileMenu()" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg theme-btn-primary font-bold text-sm shadow-md transition">
           <i data-lucide="calendar-check" class="w-4 h-4"></i>
           Agendar Aula Experimental
         </a>
@@ -414,10 +530,10 @@
   </header>
 
   <!-- ================= HERO SECTION ================= -->
-  <section id="hero" class="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden z-10">
+  <section id="hero" class="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden z-10 theme-section-main">
     <div class="absolute inset-0 bg-grid-pattern opacity-30 pointer-events-none"></div>
-    <div class="absolute -top-40 -right-40 w-96 h-96 bg-red-600/20 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute top-1/2 -left-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -top-40 -right-40 w-96 h-96 bg-[var(--color-primary-light)] rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute top-1/2 -left-40 w-96 h-96 bg-[var(--color-primary-light)] rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -425,14 +541,14 @@
         <!-- Hero Text & CTA -->
         <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
           
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-950/60 border border-red-800/80 text-red-400 text-xs sm:text-sm font-semibold tracking-wide">
-            <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full theme-badge text-xs sm:text-sm font-semibold tracking-wide">
+            <span class="w-2 h-2 rounded-full theme-badge-dot animate-ping"></span>
             <span>CENTRO DE TREINAMENTO & ARTES MARCIAIS DE ALTO NÍVEL</span>
           </div>
 
           <h1 class="font-display text-4xl sm:text-6xl xl:text-7xl font-extrabold uppercase tracking-tight text-white leading-none">
             Mais Que Um Treino, <br class="hidden sm:inline">
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-red-600 to-amber-500">
+            <span class="theme-gradient-text">
               Uma Transformação
             </span>
           </h1>
@@ -443,30 +559,30 @@
 
           <!-- CTAs -->
           <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-            <a href="/agendar" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-black text-base uppercase tracking-wider glow-red transition transform hover:-translate-y-0.5 active:scale-95">
-              <i data-lucide="check-circle-2" class="w-5 h-5 text-amber-300"></i>
+            <a href="/agendar" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl theme-btn-primary font-black text-base uppercase tracking-wider transition transform hover:-translate-y-0.5 active:scale-95">
+              <i data-lucide="check-circle-2" class="w-5 h-5"></i>
               <span>Agendar Aula Gratuita</span>
             </a>
 
-            <a href="#o-que-e-o-ct" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-4 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-zinc-100 font-bold text-base transition transform hover:-translate-y-0.5">
-              <i data-lucide="compass" class="w-5 h-5 text-red-500"></i>
+            <a href="#o-que-e-o-ct" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-4 rounded-xl theme-btn-secondary font-bold text-base transition transform hover:-translate-y-0.5">
+              <i data-lucide="compass" class="w-5 h-5 theme-text-primary"></i>
               <span>Conhecer o CT</span>
             </a>
           </div>
 
           <!-- Credibility Highlights -->
-          <div class="pt-6 border-t border-zinc-800/80 grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
+          <div class="pt-6 border-t border-[var(--color-border)] grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
             <div>
-              <div class="font-display text-2xl sm:text-3xl font-bold text-white">+500</div>
-              <div class="text-xs text-zinc-400 font-medium">Alunos Ativos</div>
+              <div class="font-display text-2xl sm:text-3xl font-bold">+500</div>
+              <div class="text-xs text-[var(--color-text-muted)] font-medium">Alunos Ativos</div>
             </div>
             <div>
-              <div class="font-display text-2xl sm:text-3xl font-bold text-red-500">100%</div>
-              <div class="text-xs text-zinc-400 font-medium">Mestres Graduados</div>
+              <div class="font-display text-2xl sm:text-3xl font-bold theme-text-primary">100%</div>
+              <div class="text-xs text-[var(--color-text-muted)] font-medium">Mestres Graduados</div>
             </div>
             <div>
-              <div class="font-display text-2xl sm:text-3xl font-bold text-amber-400">180m²</div>
-              <div class="text-xs text-zinc-400 font-medium">Tatame Climatizado</div>
+              <div class="font-display text-2xl sm:text-3xl font-bold theme-text-primary">180m²</div>
+              <div class="text-xs text-[var(--color-text-muted)] font-medium">Tatame Climatizado</div>
             </div>
           </div>
 
@@ -474,30 +590,30 @@
 
         <!-- Hero Media Showcase Card -->
         <div class="lg:col-span-5 relative">
-          <div class="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl bg-zinc-950 group">
+          <div class="relative rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-2xl bg-[var(--color-bg-card)] group">
             <img src="https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=1200&auto=format&fit=crop&q=80" 
                  alt="Artes Marciais e Treinamento de Alta Performance" 
                  class="w-full h-[460px] object-cover object-center group-hover:scale-105 transition duration-700">
             
-            <div class="absolute inset-0 bg-gradient-to-t from-[#0B0B0C] via-transparent to-black/20 pointer-events-none"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none"></div>
 
-            <div class="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md text-white text-xs font-black uppercase px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
+            <div class="absolute top-4 right-4 theme-btn-primary text-xs font-black uppercase px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
               <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
               Unidade Central
             </div>
 
-            <div class="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80">
+            <div class="absolute bottom-4 left-4 right-4 p-4 rounded-xl theme-card border border-[var(--color-border)] backdrop-blur-md">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg bg-red-600/20 border border-red-500/40 flex items-center justify-center">
-                    <i data-lucide="award" class="w-5 h-5 text-red-400"></i>
+                  <div class="w-10 h-10 rounded-lg theme-badge flex items-center justify-center">
+                    <i data-lucide="award" class="w-5 h-5 theme-text-primary"></i>
                   </div>
                   <div>
-                    <h4 class="text-sm font-bold text-white">Metodologia Gradual & Segura</h4>
-                    <p class="text-xs text-zinc-400">Acolhimento para iniciantes sem machucados</p>
+                    <h4 class="text-sm font-bold">Metodologia Gradual & Segura</h4>
+                    <p class="text-xs text-[var(--color-text-muted)]">Acolhimento para iniciantes sem machucados</p>
                   </div>
                 </div>
-                <a href="/agendar" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-bold text-white transition">
+                <a href="/agendar" class="px-3 py-1.5 rounded-lg theme-btn-primary text-xs font-bold transition">
                   Experimentar
                 </a>
               </div>
@@ -509,13 +625,14 @@
     </div>
   </section>
 
+
   <!-- ================= SEÇÃO: PLANOS & CONVÊNIOS ================= -->
-  <section id="planos" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
+  <section id="planos" class="py-24 theme-section-alt border-y relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
-        <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Valores Transparentes</h2>
-        <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase">
+        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Valores Transparentes</h2>
+        <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase">
           Planos de Treinamento
         </h3>
         <p class="text-zinc-400 text-sm">
@@ -527,84 +644,87 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         
         <!-- 2x na semana -->
-        <div class="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between card-combat">
+        <div class="p-6 rounded-2xl card-combat flex flex-col justify-between">
           <div class="space-y-4 text-center">
-            <h4 class="font-display text-3xl font-bold text-white uppercase">2x</h4>
+            <h4 class="font-display text-3xl font-bold uppercase">2x</h4>
             <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 block">na semana</span>
             <div class="flex justify-center mt-4">
               <i data-lucide="target" class="w-12 h-12 text-zinc-600"></i>
             </div>
             <div class="flex items-baseline justify-center gap-1 mt-6">
               <span class="text-sm font-semibold text-zinc-400">R$</span>
-              <span class="text-4xl font-extrabold text-white">140</span>
+              <span class="text-4xl font-extrabold">140</span>
               <span class="text-sm text-zinc-400">,00</span>
             </div>
           </div>
-          <div class="pt-6 mt-6 border-t border-zinc-800">
-            <a href="/checkout?plano=2x%20na%20semana&valor=140" class="block text-center w-full py-3 rounded-xl border border-zinc-700 hover:border-red-500 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-sm transition">
+          <div class="pt-6 mt-6 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=2x%20na%20semana&valor=140" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-sm transition">
               Assinar Plano
             </a>
           </div>
         </div>
 
         <!-- 3x na semana -->
-        <div class="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between card-combat">
+        <div class="p-6 rounded-2xl card-combat flex flex-col justify-between">
           <div class="space-y-4 text-center">
-            <h4 class="font-display text-3xl font-bold text-white uppercase">3x</h4>
+            <h4 class="font-display text-3xl font-bold uppercase">3x</h4>
             <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 block">na semana</span>
             <div class="flex justify-center mt-4">
               <i data-lucide="flame" class="w-12 h-12 text-zinc-500"></i>
             </div>
             <div class="flex items-baseline justify-center gap-1 mt-6">
               <span class="text-sm font-semibold text-zinc-400">R$</span>
-              <span class="text-4xl font-extrabold text-white">160</span>
+              <span class="text-4xl font-extrabold">160</span>
               <span class="text-sm text-zinc-400">,00</span>
             </div>
           </div>
-          <div class="pt-6 mt-6 border-t border-zinc-800">
-            <a href="/checkout?plano=3x%20na%20semana&valor=160" class="block text-center w-full py-3 rounded-xl border border-zinc-700 hover:border-red-500 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-sm transition">
+          <div class="pt-6 mt-6 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=3x%20na%20semana&valor=160" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-sm transition">
               Assinar Plano
             </a>
           </div>
         </div>
 
         <!-- 5x na semana -->
-        <div class="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between card-combat">
+        <div class="p-6 rounded-2xl card-combat flex flex-col justify-between">
           <div class="space-y-4 text-center">
-            <h4 class="font-display text-3xl font-bold text-white uppercase">5x</h4>
+            <h4 class="font-display text-3xl font-bold uppercase">5x</h4>
             <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 block">na semana</span>
             <div class="flex justify-center mt-4">
               <i data-lucide="zap" class="w-12 h-12 text-zinc-400"></i>
             </div>
             <div class="flex items-baseline justify-center gap-1 mt-6">
               <span class="text-sm font-semibold text-zinc-400">R$</span>
-              <span class="text-4xl font-extrabold text-white">200</span>
+              <span class="text-4xl font-extrabold">200</span>
               <span class="text-sm text-zinc-400">,00</span>
             </div>
           </div>
-          <div class="pt-6 mt-6 border-t border-zinc-800">
-            <a href="/checkout?plano=5x%20na%20semana&valor=200" class="block text-center w-full py-3 rounded-xl border border-zinc-700 hover:border-red-500 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-sm transition">
+          <div class="pt-6 mt-6 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=5x%20na%20semana&valor=200" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-sm transition">
               Assinar Plano
             </a>
           </div>
         </div>
 
         <!-- Livre -->
-        <div class="p-6 rounded-2xl bg-red-700 border-2 border-red-500 flex flex-col justify-between relative shadow-2xl card-combat transform lg:-translate-y-2">
-          <div class="space-y-2 text-center">
-            <h4 class="font-display text-4xl font-bold text-white uppercase">Livre</h4>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-red-200 block">6x na semana<br>Todos os horários</span>
+        <div class="p-6 rounded-2xl border-2 theme-border-primary card-combat flex flex-col justify-between relative shadow-2xl transform lg:-translate-y-2 overflow-hidden">
+          <div class="absolute top-0 right-0 bg-[var(--color-primary)] text-[var(--color-btn-text)] text-[10px] font-black uppercase px-3 py-1 rounded-bl-xl tracking-wider shadow">
+            Mais Escolhido
+          </div>
+          <div class="space-y-2 text-center pt-2">
+            <h4 class="font-display text-4xl font-bold uppercase">Livre</h4>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] block">6x na semana<br>Todos os horários</span>
             <div class="flex justify-center mt-2 pb-2">
-              <i data-lucide="award" class="w-14 h-14 text-amber-300 drop-shadow-md"></i>
+              <i data-lucide="award" class="w-14 h-14 theme-text-primary drop-shadow-md"></i>
             </div>
             <div class="flex items-baseline justify-center gap-1 mt-4">
-              <span class="text-sm font-semibold text-red-200">R$</span>
-              <span class="text-5xl font-extrabold text-white">280</span>
-              <span class="text-sm text-red-200">,00</span>
+              <span class="text-sm font-semibold text-[var(--color-text-muted)]">R$</span>
+              <span class="text-5xl font-extrabold">280</span>
+              <span class="text-sm text-[var(--color-text-muted)]">,00</span>
             </div>
           </div>
-          <div class="pt-6 mt-4 border-t border-red-500">
-            <a href="/checkout?plano=Livre&valor=280" class="block text-center w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-red-950 font-black text-sm uppercase tracking-wider shadow-lg transition">
+          <div class="pt-6 mt-4 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=Livre&valor=280" class="block text-center w-full py-3 rounded-xl theme-btn-primary font-black text-sm uppercase tracking-wider shadow-lg transition">
               Garantir
             </a>
           </div>
@@ -613,36 +733,36 @@
       </div>
 
       <!-- Diária Banner -->
-      <div class="mt-8 rounded-2xl p-6 bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="mt-8 rounded-2xl p-6 card-combat flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
-            <i data-lucide="ticket" class="w-6 h-6 text-zinc-400"></i>
+          <div class="w-12 h-12 rounded-full bg-[var(--color-primary-light)] flex items-center justify-center">
+            <i data-lucide="ticket" class="w-6 h-6 theme-text-primary"></i>
           </div>
           <div>
-            <h5 class="text-lg font-bold text-white uppercase">Treino Avulso / Diária</h5>
+            <h5 class="text-lg font-bold uppercase">Treino Avulso / Diária</h5>
             <p class="text-sm text-zinc-400">Quer treinar apenas hoje? Pague somente pelo dia.</p>
           </div>
         </div>
         <div class="flex items-center gap-6">
           <div class="flex items-baseline gap-1">
             <span class="text-sm font-semibold text-zinc-400">R$</span>
-            <span class="text-3xl font-extrabold text-white">25</span>
+            <span class="text-3xl font-extrabold">25</span>
             <span class="text-sm text-zinc-400">,00</span>
           </div>
-          <a href="/checkout?plano=Diária&valor=25" class="px-6 py-2.5 rounded-lg border border-zinc-700 hover:border-red-500 text-white font-bold text-sm transition">
+          <a href="/checkout?plano=Diária&valor=25" class="px-6 py-2.5 rounded-lg theme-btn-secondary font-bold text-sm transition">
             Agendar
           </a>
         </div>
       </div>
 
       <!-- Parceiros Corporativos (Wellhub / TotalPass) -->
-      <div class="mt-16 p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 text-center">
+      <div class="mt-16 p-8 rounded-2xl card-combat text-center">
         <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-6">Parceiros Corporativos Aceitos no CT</h4>
         <div class="flex flex-wrap items-center justify-center gap-10 md:gap-16 opacity-80 hover:opacity-100 transition">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center font-black text-white text-lg">W</div>
             <div class="text-left">
-              <span class="font-bold text-white text-base">Wellhub</span>
+              <span class="font-bold text-base">Wellhub</span>
               <span class="block text-[11px] text-zinc-400">(Antigo Gympass)</span>
             </div>
           </div>
@@ -650,7 +770,7 @@
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white text-lg">T</div>
             <div class="text-left">
-              <span class="font-bold text-white text-base">TotalPass</span>
+              <span class="font-bold text-base">TotalPass</span>
               <span class="block text-[11px] text-zinc-400">Check-in Liberado</span>
             </div>
           </div>
@@ -658,8 +778,8 @@
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center font-black text-zinc-900 text-lg">B</div>
             <div class="text-left">
-              <span class="font-bold text-white text-base">Convênios Locais</span>
-              <span class="block text-[11px] text-zinc-400">Empresas & OAB/RO</span>
+              <span class="font-bold text-base">Convênios Locais</span>
+              <span class="block text-[11px] text-zinc-400">Empresas & Parceiros</span>
             </div>
           </div>
         </div>
@@ -669,12 +789,12 @@
   </section>
 
   <!-- ================= SEÇÃO: GRADE DE HORÁRIOS ================= -->
-  <section id="horarios" class="py-20 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
+  <section id="horarios" class="py-20 theme-section-main border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-12 space-y-3">
-        <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Grade Completa</h2>
-        <h3 class="font-display text-3xl sm:text-5xl font-extrabold text-white uppercase">
+        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Grade Completa</h2>
+        <h3 class="font-display text-3xl sm:text-5xl font-extrabold uppercase">
           Horários de Treino
         </h3>
         <p class="text-zinc-400 text-sm">
@@ -684,16 +804,16 @@
 
       <!-- Shift Filter Tabs -->
       <div class="flex flex-wrap items-center justify-center gap-2 mb-8" id="schedule-filters">
-        <button class="schedule-filter-btn active px-5 py-2.5 rounded-lg text-sm font-bold transition bg-red-600 text-white" data-filter="all">
+        <button class="schedule-filter-btn active px-5 py-2.5 rounded-lg text-sm font-bold transition theme-btn-primary" data-filter="all">
           Todos os Turnos
         </button>
-        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-700" data-filter="manha">
+        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition theme-btn-secondary" data-filter="manha">
           <i data-lucide="sun" class="w-4 h-4 inline mr-1 text-amber-400"></i> Manhã (06h - 11h)
         </button>
-        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-700" data-filter="tarde">
+        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition theme-btn-secondary" data-filter="tarde">
           <i data-lucide="cloud-sun" class="w-4 h-4 inline mr-1 text-orange-400"></i> Tarde (12h - 17h)
         </button>
-        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-700" data-filter="noite">
+        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition theme-btn-secondary" data-filter="noite">
           <i data-lucide="moon" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Noite (17h - 22h)
         </button>
       </div>
@@ -707,17 +827,17 @@
   </section>
 
   <!-- ================= SEÇÃO: O QUE É O CT ================= -->
-  <section id="o-que-e-o-ct" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
+  <section id="o-que-e-o-ct" class="py-24 theme-section-alt border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
         <div class="lg:col-span-5 space-y-4">
-          <div class="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl">
+          <div class="relative rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-2xl">
             <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1000&auto=format&fit=crop&q=80" 
                  alt="Treino no Centro de Treinamento" 
                  class="w-full h-80 object-cover object-center">
-            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
             <div class="absolute bottom-4 left-4 right-4">
               <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Ambiente de Respeito & Disciplina</span>
               <p class="text-sm font-semibold text-white mt-1">Onde o ego fica do lado de fora do tatame.</p>
@@ -725,25 +845,25 @@
           </div>
 
           <div class="grid grid-cols-2 gap-4">
-            <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-center">
-              <div class="font-display text-3xl font-bold text-red-500">100%</div>
-              <div class="text-xs text-zinc-400 mt-1">Ambiente Climatizado</div>
+            <div class="p-4 rounded-xl card-combat text-center">
+              <div class="font-display text-3xl font-bold theme-text-primary">100%</div>
+              <div class="text-xs text-[var(--color-text-muted)] mt-1">Ambiente Climatizado</div>
             </div>
-            <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-center">
+            <div class="p-4 rounded-xl card-combat text-center">
               <div class="font-display text-3xl font-bold text-amber-400">0 a 100</div>
-              <div class="text-xs text-zinc-400 mt-1">Do Sedentário ao Atleta</div>
+              <div class="text-xs text-[var(--color-text-muted)] mt-1">Do Sedentário ao Atleta</div>
             </div>
           </div>
         </div>
 
         <div class="lg:col-span-7 space-y-6">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-red-600/20 text-red-400 text-xs font-bold uppercase tracking-wider">
-            <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded theme-badge text-xs font-bold uppercase tracking-wider">
+            <i data-lucide="shield" class="w-3.5 h-3.5 theme-text-primary"></i>
             Conheça o Nosso Centro de Treinamento
           </div>
 
-          <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-white uppercase leading-tight">
-            O Que É o <span class="text-red-500">Centro de Treinamento</span>?
+          <h2 class="font-display text-3xl sm:text-5xl font-extrabold uppercase leading-tight">
+            O Que É o <span class="theme-text-primary">Centro de Treinamento</span>?
           </h2>
 
           <p class="text-zinc-300 text-base leading-relaxed">
@@ -751,42 +871,43 @@
             <strong>democratizar as artes marciais de alto nível técnico</strong> em um ambiente seguro, acolhedor e com infraestrutura padrão internacional.
           </p>
 
-          <div class="space-y-4 text-sm text-zinc-400">
+          <div class="space-y-4 text-sm text-[var(--color-text-muted)]">
             <div class="flex items-start gap-3">
-              <div class="p-2 rounded-lg bg-red-600/10 text-red-500 flex-shrink-0 mt-0.5">
-                <i data-lucide="check" class="w-4 h-4"></i>
+              <div class="p-2 rounded-lg theme-badge flex-shrink-0 mt-0.5">
+                <i data-lucide="check" class="w-4 h-4 theme-text-primary"></i>
               </div>
               <div>
-                <strong class="text-white">Para quem nunca calçou uma luva ou vestiu um kimono:</strong> 
+                <strong class="text-[var(--color-text-main)]">Para quem nunca calçou uma luva ou vestiu um kimono:</strong> 
                 Não existe cobrança agressiva de desempenho. Nossos mestres ensinam desde a base (postura, guarda, respiração) garantindo que você se sinta seguro e motivado a cada aula.
               </div>
             </div>
 
             <div class="flex items-start gap-3">
-              <div class="p-2 rounded-lg bg-red-600/10 text-red-500 flex-shrink-0 mt-0.5">
-                <i data-lucide="check" class="w-4 h-4"></i>
+              <div class="p-2 rounded-lg theme-badge flex-shrink-0 mt-0.5">
+                <i data-lucide="check" class="w-4 h-4 theme-text-primary"></i>
               </div>
               <div>
-                <strong class="text-white">Para quem busca emagrecimento & alívio do estresse:</strong> 
+                <strong class="text-[var(--color-text-main)]">Para quem busca emagrecimento & alívio do estresse:</strong> 
                 Nossos treinos de Muay Thai, Kickboxing e Funcional Fight queimam até 800 calorias por hora, descarregando as tensões do dia a dia e tonificando o corpo todo.
               </div>
             </div>
 
             <div class="flex items-start gap-3">
-              <div class="p-2 rounded-lg bg-red-600/10 text-red-500 flex-shrink-0 mt-0.5">
-                <i data-lucide="check" class="w-4 h-4"></i>
+              <div class="p-2 rounded-lg theme-badge flex-shrink-0 mt-0.5">
+                <i data-lucide="check" class="w-4 h-4 theme-text-primary"></i>
               </div>
               <div>
-                <strong class="text-white">Para atletas e praticantes graduados:</strong> 
+                <strong class="text-[var(--color-text-main)]">Para atletas e praticantes graduados:</strong> 
                 Treinos táticos de alto rendimento, sparring técnico controlado, preparação física especializada e preparação para campeonatos de Jiu-Jitsu, Muay Thai e MMA.
               </div>
             </div>
           </div>
 
           <div class="pt-2 flex flex-wrap gap-4">
-            <a href="/agendar" class="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm uppercase tracking-wider shadow-lg transition">
-              Agendar Minha Primeira Aula</a>
-            <a href="#estrutura" class="px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-sm transition">
+            <a href="/agendar" class="px-6 py-3 rounded-xl theme-btn-primary font-bold text-sm uppercase tracking-wider shadow-lg transition">
+              Agendar Minha Primeira Aula
+            </a>
+            <a href="#estrutura" class="px-6 py-3 rounded-xl theme-btn-secondary font-bold text-sm transition">
               Ver Nossa Estrutura
             </a>
           </div>
@@ -799,12 +920,12 @@
   </section>
 
   <!-- ================= SEÇÃO: ESTRUTURA & INSTALAÇÕES ================= -->
-  <section id="estrutura" class="py-24 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
+  <section id="estrutura" class="py-24 theme-section-main border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
-        <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Infraestrutura de Ponta</h2>
-        <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase">
+        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Infraestrutura de Ponta</h2>
+        <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase">
           Estrutura do Centro de Treinamento
         </h3>
         <p class="text-zinc-400 text-sm">
@@ -820,12 +941,12 @@
   </section>
 
   <!-- ================= SEÇÃO: PROFESSORES / MESTRES (PORTFÓLIO) ================= -->
-  <section id="professores" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
+  <section id="professores" class="py-24 theme-section-alt border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
-        <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Corpo Docente de Elite</h2>
-        <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase">
+        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Corpo Docente de Elite</h2>
+        <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase">
           Nossos Professores & Mestres
         </h3>
         <p class="text-zinc-400 text-sm">
@@ -842,13 +963,13 @@
   </section>
 
   <!-- ================= SEÇÃO: MODALIDADES ================= -->
-  <section id="modalidades" class="py-24 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
+  <section id="modalidades" class="py-24 theme-section-main border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
         <div>
-          <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Artes Marciais & Condicionamento</h2>
-          <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase mt-1">
+          <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Artes Marciais & Condicionamento</h2>
+          <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase mt-1">
             Modalidades Oferecidas
           </h3>
         </div>
@@ -866,12 +987,12 @@
   </section>
 
   <!-- ================= SEÇÃO: GALERIA DO CT (ATMOSFERA) ================= -->
-  <section id="galeria" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-y border-zinc-800/80 relative z-10">
+  <section id="galeria" class="py-24 theme-section-alt border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
-        <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Dia a Dia no Tatame</h2>
-        <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase">
+        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Dia a Dia no Tatame</h2>
+        <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase">
           Galeria de Fotos do CT
         </h3>
         <p class="text-zinc-400 text-sm">
@@ -882,50 +1003,50 @@
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
         
         <!-- Foto 1: Chute & Manopla -->
-        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
+        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 card-combat shadow-lg">
           <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80" alt="Treino de Chute e Manopla no Tatame" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <span class="text-xs font-bold text-white uppercase tracking-wider bg-red-600/90 px-3 py-1 rounded shadow">Chute & Manopla</span>
+            <span class="text-xs font-bold uppercase tracking-wider theme-btn-primary px-3 py-1 rounded shadow">Chute & Manopla</span>
           </div>
         </div>
 
         <!-- Foto 2: Jiu-Jitsu / Solo -->
-        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
+        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 card-combat shadow-lg">
           <img src="https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=800&auto=format&fit=crop&q=80" alt="Jiu-Jitsu e Domínio de Solo" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <span class="text-xs font-bold text-white uppercase tracking-wider bg-blue-600/90 text-white px-3 py-1 rounded shadow">Arte Suave (BJJ)</span>
+            <span class="text-xs font-bold uppercase tracking-wider theme-btn-primary px-3 py-1 rounded shadow">Arte Suave (BJJ)</span>
           </div>
         </div>
 
         <!-- Foto 3: Boxe Clássico -->
-        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
+        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 card-combat shadow-lg">
           <img src="https://images.unsplash.com/photo-1509563423944-b791c380791c?w=800&auto=format&fit=crop&q=80" alt="Boxe e Trabalho de Saco Pesado" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <span class="text-xs font-bold text-white uppercase tracking-wider bg-amber-500/90 text-black px-3 py-1 rounded shadow">Boxe Clássico</span>
+            <span class="text-xs font-bold uppercase tracking-wider theme-btn-primary px-3 py-1 rounded shadow">Boxe Clássico</span>
           </div>
         </div>
 
         <!-- Foto 4: Tatame & Condicionamento -->
-        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
+        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 card-combat shadow-lg">
           <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80" alt="Estrutura e Estações de Treinamento" class="w-full h-full object-cover object-top group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <span class="text-xs font-bold text-white uppercase tracking-wider bg-red-600/90 px-3 py-1 rounded shadow">Tatame & Estrutura</span>
+            <span class="text-xs font-bold uppercase tracking-wider theme-btn-primary px-3 py-1 rounded shadow">Tatame & Estrutura</span>
           </div>
         </div>
 
         <!-- Foto 5: Foco & Manoplas -->
-        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
+        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 card-combat shadow-lg">
           <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop&q=80" alt="Treino Técnico de Manopla e Agilidade" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <span class="text-xs font-bold text-white uppercase tracking-wider bg-zinc-800 px-3 py-1 rounded shadow">Foco & Manopla</span>
+            <span class="text-xs font-bold uppercase tracking-wider theme-btn-secondary px-3 py-1 rounded shadow">Foco & Manopla</span>
           </div>
         </div>
 
         <!-- Foto 6: MMA & Octógono -->
-        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
+        <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 card-combat shadow-lg">
           <img src="https://images.unsplash.com/photo-1517344884509-a0c97ec11bcc?w=800&auto=format&fit=crop&q=80" alt="MMA e Alta Performance" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <span class="text-xs font-bold text-white uppercase tracking-wider bg-emerald-600/90 text-white px-3 py-1 rounded shadow">MMA & Octógono</span>
+            <span class="text-xs font-bold uppercase tracking-wider theme-btn-primary px-3 py-1 rounded shadow">MMA & Octógono</span>
           </div>
         </div>
 
@@ -935,12 +1056,12 @@
   </section>
 
   <!-- ================= SEÇÃO: DÚVIDAS FREQUENTES (FAQ) ================= -->
-  <section id="faq" class="py-24 bg-[#0B0B0C]/80 backdrop-blur-[2px] relative z-10">
+  <section id="faq" class="py-24 theme-section-main border-b relative z-10">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center mb-16 space-y-3">
-        <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Tire Suas Dúvidas</h2>
-        <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase">
+        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Tire Suas Dúvidas</h2>
+        <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase">
           Perguntas Frequentes
         </h3>
         <p class="text-zinc-400 text-sm">
@@ -956,13 +1077,13 @@
   </section>
 
   <!-- ================= LOCALIZAÇÃO & ATENDIMENTO ================= -->
-  <section id="localizacao" class="py-24 bg-[#141416]/85 backdrop-blur-[2px] border-t border-zinc-800/80 relative z-10">
+  <section id="localizacao" class="py-24 theme-section-alt border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
         <div class="lg:col-span-6 space-y-6">
-          <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Venha Nos Conhecer Pessoalmente</h2>
-          <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase">
+          <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Venha Nos Conhecer Pessoalmente</h2>
+          <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase">
             Localização da Academia
           </h3>
           <p class="text-zinc-400 text-sm leading-relaxed">
@@ -970,43 +1091,43 @@
           </p>
 
           <div class="space-y-4 pt-2">
-            <div class="flex items-start gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-              <div class="p-2.5 rounded-lg bg-red-600/20 text-red-500">
-                <i data-lucide="map-pin" class="w-5 h-5"></i>
+            <div class="flex items-start gap-4 p-4 rounded-xl card-combat">
+              <div class="p-2.5 rounded-lg theme-badge">
+                <i data-lucide="map-pin" class="w-5 h-5 theme-text-primary"></i>
               </div>
               <div>
-                <h5 class="text-sm font-bold text-white">Endereço da Unidade</h5>
-                <p class="text-xs text-zinc-400 mt-0.5">Av. das Artes Marciais, 1500 - Centro | Sua Cidade - UF</p>
+                <h5 class="text-sm font-bold">Endereço da Unidade</h5>
+                <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Av. das Artes Marciais, 1500 - Centro | Sua Cidade - UF</p>
               </div>
             </div>
 
-            <div class="flex items-start gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-              <div class="p-2.5 rounded-lg bg-amber-500/20 text-amber-500">
-                <i data-lucide="clock" class="w-5 h-5"></i>
+            <div class="flex items-start gap-4 p-4 rounded-xl card-combat">
+              <div class="p-2.5 rounded-lg theme-badge">
+                <i data-lucide="clock" class="w-5 h-5 theme-text-primary"></i>
               </div>
               <div>
-                <h5 class="text-sm font-bold text-white">Horário de Funcionamento</h5>
-                <p class="text-xs text-zinc-400 mt-0.5">Segunda a Sexta: 06h às 22h | Sábados: 08h às 14h</p>
+                <h5 class="text-sm font-bold">Horário de Funcionamento</h5>
+                <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Segunda a Sexta: 06h às 22h | Sábados: 08h às 14h</p>
               </div>
             </div>
 
-            <div class="flex items-start gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-              <div class="p-2.5 rounded-lg bg-emerald-600/20 text-emerald-500">
-                <i data-lucide="message-circle" class="w-5 h-5"></i>
+            <div class="flex items-start gap-4 p-4 rounded-xl card-combat">
+              <div class="p-2.5 rounded-lg theme-badge">
+                <i data-lucide="message-circle" class="w-5 h-5 theme-text-primary"></i>
               </div>
               <div>
-                <h5 class="text-sm font-bold text-white">WhatsApp & Redes Sociais</h5>
-                <p class="text-xs text-zinc-400 mt-0.5">WhatsApp: (11) 98765-4321 | Instagram: @academiadecombate</p>
+                <h5 class="text-sm font-bold">WhatsApp & Redes Sociais</h5>
+                <p class="text-xs text-[var(--color-text-muted)] mt-0.5">WhatsApp: (11) 98765-4321 | Instagram: @academiadecombate</p>
               </div>
             </div>
           </div>
 
           <div class="pt-2 flex flex-wrap gap-4">
-            <a href="https://instagram.com" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-sm font-semibold text-zinc-200">
+            <a href="https://instagram.com" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg theme-btn-secondary text-sm font-semibold">
               <i data-lucide="instagram" class="w-4 h-4 text-pink-500"></i>
               @academiadecombate
             </a>
-            <a href="https://wa.me/5511987654321?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20aulas%20na%20academia." target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm">
+            <a href="https://wa.me/5511987654321?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20aulas%20na%20academia." target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg theme-btn-primary font-bold text-sm">
               <i data-lucide="send" class="w-4 h-4"></i>
               Conversar no WhatsApp ((11) 98765-4321)
             </a>
@@ -1015,7 +1136,7 @@
 
         <!-- Mapa / Visual Showcase -->
         <div class="lg:col-span-6">
-          <div class="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 p-2 shadow-2xl">
+          <div class="rounded-2xl overflow-hidden card-combat p-2 shadow-2xl">
             <div class="relative h-[380px] w-full rounded-xl overflow-hidden bg-zinc-950 flex items-center justify-center">
               <iframe 
                 src="https://maps.google.com/maps?q=-23.550520,-46.633308&hl=pt-BR&z=17&output=embed" 
@@ -1026,9 +1147,9 @@
                 loading="lazy" 
                 referrerpolicy="no-referrer-when-downgrade">
               </iframe>
-              <div class="absolute bottom-4 left-4 right-4 bg-zinc-900/90 backdrop-blur-md p-3 rounded-lg border border-zinc-700 text-xs flex items-center justify-between">
-                <span class="font-bold text-white">Av. das Artes Marciais, 1500 - Centro</span>
-                <a href="https://maps.google.com/?q=-23.550520,-46.633308" target="_blank" class="text-red-400 font-bold hover:underline">Abrir no GPS</a>
+              <div class="absolute bottom-4 left-4 right-4 card-combat p-3 rounded-lg text-xs flex items-center justify-between">
+                <span class="font-bold">Av. das Artes Marciais, 1500 - Centro</span>
+                <a href="https://maps.google.com/?q=-23.550520,-46.633308" target="_blank" class="theme-text-primary font-bold hover:underline">Abrir no GPS</a>
               </div>
             </div>
           </div>
@@ -1039,27 +1160,27 @@
   </section>
 
   <!-- ================= FOOTER ================= -->
-  <footer class="bg-black/90 backdrop-blur-sm border-t border-zinc-900 py-12 text-zinc-500 text-sm relative z-10">
+  <footer class="theme-section-main backdrop-blur-sm border-t py-12 text-zinc-500 text-sm relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col md:flex-row items-center justify-between gap-6">
         
         <div class="flex items-center gap-3">
-          <img src="/logo-combat.svg" alt="COMBAT HUB" class="w-9 h-9 rounded-full border border-red-600/70 shadow-sm object-contain" />
-          <span class="font-display text-xl font-bold tracking-widest text-white">COMBAT HUB</span>
+          <img src="/logo-combat.svg" alt="COMBAT HUB" class="w-9 h-9 rounded-full border border-[var(--color-primary)] shadow-sm object-contain" />
+          <span class="font-display text-xl font-bold tracking-widest text-[var(--color-text-main)]">COMBAT HUB</span>
           <span class="text-xs text-zinc-500">| Centro de Treinamento em Artes Marciais</span>
         </div>
 
         <div class="flex flex-wrap items-center gap-6 text-xs font-medium">
-          <a href="#o-que-e-o-ct" class="hover:text-zinc-300 transition">O Que É o CT</a>
-          <a href="#professores" class="hover:text-zinc-300 transition">Professores</a>
-          <a href="#estrutura" class="hover:text-zinc-300 transition">Estrutura</a>
-          <a href="#horarios" class="hover:text-zinc-300 transition">Horários</a>
-          <a href="/portal" class="hover:text-red-400 transition font-bold">Área do Aluno</a>
+          <a href="#o-que-e-o-ct" class="hover:text-[var(--color-primary)] transition">O Que É o CT</a>
+          <a href="#professores" class="hover:text-[var(--color-primary)] transition">Professores</a>
+          <a href="#estrutura" class="hover:text-[var(--color-primary)] transition">Estrutura</a>
+          <a href="#horarios" class="hover:text-[var(--color-primary)] transition">Horários</a>
+          <a href="/portal" class="hover:text-[var(--color-primary)] transition font-bold">Área do Aluno</a>
         </div>
 
         <div class="text-xs text-center md:text-right flex flex-col gap-1 items-end">
           <span>&copy; <span id="current-year"></span> COMBAT HUB - Centro de Treinamento. Todos os direitos reservados.</span>
-          <a href="/admin" class="hover:text-red-500 transition opacity-30 hover:opacity-100 mt-1">Acesso de Professor</a>
+          <a href="/admin" class="hover:text-[var(--color-primary)] transition opacity-30 hover:opacity-100 mt-1">Acesso de Professor</a>
         </div>
 
       </div>
@@ -1068,13 +1189,13 @@
 
   <!-- ================= MODAL AGENDAMENTO EXPERIMENTAL ================= -->
   <div id="booking-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
-    <div class="bg-[#141416] border border-zinc-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div class="card-combat rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Modal Header -->
-      <div class="p-6 bg-gradient-to-r from-red-950/60 to-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+      <div class="p-6 bg-[var(--color-bg-card-alt)] border-b border-[var(--color-border)] flex items-center justify-between">
         <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-red-400">100% Gratuita & Sem Compromisso</span>
-          <h3 class="font-display text-2xl font-bold text-white uppercase">Agendar Aula Experimental no CT</h3>
+          <span class="text-xs font-bold uppercase tracking-wider theme-text-primary">100% Gratuita & Sem Compromisso</span>
+          <h3 class="font-display text-2xl font-bold uppercase">Agendar Aula Experimental no CT</h3>
         </div>
         <button onclick="closeBookingModal()" class="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -1085,19 +1206,19 @@
       <form id="booking-form" class="p-6 space-y-4" onsubmit="handleBookingSubmit(event)">
         
         <div>
-          <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">Seu Nome Completo *</label>
-          <input type="text" id="book-name" required placeholder="Ex: Carlos Eduardo" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:border-red-500 focus:outline-none text-sm">
+          <label class="block text-xs font-bold uppercase tracking-wider mb-1.5">Seu Nome Completo *</label>
+          <input type="text" id="book-name" required placeholder="Ex: Carlos Eduardo" class="w-full px-4 py-3 rounded-lg card-combat placeholder-zinc-500 focus:border-[var(--color-primary)] focus:outline-none text-sm">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">WhatsApp / Celular *</label>
-            <input type="tel" id="book-phone" required placeholder="(11) 98765-4321" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:border-red-500 focus:outline-none text-sm">
+            <label class="block text-xs font-bold uppercase tracking-wider mb-1.5">WhatsApp / Celular *</label>
+            <input type="tel" id="book-phone" required placeholder="(11) 98765-4321" class="w-full px-4 py-3 rounded-lg card-combat placeholder-zinc-500 focus:border-[var(--color-primary)] focus:outline-none text-sm">
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">Modalidade Desejada *</label>
-            <select id="book-modality" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-700 text-white focus:border-red-500 focus:outline-none text-sm">
+            <label class="block text-xs font-bold uppercase tracking-wider mb-1.5">Modalidade Desejada *</label>
+            <select id="book-modality" class="w-full px-4 py-3 rounded-lg card-combat focus:border-[var(--color-primary)] focus:outline-none text-sm">
               <option value="Muay Thai Tradicional">Muay Thai Tradicional</option>
               <option value="Jiu-Jitsu Brasileiro (BJJ)">Jiu-Jitsu Brasileiro (BJJ)</option>
               <option value="Boxe Clássico">Boxe Clássico</option>
@@ -1113,8 +1234,8 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">Turno de Preferência</label>
-            <select id="book-shift" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-700 text-white focus:border-red-500 focus:outline-none text-sm">
+            <label class="block text-xs font-bold uppercase tracking-wider mb-1.5">Turno de Preferência</label>
+            <select id="book-shift" class="w-full px-4 py-3 rounded-lg card-combat focus:border-[var(--color-primary)] focus:outline-none text-sm">
               <option value="Manhã (06h - 10h)">Manhã (06h - 10h)</option>
               <option value="Tarde (12h - 17h)">Tarde (12h - 17h)</option>
               <option value="Noite (18h - 22h)">Noite (18h - 22h)</option>
@@ -1122,8 +1243,8 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5">Já praticou lutas?</label>
-            <select id="book-experience" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-700 text-white focus:border-red-500 focus:outline-none text-sm">
+            <label class="block text-xs font-bold uppercase tracking-wider mb-1.5">Já praticou lutas?</label>
+            <select id="book-experience" class="w-full px-4 py-3 rounded-lg card-combat focus:border-[var(--color-primary)] focus:outline-none text-sm">
               <option value="Nunca pratiquei (Iniciante zero)">Nunca pratiquei (Iniciante zero)</option>
               <option value="Já fiz outra modalidade">Já fiz outra modalidade</option>
               <option value="Já sou graduado / praticante">Já sou graduado / praticante</option>
@@ -1131,12 +1252,12 @@
           </div>
         </div>
 
-        <div class="pt-4 border-t border-zinc-800">
-          <button type="submit" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm uppercase tracking-wider shadow-lg shadow-red-900/40 flex items-center justify-center gap-2 transition">
+        <div class="pt-4 border-t border-[var(--color-border)]">
+          <button type="submit" class="w-full py-4 rounded-xl theme-btn-primary font-bold text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition">
             <i data-lucide="send" class="w-4 h-4"></i>
             <span>Confirmar no WhatsApp da Academia</span>
           </button>
-          <p class="text-[11px] text-zinc-400 text-center mt-2">Você será redirecionado para o WhatsApp com seu formulário preenchido.</p>
+          <p class="text-[11px] text-[var(--color-text-muted)] text-center mt-2">Você será redirecionado para o WhatsApp com seu formulário preenchido.</p>
         </div>
 
       </form>
@@ -1145,10 +1266,10 @@
 
   <!-- Botão Flutuante de Cores (Canto Inferior Direito) -->
   <div class="fixed bottom-6 right-6 z-40">
-    <button id="floating-theme-btn" type="button" title="Trocar Paleta de Cores" class="px-4 py-3 rounded-full bg-zinc-900/95 border-2 border-[var(--color-primary)] text-white shadow-2xl hover:scale-105 active:scale-95 transition flex items-center gap-2 group backdrop-blur-md">
-      <span class="w-3.5 h-3.5 rounded-full bg-[var(--color-primary)] ring-2 ring-white/40 animate-pulse"></span>
-      <i data-lucide="palette" class="w-4 h-4 text-zinc-300 group-hover:text-white"></i>
-      <span class="text-xs font-bold text-zinc-200 group-hover:text-white">Trocar Cores</span>
+    <button id="floating-theme-btn" type="button" title="Trocar Paleta de Cores" class="px-4 py-3 rounded-full theme-btn-primary border-2 border-white/40 shadow-2xl hover:scale-105 active:scale-95 transition flex items-center gap-2 group backdrop-blur-md">
+      <span class="w-3.5 h-3.5 rounded-full bg-white ring-2 ring-black/20 animate-pulse"></span>
+      <i data-lucide="palette" class="w-4 h-4"></i>
+      <span class="text-xs font-bold">Trocar Cores</span>
     </button>
   </div>
 

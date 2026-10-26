@@ -67,39 +67,88 @@ export default function ThemeSwitcher({ compact = false }: ThemeSwitcherProps) {
               </span>
             </div>
 
-            <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
-              {THEMES_LIST.map((t) => {
-                const isSelected = t.id === activeThemeId;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => handleSelectTheme(t.id)}
-                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-medium transition text-left ${
-                      isSelected
-                        ? 'bg-zinc-800 text-white border border-zinc-600 shadow-sm'
-                        : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex items-center -space-x-1">
-                        <span
-                          className="w-4 h-4 rounded-full border border-zinc-900 shadow-sm"
-                          style={{ backgroundColor: t.preview[0] }}
-                        />
-                        <span
-                          className="w-4 h-4 rounded-full border border-zinc-900 shadow-sm"
-                          style={{ backgroundColor: t.preview[1] }}
-                        />
-                      </div>
-                      <span className="truncate max-w-[150px]">{t.name}</span>
-                    </div>
+            <div className="max-h-80 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
+              {/* Dark Themes */}
+              <div>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2 py-1">
+                  🌙 Estilos Combate (Dark)
+                </p>
+                <div className="space-y-1">
+                  {THEMES_LIST.filter(t => t.mode === 'dark').map((t) => {
+                    const isSelected = t.id === activeThemeId;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handleSelectTheme(t.id)}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-medium transition text-left ${
+                          isSelected
+                            ? 'bg-zinc-800 text-white border border-zinc-600 shadow-sm'
+                            : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex items-center -space-x-1">
+                            <span
+                              className="w-4 h-4 rounded-full border border-zinc-900 shadow-sm"
+                              style={{ backgroundColor: t.preview[0] }}
+                            />
+                            <span
+                              className="w-4 h-4 rounded-full border border-zinc-900 shadow-sm"
+                              style={{ backgroundColor: t.preview[1] }}
+                            />
+                          </div>
+                          <span className="truncate max-w-[140px]">{t.name}</span>
+                        </div>
+                        {isSelected && (
+                          <span className="text-[10px] font-bold text-emerald-400">✓ Ativo</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-                    {isSelected && (
-                      <span className="text-[11px] font-bold text-emerald-400">✓ Ativo</span>
-                    )}
-                  </button>
-                );
-              })}
+              {/* Light Themes */}
+              <div className="border-t border-zinc-800 pt-2">
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2 py-1">
+                  ☀️ Estilos Clean (Light)
+                </p>
+                <div className="space-y-1">
+                  {THEMES_LIST.filter(t => t.mode === 'light').map((t) => {
+                    const isSelected = t.id === activeThemeId;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handleSelectTheme(t.id)}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-medium transition text-left ${
+                          isSelected
+                            ? 'bg-zinc-800 text-white border border-zinc-600 shadow-sm'
+                            : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex items-center -space-x-1">
+                            <span
+                              className="w-4 h-4 rounded-full border border-zinc-900 shadow-sm"
+                              style={{ backgroundColor: t.preview[0] }}
+                            />
+                            <span
+                              className="w-4 h-4 rounded-full border border-zinc-900 shadow-sm"
+                              style={{ backgroundColor: t.preview[1] }}
+                            />
+                          </div>
+                          <span className="truncate max-w-[140px]">{t.name}</span>
+                        </div>
+                        {isSelected && (
+                          <span className="text-[10px] font-bold text-emerald-400">✓ Ativo</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </>
