@@ -740,44 +740,44 @@ export default function AdminDashboard() {
   // ==========================================
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
-        <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
-          <div className="flex justify-end mb-1">
+      <div className="fixed inset-0 bg-[var(--color-bg-main)]/85 backdrop-blur-sm flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
+        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10 text-[var(--color-text-main)] transition-colors">
+          <div className="flex justify-end mb-2">
             <ThemeSwitcher compact />
           </div>
           <div className="text-center mb-6">
             <img 
               src={ACADEMY_CONFIG.logoUrl} 
               alt={ACADEMY_CONFIG.nome} 
-              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-cover bg-zinc-950" 
+              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-[var(--color-primary-border)] shadow-xl object-contain bg-[var(--color-bg-main)] p-2" 
             />
-            <h1 className="text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
-            <p className="text-red-500 font-bold text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
-            <p className="text-zinc-400 text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-main)] tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
+            <p className="text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
+            <p className="text-[var(--color-text-muted)] text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-xs font-semibold mb-1">Login de Acesso</label>
+              <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">Login de Acesso</label>
               <input 
                 type="text" 
                 value={loginInput}
                 onChange={(e) => setLoginInput(e.target.value)}
-                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
                 placeholder="Usuário (BrgAdmin) ou CPF do Professor"
                 required
               />
-              <p className="text-[11px] text-zinc-500 mt-1">
+              <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
                 * Professores acessam informando o seu <strong>CPF</strong> (com ou sem pontuação) e senha cadastrada.
               </p>
             </div>
             <div>
-              <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha de Acesso</label>
+              <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">Senha de Acesso</label>
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
                 placeholder="Sua senha de acesso"
                 required
               />
@@ -785,16 +785,16 @@ export default function AdminDashboard() {
             <button 
               type="submit" 
               disabled={loginLoading}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm uppercase tracking-wider"
+              className="w-full theme-btn-primary disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg text-sm uppercase tracking-wider"
             >
               {loginLoading ? 'Verificando...' : 'Entrar no Painel'}
             </button>
-            <p className="text-[11px] text-zinc-500 text-center mt-3">
+            <p className="text-[11px] text-[var(--color-text-muted)] text-center mt-3">
               Esqueceu a senha de professor? A redefinição de senha é feita diretamente com a Administração.
             </p>
           </form>
 
-          <Link to="/" className="block text-center mt-5 text-zinc-500 hover:text-white text-xs transition">
+          <Link to="/" className="block text-center mt-5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] text-xs transition">
             ← Voltar ao site principal
           </Link>
         </div>
@@ -832,13 +832,13 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-5">
           <div className="flex items-center gap-3">
-            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover flex-shrink-0 bg-zinc-950" />
+            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-[var(--color-primary-border)] shadow-md object-contain flex-shrink-0 bg-[var(--color-bg-card)] p-1" />
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-                  PAINEL <span className="text-red-600">DE GESTÃO</span>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-[var(--color-text-main)]">
+                  PAINEL <span className="text-[var(--color-primary)]">DE GESTÃO</span>
                 </h1>
                 {usuarioLogado?.cargo === 'ADMIN' ? (
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
@@ -850,8 +850,8 @@ export default function AdminDashboard() {
                   </span>
                 )}
               </div>
-              <p className="text-zinc-400 text-xs sm:text-sm mt-1">
-                Olá, <strong className="text-white">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
+              <p className="text-[var(--color-text-muted)] text-xs sm:text-sm mt-1">
+                Olá, <strong className="text-[var(--color-text-main)]">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
               </p>
             </div>
           </div>
@@ -868,7 +868,7 @@ export default function AdminDashboard() {
             )}
             <button 
               onClick={() => setShowModal(true)}
-              className="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
+              className="px-3.5 py-2 rounded-lg theme-btn-primary text-xs font-bold transition flex items-center gap-1.5 shadow-md"
             >
               <span>➕ Novo Aluno</span>
             </button>

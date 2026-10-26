@@ -47,13 +47,13 @@ export interface AcademyConfig {
 }
 
 export const ACADEMY_CONFIG: AcademyConfig = {
-  nome: 'COMBAT HUB',
-  nomeCurto: 'COMBAT HUB',
+  nome: 'CENTRO DE COMBATE',
+  nomeCurto: 'CENTRO DE COMBATE',
   subtitulo: 'Centro de Treinamento em Artes Marciais & Alta Performance',
   slogan: 'Disciplina, Técnica & Evolução Constante',
   descricao: 'Sistema e plataforma completa para academias de lutas, centros de combate e dojos. Gestão de alunos, chamadas, graduações, planos e loja integrada.',
-  sigla: 'CH',
-  badge: 'CT MODELO',
+  sigla: 'CC',
+  badge: 'CT OFICIAL',
 
   cidadeEstado: 'São Paulo - SP',
   enderecoCompleto: 'Av. das Artes Marciais, 1500 - Centro',

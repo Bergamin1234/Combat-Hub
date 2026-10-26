@@ -293,19 +293,19 @@ export default function PortalAluno() {
   // TELA DE LOGIN DO ALUNO
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
-        <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-7 sm:p-8 rounded-2xl w-full max-w-sm shadow-2xl relative z-10">
-          <div className="flex justify-end mb-1">
+      <div className="fixed inset-0 bg-[var(--color-bg-main)]/85 backdrop-blur-sm flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
+        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] p-7 sm:p-8 rounded-2xl w-full max-w-sm shadow-2xl relative z-10 text-[var(--color-text-main)] transition-colors">
+          <div className="flex justify-end mb-2">
             <ThemeSwitcher compact />
           </div>
           <div className="text-center mb-6">
             <img 
               src={ACADEMY_CONFIG.logoUrl} 
               alt={ACADEMY_CONFIG.nome} 
-              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-cover bg-zinc-950" 
+              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-[var(--color-primary-border)] shadow-xl object-contain bg-[var(--color-bg-main)] p-2" 
             />
-            <h1 className="text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
-            <p className="text-red-500 font-bold text-xs uppercase tracking-widest">
+            <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-main)] tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
+            <p className="text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">
               {showRecuperarSenha ? 'Recuperar Acesso' : 'Portal do Aluno'}
             </p>
           </div>
@@ -313,23 +313,23 @@ export default function PortalAluno() {
           {showRecuperarSenha ? (
             <form onSubmit={handleRecuperarSenha} className="space-y-4">
               <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail, CPF ou Telefone</label>
+                <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">E-mail, CPF ou Telefone</label>
                 <input 
                   type="text" 
                   value={contatoRecuperacao}
                   onChange={(e) => setContatoRecuperacao(e.target.value)}
-                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                  className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
                   placeholder="Insira seu contato"
                   required
                 />
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm">
+              <button type="submit" disabled={loading} className="w-full theme-btn-primary disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg text-sm">
                 {loading ? 'Buscando...' : 'Recuperar Acesso'}
               </button>
               <button 
                 type="button" 
                 onClick={() => setShowRecuperarSenha(false)} 
-                className="w-full text-zinc-500 hover:text-white text-xs transition font-semibold"
+                className="w-full text-[var(--color-text-muted)] hover:text-[var(--color-primary)] text-xs transition font-semibold"
               >
                 Voltar para Login
               </button>
@@ -337,24 +337,24 @@ export default function PortalAluno() {
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">Seu CPF</label>
+                <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">Seu CPF</label>
                 <input 
                   type="text" 
                   value={cpf}
                   onChange={(e) => formatarCpf(e.target.value)}
                   maxLength={14}
-                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                  className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
                   placeholder="000.000.000-00"
                   required
                 />
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="block text-zinc-400 text-xs font-semibold">Senha</label>
+                  <label className="block text-[var(--color-text-muted)] text-xs font-semibold">Senha</label>
                   <button 
                     type="button" 
                     onClick={() => setShowRecuperarSenha(true)} 
-                    className="text-xs text-red-500 hover:text-red-400 font-bold transition"
+                    className="text-xs text-[var(--color-primary)] hover:underline font-bold transition"
                   >
                     Esqueci a senha
                   </button>
@@ -363,19 +363,19 @@ export default function PortalAluno() {
                   type="password" 
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                  className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
                   placeholder="Sua senha"
                   required
                 />
-                {erroCpf && <p className="text-red-500 text-xs mt-2 font-semibold">{erroCpf}</p>}
+                {erroCpf && <p className="text-[var(--color-primary)] text-xs mt-2 font-semibold">{erroCpf}</p>}
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm uppercase tracking-wider">
+              <button type="submit" disabled={loading} className="w-full theme-btn-primary disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg text-sm uppercase tracking-wider">
                 {loading ? 'Entrando...' : 'Acessar Portal'}
               </button>
             </form>
           )}
 
-          <Link to="/" className="block text-center mt-6 text-zinc-500 hover:text-white text-xs transition">
+          <Link to="/" className="block text-center mt-6 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] text-xs transition">
             ← Voltar ao site principal
           </Link>
         </div>
@@ -446,19 +446,19 @@ export default function PortalAluno() {
         )}
 
         {/* HEADER SUPERIOR */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-5">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--color-border)] pb-5">
           <div className="flex items-center gap-3">
-            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover flex-shrink-0 bg-zinc-950" />
+            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-[var(--color-primary-border)] shadow-md object-contain flex-shrink-0 bg-[var(--color-bg-card)] p-1" />
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-                  ÁREA DO <span className="text-red-600">ALUNO</span>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-[var(--color-text-main)]">
+                  ÁREA DO <span className="text-[var(--color-primary)]">ALUNO</span>
                 </h1>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary-border)] font-bold">
                   {ACADEMY_CONFIG.nome}
                 </span>
               </div>
-              <p className="text-zinc-400 text-xs sm:text-sm mt-0.5">Bem-vindo(a), <strong className="text-white">{alunoLogado?.nome}</strong>!</p>
+              <p className="text-[var(--color-text-muted)] text-xs sm:text-sm mt-0.5">Bem-vindo(a), <strong className="text-[var(--color-text-main)]">{alunoLogado?.nome}</strong>!</p>
             </div>
           </div>
 

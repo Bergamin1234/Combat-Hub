@@ -1,62 +1,87 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1A1A1E"/>
-      <stop offset="50%" stop-color="#0E0E10"/>
-      <stop offset="100%" stop-color="#070708"/>
+    <!-- Dark & Metallic Gradients -->
+    <linearGradient id="shieldBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E2024"/>
+      <stop offset="50%" stop-color="#121316"/>
+      <stop offset="100%" stop-color="#08090A"/>
     </linearGradient>
-    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#EF4444"/>
-      <stop offset="50%" stop-color="#DC2626"/>
-      <stop offset="100%" stop-color="#991B1B"/>
+
+    <linearGradient id="metalRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F1F5F9"/>
+      <stop offset="35%" stop-color="#94A3B8"/>
+      <stop offset="70%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
     </linearGradient>
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FCD34D"/>
-      <stop offset="50%" stop-color="#F59E0B"/>
-      <stop offset="100%" stop-color="#D97706"/>
+
+    <linearGradient id="bladeGradPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#64748B"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#DC2626" flood-opacity="0.35"/>
+
+    <linearGradient id="accentCore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.45"/>
     </filter>
   </defs>
 
-  <!-- Circular Badge Outline -->
-  <circle cx="250" cy="250" r="235" fill="url(#bgGrad)" stroke="#27272A" stroke-width="4"/>
-  <circle cx="250" cy="250" r="222" fill="none" stroke="url(#redGrad)" stroke-width="6" filter="url(#shadow)"/>
-  <circle cx="250" cy="250" r="210" fill="none" stroke="#27272A" stroke-dasharray="8 6" stroke-width="2"/>
+  <!-- Outer Protective Hexagonal Crest -->
+  <polygon points="250,22 455,115 455,340 250,478 45,340 45,115" 
+           fill="url(#shieldBg)" stroke="url(#metalRim)" stroke-width="8" stroke-linejoin="round" filter="url(#softGlow)"/>
 
-  <!-- Shield Outline -->
-  <path d="M 250,75 L 360,125 C 360,250 295,340 250,375 C 205,340 140,250 140,125 Z" 
-        fill="#141416" stroke="url(#redGrad)" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Inner Trim Outline -->
+  <polygon points="250,45 430,128 430,325 250,448 70,325 70,128" 
+           fill="#0F1013" stroke="#2B2D33" stroke-width="3" stroke-linejoin="round"/>
 
-  <!-- Inner Shield Trim -->
-  <path d="M 250,95 L 340,135 C 340,240 285,320 250,350 C 215,320 160,240 160,135 Z" 
-        fill="#1A1A1E" stroke="#3F3F46" stroke-width="3"/>
-
-  <!-- Stylized Combat Fist / Wings -->
-  <g fill="url(#redGrad)">
-    <!-- Center Strike Symbol -->
-    <path d="M 250,130 L 275,200 L 250,225 L 225,200 Z"/>
-    <!-- Wings / Blades -->
-    <path d="M 250,185 L 305,215 L 285,255 L 250,230 Z"/>
-    <path d="M 250,185 L 195,215 L 215,255 L 250,230 Z"/>
-    <!-- Lower V -->
-    <path d="M 250,245 L 290,275 L 250,330 L 210,275 Z"/>
+  <!-- Subtle Carbon Texture Stripes -->
+  <g opacity="0.08" stroke="#FFFFFF" stroke-width="2">
+    <line x1="120" y1="120" x2="380" y2="380"/>
+    <line x1="140" y1="100" x2="400" y2="360"/>
+    <line x1="100" y1="140" x2="360" y2="400"/>
+    <line x1="80" y1="160" x2="340" y2="420"/>
   </g>
 
-  <!-- Gold Star Emblems -->
-  <g fill="url(#goldGrad)">
-    <polygon points="250,135 254,147 267,147 256,155 260,167 250,160 240,167 244,155 233,147 246,147"/>
-    <polygon points="190,170 193,179 203,179 195,185 198,194 190,189 182,194 185,185 177,179 187,179"/>
-    <polygon points="310,170 313,179 323,179 315,185 318,194 310,189 302,194 305,185 297,179 307,179"/>
+  <!-- Central Martial Arts Emblem: Interlocking Striking Wings / Dual Katana Apex Crest -->
+  <g filter="url(#softGlow)">
+    <!-- Left Dynamic Wing / Blade -->
+    <path d="M 250,110 L 160,195 L 205,255 L 250,215 L 225,185 L 250,160 Z" 
+          fill="url(#bladeGradPrimary)"/>
+
+    <!-- Right Dynamic Wing / Blade -->
+    <path d="M 250,110 L 340,195 L 295,255 L 250,215 L 275,185 L 250,160 Z" 
+          fill="url(#metalRim)"/>
+
+    <!-- Center Apex Strike Spear -->
+    <polygon points="250,90 270,155 250,180 230,155" 
+             fill="#FFFFFF"/>
+
+    <!-- Lower Shield Chevrons (Representing Ground Mastery & Striking Defense) -->
+    <!-- Chevron 1 -->
+    <path d="M 250,240 L 320,290 L 305,315 L 250,275 L 195,315 L 180,290 Z" 
+          fill="url(#bladeGradPrimary)"/>
+
+    <!-- Chevron 2 -->
+    <path d="M 250,300 L 300,345 L 285,370 L 250,340 L 215,370 L 200,345 Z" 
+          fill="url(#accentCore)"/>
+
+    <!-- Apex Diamond Core -->
+    <polygon points="250,360 268,390 250,420 232,390" 
+             fill="#F8FAFC"/>
   </g>
 
-  <!-- Banner for Typography -->
-  <path d="M 100,395 L 400,395 L 380,445 L 120,445 Z" fill="#DC2626"/>
-  <text x="250" y="432" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="34" 
-        fill="#FFFFFF" text-anchor="middle" letter-spacing="6">COMBAT HUB</text>
-
-  <!-- Upper Arch text -->
-  <text x="250" y="55" font-family="'Montserrat', sans-serif" font-weight="800" font-size="14" 
-        fill="#A1A1AA" text-anchor="middle" letter-spacing="8">CENTRO DE COMBATE</text>
+  <!-- Stars of Excellence & Discipline -->
+  <g fill="#F1F5F9" opacity="0.9">
+    <!-- Center Star -->
+    <polygon points="250,60 254,70 265,70 256,76 259,86 250,80 241,86 244,76 235,70 246,70"/>
+    <!-- Left Star -->
+    <polygon points="175,115 178,122 186,122 179,127 181,135 175,130 169,135 171,127 164,122 172,122"/>
+    <!-- Right Star -->
+    <polygon points="325,115 328,122 336,122 329,127 331,135 325,130 319,135 321,127 314,122 322,122"/>
+  </g>
 </svg>

@@ -2,13 +2,13 @@
 // Configurações Globais da Academia / Centro de Treinamento (Modelo White-Label)
 
 window.ACADEMY_CONFIG = {
-  nome: 'COMBAT HUB',
-  nomeCurto: 'COMBAT HUB',
+  nome: 'CENTRO DE COMBATE',
+  nomeCurto: 'CENTRO DE COMBATE',
   subtitulo: 'Centro de Treinamento em Artes Marciais & Alta Performance',
   slogan: 'Disciplina, Técnica & Alta Performance',
-  descricao: 'Centro de Treinamento de Artes Marciais. Estrutura de ponta, professores graduados em Muay Thai, Jiu-Jitsu, MMA, Kickboxing e Boxe.',
-  sigla: 'CH',
-  badge: 'CT MODELO',
+  descricao: 'Centro de Treinamento em Artes Marciais. Estrutura de ponta, professores graduados em Muay Thai, Jiu-Jitsu, MMA, Kickboxing e Boxe.',
+  sigla: 'CC',
+  badge: 'CT OFICIAL',
 
   cidadeEstado: 'Sua Cidade - UF',
   enderecoCompleto: 'Av. das Artes Marciais, 1500 - Centro',
