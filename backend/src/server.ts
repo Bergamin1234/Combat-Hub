@@ -377,7 +377,7 @@ app.delete('/api/admin/avisos/:id', async (req, res) => {
 });
 
 // ==========================================
-// LOJA & MERCADO BORÜ (BETA)
+// LOJA & MERCADO COMBAT HUB (BETA)
 // ==========================================
 
 // Listar produtos da loja (com filtro opcional por categoria)

@@ -1,194 +1,93 @@
-// js/mockData.js - Banco de dados de Videoaulas, Professores, Estrutura e FAQ do BORÜ Centro de Combate
+// frontend/public/mockData.js - Banco de Dados de Modalidades, Instrutores, Estrutura e FAQ do Combat Hub (Template Modelo)
 
-const INITIAL_LESSONS = [
+const COMBAT_MODALITIES = [
   {
-    id: "lesson-01",
-    title: "Fundamentos do Jab-Direto e Bloqueio Cruzado no Muay Thai",
-    discipline: "muay-thai",
-    disciplineName: "Muay Thai",
-    level: "Iniciante",
-    instructor: "Kru Rafael Silva",
-    duration: "18 min",
-    videoUrl: "https://www.youtube.com/embed/n3Xv_g3g-mA",
-    thumbnail: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=800&q=80",
-    description: "Nesta aula fundamental, o Kru Rafael destrincha o alinhamento corporal no jab e direto, a rotação de quadril e a transição rápida para defesa ativa com bloqueio cruzado de socos.",
-    technicalKeypoints: [
-      "Base sólida com calcanhar traseiro levemente elevado",
-      "Rotação total do ombro protegendo o queixo",
-      "Retorno rápido da mão à guarda antes de chutar"
-    ],
-    materials: [
-      { name: "Guia de Postura e Ângulos (PDF)", size: "1.4 MB" }
-    ],
-    dateAdded: "2025-01-15"
+    id: "muay-thai",
+    name: "Muay Thai Tradicional",
+    category: "Striking Tailandês",
+    badge: "Arte das 8 Armas",
+    image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&auto=format&fit=crop&q=80",
+    desc: "Socos, chutes com a canela, joelhadas cortantes, cotoveladas e clinch tailandês. O treino mais dinâmico para queima calórica (+800 kcal/aula) e reflexos afiados.",
+    highlights: ["Queima Calórica Alta", "Condicionamento Total", "Clinch & Cotoveladas", "Turmas Kids e Adultos"],
+    target: "Iniciantes, Mulheres, Crianças e Atletas",
+    scheduleSummary: "Seg a Sex (Manhã, Tarde e Noite) | Sábado"
   },
   {
-    id: "lesson-02",
-    title: "Passagem de Guarda Toureada com Controle de Lapela",
-    discipline: "bjj",
-    disciplineName: "Jiu-Jitsu (BJJ)",
-    level: "Intermediário",
-    instructor: "Prof. Marcos 'Tubarão' Prado",
-    duration: "24 min",
-    videoUrl: "https://www.youtube.com/embed/5a2d6F_Vq6o",
-    thumbnail: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
-    description: "Aprenda a anular a guarda aberta do adversário aplicando a pressão correta com a pegada nas calças e o estourar de pegadas na manga usando torque no quadril.",
-    technicalKeypoints: [
-      "Domínio duplo na barra da calça",
-      "Pressão lateral com mudança súbita de direção ('Bullfight')",
-      "Estabilização imediata dos 100kg com peito no peito"
-    ],
-    materials: [
-      { name: "Mapa Mental de Transições de Guarda (PDF)", size: "2.1 MB" }
-    ],
-    dateAdded: "2025-01-20"
+    id: "jiu-jitsu",
+    name: "Jiu-Jitsu Brasileiro (BJJ)",
+    category: "Grappling & Arte Suave",
+    badge: "Domínio no Chão",
+    image: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=800&auto=format&fit=crop&q=80",
+    desc: "A arte marcial baseada em alavancas, raspagens e finalizações (chaves de braço, triângulos e estrangulamentos). Onde a técnica supera a força física.",
+    highlights: ["Com Kimono (Gi) & Sem Kimono (No-Gi)", "Graduação Oficial de Faixas", "Xadrez Corporal", "Respeito e Irmandade"],
+    target: "Todas as Idades e Níveis Técnicos",
+    scheduleSummary: "Seg a Sáb (Manhã, Noite e Open Mat)"
   },
   {
-    id: "lesson-03",
-    title: "Transição de Grade para Queda Double Leg no MMA",
-    discipline: "mma",
-    disciplineName: "MMA",
-    level: "Avançado",
-    instructor: "Coach Diego Albuquerque",
-    duration: "21 min",
-    videoUrl: "https://www.youtube.com/embed/YxVbY1sV5f0",
-    thumbnail: "https://images.unsplash.com/photo-1517344884509-a0c97ec11bcc?auto=format&fit=crop&w=800&q=80",
-    description: "Dominando o clinch contra a grade, quebrando a base do oponente através do controle de cabeça ('underhook') para a entrada explosiva no Double Leg.",
-    technicalKeypoints: [
-      "Manter a cabeça sob o queixo do oponente para controlar a postura",
-      "Troca de nível com joelho tocando o tatame e puxada de calcanhar",
-      "Finalização com corte de ângulo para evitar guilhotina"
-    ],
-    materials: [
-      { name: "Checklist de Defesa e Ataque na Grade (PDF)", size: "950 KB" }
-    ],
-    dateAdded: "2025-02-01"
+    id: "boxe",
+    name: "Boxe Clássico",
+    category: "Nobre Arte",
+    badge: "Mãos de Aço",
+    image: "https://images.unsplash.com/photo-1509563423944-b791c380791c?w=800&auto=format&fit=crop&q=80",
+    desc: "Evolua seu jogo de pernas, pêndulos defensivos, esquivas cirúrgicas e combinações devastadoras de jab, direto, cruzado e uppercut em sacos pesados e manoplas.",
+    highlights: ["Trabalho de Pernas e Esquivas", "Fortalecimento do Core", "Treino em Sacos Pesados", "Sparring Técnico Controlado"],
+    target: "Iniciantes ao Alto Rendimento",
+    scheduleSummary: "Seg, Qua e Sex (07h, 12h, 18h e 19h)"
   },
   {
-    id: "lesson-04",
-    title: "Combinações Avançadas de Low Kick e Fintas de Chute",
-    discipline: "kickboxing",
-    disciplineName: "Kickboxing",
-    level: "Intermediário",
-    instructor: "Sensei Lucas Andrade",
-    duration: "16 min",
-    videoUrl: "https://www.youtube.com/embed/2vJ37Ye3Q60",
-    thumbnail: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80",
-    description: "Como mascarar o chute na coxa usando socos em linha reta, quebrando a leitura do oponente e forçando a abertura da guarda defensiva.",
-    technicalKeypoints: [
-      "Cruzado de esquerda curto abrindo o ângulo do pé de apoio",
-      "Chute com a canela mirando a inserção muscular acima do joelho",
-      "Equilíbrio imediato para contra-ataque"
-    ],
-    materials: [
-      { name: "Tabela de Drills de Chute em Dupla (PDF)", size: "1.2 MB" }
-    ],
-    dateAdded: "2025-02-05"
+    id: "mma",
+    name: "MMA (Mixed Martial Arts)",
+    category: "Combate Misto",
+    badge: "Octógono & Grade",
+    image: "https://images.unsplash.com/photo-1517344884509-a0c97ec11bcc?w=800&auto=format&fit=crop&q=80",
+    desc: "A integração completa das modalidades: striking em pé, transições de grade, quedas do wrestling e finalizações no solo. Para quem busca a máxima preparação.",
+    highlights: ["Treino em Cage / Grade Oficial", "Transições em Pé e Solo", "Ground and Pound Técnico", "Preparação Física de Elite"],
+    target: "Praticantes Intermediários e Avançados",
+    scheduleSummary: "Ter e Qui (20h às 21h30) | Sex (Sparring)"
   },
   {
-    id: "lesson-05",
-    title: "Finalização Triângulo da Guarda Fechada com Ajuste de Ângulo",
-    discipline: "bjj",
-    disciplineName: "Jiu-Jitsu (BJJ)",
-    level: "Iniciante",
-    instructor: "Prof. Marcos 'Tubarão' Prado",
-    duration: "20 min",
-    videoUrl: "https://www.youtube.com/embed/eW3k7W5gO90",
-    thumbnail: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=800&q=80",
-    description: "Detalhes minuciosos para travar o triângulo sem cansar as pernas: quebra de postura, passagem do braço e pegada na canela para fechar o cadeado perfeito.",
-    technicalKeypoints: [
-      "Puxar a cabeça para baixo enquanto escala o quadril",
-      "Ângulo de 90 graus em relação ao oponente",
-      "Puxar a canela com a mão oposta antes de fechar o 4"
-    ],
-    materials: [
-      { name: "Principais Erros no Triângulo (PDF)", size: "800 KB" }
-    ],
-    dateAdded: "2025-02-08"
+    id: "kickboxing",
+    name: "Kickboxing & K-1 Rules",
+    category: "Potência & Ritmo",
+    badge: "Explosão Total",
+    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80",
+    desc: "A união dos socos contundentes do boxe com chutes circulares rápidos e low kicks na coxa. Treinos explosivos que esculpem o corpo e aumentam a resistência cardiovascular.",
+    highlights: ["Combinações Rápidas", "Defesa Ativa e Contra-Ataque", "Fortalecimento de Pernas", "Alta Queima de Gordura"],
+    target: "Público Masculino, Feminino e Juvenil",
+    scheduleSummary: "Ter e Qui (18h às 19h30)"
   },
   {
-    id: "lesson-06",
-    title: "Condicionamento de Alta Intensidade para Esportes de Combate (HIIT)",
-    discipline: "funcional",
-    disciplineName: "Funcional de Luta",
-    level: "Todos os Níveis",
-    instructor: "Prep. Físico Bruno Castro",
-    duration: "25 min",
-    videoUrl: "https://www.youtube.com/embed/ml6cT4AZdqI",
-    thumbnail: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
-    description: "Circuito focado em potência explosiva, resistência de 'gás' para rounds de 5 minutos, trabalho de medicine ball, corda naval e kettlebell swings.",
-    technicalKeypoints: [
-      "Manutenção da frequência cardíaca em zona 4 e 5",
-      "Transferência de força do core para os membros superiores",
-      "Respiração diafragmática sob estresse metabólico"
-    ],
-    materials: [
-      { name: "Planilha de Periodização Semanal (PDF)", size: "3.0 MB" }
-    ],
-    dateAdded: "2025-02-10"
+    id: "taekwondo",
+    name: "Taekwondo Olímpico",
+    category: "Arte Marcial Coreana",
+    badge: "Precisão & Chutes",
+    image: "https://images.unsplash.com/photo-1555597673-b21d5c935865?w=800&auto=format&fit=crop&q=80",
+    desc: "Chutes voadores, giratórios e velocidade dinâmica com foco em disciplina, flexibilidade extraordinária e autocontrole. Excelente pedagogia esportiva infantil.",
+    highlights: ["Chutes Rápidos e Giratórios", "Flexibilidade Extrema", "Graduação de Faixas e Dans", "Formação de Caráter Infantil"],
+    target: "Crianças a partir de 5 anos e Adultos",
+    scheduleSummary: "Ter e Qui (17h Kids / 18h Adultos)"
   },
   {
-    id: "lesson-07",
-    title: "Cotoveladas Cortantes e Clinch Tradicional Tailandês",
-    discipline: "muay-thai",
-    disciplineName: "Muay Thai",
-    level: "Avançado",
-    instructor: "Kru Rafael Silva",
-    duration: "22 min",
-    videoUrl: "https://www.youtube.com/embed/zFp4dUp5k2A",
-    thumbnail: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=800&q=80",
-    description: "Domínio no Plum com joelhadas frontais e entradas cirúrgicas de cotovelo diagonal e ascendente para romper bloqueios estreitos.",
-    technicalKeypoints: [
-      "Controle das duas mãos na nuca sem entrelaçar os dedos",
-      "Tracionar o tronco do oponente para baixo ao desferir a joelhada",
-      "Cotovelo passando em 45 graus com mão aberta junto ao peito"
-    ],
-    materials: [
-      { name: "Manual de Regras e Pontuação do Muay Thai (PDF)", size: "1.8 MB" }
-    ],
-    dateAdded: "2025-02-12"
+    id: "judo",
+    name: "Judô & Submission Grappling",
+    category: "Quedas & Alavancas",
+    badge: "Caminho Suave",
+    image: "https://images.unsplash.com/photo-1564415315949-7a0c4c73aab4?w=800&auto=format&fit=crop&q=80",
+    desc: "Uso inteligente da força e equilíbrio do oponente contra ele mesmo. Domínio de quedas espetaculares (ippon), projeções corporais e controle no solo.",
+    highlights: ["Projeções e Quedas Perfeitas", "Equilíbrio e Postura Inabalável", "Disciplina e Tradição", "Defesa Pessoal Eficaz"],
+    target: "Infantil, Juvenil e Adulto",
+    scheduleSummary: "Seg e Qua (17h e 19h)"
   },
   {
-    id: "lesson-08",
-    title: "Raspagem de Meia-Guarda 'Deep Half' com Ida para as Costas",
-    discipline: "bjj",
-    disciplineName: "Jiu-Jitsu (BJJ)",
-    level: "Avançado",
-    instructor: "Prof. Marcos 'Tubarão' Prado",
-    duration: "27 min",
-    videoUrl: "https://www.youtube.com/embed/7V9N4j_aWc0",
-    thumbnail: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
-    description: "Entre por baixo do centro de gravidade do oponente na meia guarda profunda, desequilibre o peso para frente e pegue as costas com ganchos firmes.",
-    technicalKeypoints: [
-      "Mergulhar sob a perna com a orelha colada no quadril adversário",
-      "Manter o oponente desbalanceado sem permitir a esgrima",
-      "Troca rápida para a pegada no quadril subindo nas costas"
-    ],
-    materials: [
-      { name: "Esquema Tático de Meia Guarda (PDF)", size: "1.5 MB" }
-    ],
-    dateAdded: "2025-02-14"
-  },
-  {
-    id: "lesson-09",
-    title: "Defesa e Contra-Golpe de Overhand no MMA",
-    discipline: "mma",
-    disciplineName: "MMA",
-    level: "Intermediário",
-    instructor: "Coach Diego Albuquerque",
-    duration: "19 min",
-    videoUrl: "https://www.youtube.com/embed/9BqS5Zp4iUk",
-    thumbnail: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=800&q=80",
-    description: "Como absorver ou esquivar por baixo da bomba de direita (overhand) e responder com cruzado de esquerda no queixo ou queda imediata.",
-    technicalKeypoints: [
-      "Esquiva com flexão de pernas mantendo a visão fixa no quadril do adversário",
-      "Entrada em diagonal saindo do raio de ação do golpe pesado",
-      "Contra-ataque instantâneo sem recuar em linha reta"
-    ],
-    materials: [
-      { name: "Guia de Distâncias e Timing no MMA (PDF)", size: "1.1 MB" }
-    ],
-    dateAdded: "2025-02-16"
+    id: "defesa-pessoal",
+    name: "Defesa Pessoal & Krav Maga",
+    category: "Autoproteção Real",
+    badge: "Segurança Urbana",
+    image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&auto=format&fit=crop&q=80",
+    desc: "Técnicas diretas e instintivas para neutralizar agressões reais, agarramentos, empurrões e situações de perigo urbano. Aulas práticas com foco em autoconfiança feminina e masculina.",
+    highlights: ["Sem Regras Esportivas", "Desvencilhamentos Rápidos", "Segurança e Autoconfiança", "Simulações de Cenários Reais"],
+    target: "Qualquer Pessoa (Sem Exigência Prévia)",
+    scheduleSummary: "Sábados (09h00 às 11h00)"
   }
 ];
 
@@ -196,30 +95,58 @@ const INSTRUCTORS_DATA = [
   {
     id: "carlos-silva",
     name: "Mestre Carlos Silva",
-    role: "Coordenador Técnico & Head Coach",
+    role: "Head Coach de Muay Thai & Striking",
     cref: "Kru Formado & Faixa Preta",
-    bio: "Mais de 15 anos dedicados à arte marcial. Formando atletas de alto rendimento e transformando vidas através da disciplina e excelência técnica.",
-    image: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=800&q=80",
-    specialties: ["Muay Thai Tradicional", "Clinch & Cotovelos", "Defesa Pessoal"],
+    bio: "Mais de 16 anos dedicados ao ensino marcial de alto rendimento. Formador de campeões e especialista em metodologia de ensino para iniciantes e atletas.",
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
+    specialties: ["Muay Thai Tradicional", "Clinch & Cotovelos", "Kickboxing K-1"],
     achievements: [
-      "Faixa Preta / Grau Superior em Artes Marciais",
-      "Coordenador Técnico da Academia",
-      "Centenas de alunos e instrutores graduados",
-      "Especialista em Metodologia de Ensino e Fisiologia"
+      "Faixa Preta / Grau Superior Internacional",
+      "Coordenador Técnico Geral do Centro de Treinamento",
+      "Mais de 500 alunos e instrutores graduados",
+      "Certificação em Fisiologia e Treinamento de Potência"
     ]
   },
   {
     id: "marcos-prado",
     name: "Prof. Marcos 'Gracie' Prado",
-    role: "Head Coach de Jiu-Jitsu (BJJ)",
-    cref: "Faixa Preta 2º Grau",
-    bio: "Especialista em finalizações, passagens de guarda e defesa pessoal. Dedicado a formar praticantes completos, desde crianças até adultos.",
-    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
-    specialties: ["Jiu-Jitsu Esportivo", "No-Gi / Submission", "Defesa Pessoal"],
+    role: "Head Coach de Jiu-Jitsu Brasileiro (BJJ)",
+    cref: "Faixa Preta 2º Grau CBJJ/IBJJF",
+    bio: "Especialista em passagens de guarda modernas, alavancas de finalização e defesa pessoal. Dedicado à pedagogia marcial inclusiva para crianças e adultos.",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80",
+    specialties: ["Jiu-Jitsu Esportivo (Gi)", "No-Gi / Submission Grappling", "Defesa Pessoal"],
     achievements: [
       "Faixa Preta 2º Grau",
-      "Campeão de eventos estaduais e regionais",
-      "Mais de 10 anos lecionando a arte suave"
+      "Campeão de múltiplos campeonatos estaduais e nacionais",
+      "Mais de 12 anos de docência nos tatames"
+    ]
+  },
+  {
+    id: "ricardo-santos",
+    name: "Coach Ricardo Santos",
+    role: "Treinador Chefe de Boxe Clássico",
+    cref: "Ex-Boxeador Profissional & Treinador",
+    bio: "Especialista em biomecânica de golpes, esquivas milimétricas e resistência respiratória para combate.",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=80",
+    specialties: ["Boxe Clássico", "Padrão de Pêndulo e Fintas", "Manoplas de Alta Velocidade"],
+    achievements: [
+      "Cartel invicto como amador (18V - 0D)",
+      "Treinador de atletas de destaque nos ringues",
+      "Metodologia focada em queima de gordura e precisão"
+    ]
+  },
+  {
+    id: "anderson-costa",
+    name: "Sensei Jin-Woo Park",
+    role: "Mestre de Taekwondo Olímpico",
+    cref: "Faixa Preta 4º Dan Kukkiwon",
+    bio: "Dedicado ao desenvolvimento motor, flexibilidade e integridade moral das crianças e adultos através da arte marcial coreana.",
+    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&auto=format&fit=crop&q=80",
+    specialties: ["Taekwondo Olímpico", "Chutes Giratórios Acrobáticos", "Formação Infantil"],
+    achievements: [
+      "Faixa Preta 4º Dan Internacional",
+      "15 anos de dedicação e arbitragem marcial",
+      "Centenas de crianças formadas e disciplinadas"
     ]
   }
 ];
@@ -232,7 +159,7 @@ const FACILITIES_DATA = [
   },
   {
     title: "Octógono & Área de Grade Oficial",
-    desc: "Grade e cage construídos nos padrões de grandes eventos para prática real de transição e clinch no MMA.",
+    desc: "Grade e cage construídos nos padrões internacionais para prática real de transição e clinch no MMA.",
     icon: "shield"
   },
   {
@@ -261,25 +188,31 @@ const SCHEDULE_DATA = [
   {
     day: "Segunda, Quarta e Sexta",
     periods: [
-      { time: "16:00 - 17:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "tarde" },
-      { time: "18:00 - 19:00", modality: "Muay Thai (KIDS)", level: "Infantil", instructor: "Prof. Carlos Silva", shift: "noite" },
-      { time: "19:00 - 20:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "noite" },
-      { time: "20:00 - 21:00", modality: "Jiu-Jitsu / BJJ", level: "Todos os Níveis", instructor: "Prof. Marcos Prado", shift: "noite" }
+      { time: "07:00 - 08:00", modality: "Boxe Clássico", level: "Todos os Níveis", instructor: "Coach Ricardo Santos", shift: "manha" },
+      { time: "16:00 - 17:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Mestre Carlos Silva", shift: "tarde" },
+      { time: "17:00 - 18:00", modality: "Judô Infantil & Juvenil", level: "Iniciante / Kids", instructor: "Prof. Marcos Prado", shift: "tarde" },
+      { time: "18:00 - 19:00", modality: "Muay Thai (KIDS)", level: "Infantil", instructor: "Mestre Carlos Silva", shift: "noite" },
+      { time: "19:00 - 20:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Mestre Carlos Silva", shift: "noite" },
+      { time: "20:00 - 21:30", modality: "Jiu-Jitsu / BJJ (Gi)", level: "Todos os Níveis", instructor: "Prof. Marcos Prado", shift: "noite" }
     ]
   },
   {
     day: "Terça e Quinta",
     periods: [
-      { time: "15:00 - 16:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "tarde" },
-      { time: "19:00 - 20:00", modality: "Boxe & Kickboxing", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "noite" },
-      { time: "20:00 - 21:00", modality: "MMA & No-Gi", level: "Todos os Níveis", instructor: "Prof. Marcos Prado", shift: "noite" }
+      { time: "08:00 - 09:00", modality: "Funcional Fight & Condicionamento", level: "Geral", instructor: "Mestre Carlos Silva", shift: "manha" },
+      { time: "15:00 - 16:00", modality: "Muay Thai Técnico", level: "Todos os Níveis", instructor: "Mestre Carlos Silva", shift: "tarde" },
+      { time: "17:00 - 18:00", modality: "Taekwondo Kids", level: "Infantil", instructor: "Sensei Jin-Woo Park", shift: "tarde" },
+      { time: "18:00 - 19:00", modality: "Taekwondo Adulto", level: "Todos os Níveis", instructor: "Sensei Jin-Woo Park", shift: "noite" },
+      { time: "19:00 - 20:00", modality: "Kickboxing & K-1", level: "Todos os Níveis", instructor: "Mestre Carlos Silva", shift: "noite" },
+      { time: "20:00 - 21:30", modality: "MMA & Submission No-Gi", level: "Intermediário e Avançado", instructor: "Prof. Marcos Prado", shift: "noite" }
     ]
   },
   {
     day: "Sábado",
     periods: [
-      { time: "08:00 - 09:00", modality: "Funcional Fight", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "manha" },
-      { time: "10:00 - 11:30", modality: "Treino Livre / Open Mat", level: "Todos os Níveis", instructor: "Equipe de Professores", shift: "manha" }
+      { time: "08:00 - 09:00", modality: "Sparring Técnico Controlado", level: "Alunos Matriculados", instructor: "Mestre Carlos Silva", shift: "manha" },
+      { time: "09:00 - 10:30", modality: "Defesa Pessoal & Krav Maga", level: "Todos os Níveis", instructor: "Equipe Técnica", shift: "manha" },
+      { time: "10:30 - 12:00", modality: "Open Mat / Treino Livre BJJ", level: "Todos os Níveis", instructor: "Prof. Marcos Prado", shift: "manha" }
     ]
   }
 ];
@@ -290,29 +223,32 @@ const FAQ_DATA = [
     answer: "Com certeza! Mais de 70% dos nossos novos alunos começam do zero absoluto. Nossas turmas são divididas por níveis técnicos, e os professores acompanham individualmente seus primeiros passos com respeito ao seu ritmo e segurança total."
   },
   {
+    question: "Quais modalidades estão inclusas no Passaporte Livre?",
+    answer: "No plano Passaporte Livre, você pode treinar TODAS as modalidades da grade: Muay Thai, Jiu-Jitsu (Gi e No-Gi), Boxe Clássico, MMA, Kickboxing, Taekwondo, Judô e Defesa Pessoal, em qualquer horário e turno."
+  },
+  {
     question: "Preciso ter equipamentos (luvas, kimono, caneleira) na primeira aula?",
     answer: "Não! Para a sua aula experimental, basta vir com uma roupa esportiva confortável (bermuda e camiseta). Nós emprestamos luvas higienizadas e fornecemos toda a orientação."
   },
   {
     question: "Como funciona o agendamento da Aula Experimental Gratuita?",
-    answer: "Basta clicar em qualquer botão de 'Agendar Aula Gratuita' no site, preencher seu nome, modalidade e turno de preferência. Você será direcionado para o WhatsApp da recepção para confirmar o dia e horário."
+    answer: "Basta clicar em qualquer botão de 'Agendar Aula Gratuita' no site, selecionar a modalidade do seu interesse e o turno de preferência. Você será direcionado para o WhatsApp da recepção para confirmar o melhor dia e horário."
   },
   {
     question: "A academia aceita planos corporativos como Wellhub (Gympass) ou TotalPass?",
-    answer: "Sim! Aceitamos os principais planos corporativos com check-in diário liberado para as modalidades de artes marciais e funcional."
+    answer: "Sim! Aceitamos os principais planos corporativos com validação de check-in diário no balcão de atendimento para todas as artes marciais."
   },
   {
-    question: "Qual a diferença entre fazer 1 modalidade e o 'Passaporte Livre'?",
-    answer: "Com o plano de 1 modalidade você foca exclusivamente naquela arte (ex: Muay Thai). Já com o Passaporte Livre, você tem acesso ilimitado a todas as modalidades (Muay Thai, BJJ, MMA, Kickboxing e Funcional) e pode treinar em qualquer horário e turno."
+    question: "Mulheres e crianças podem treinar com segurança?",
+    answer: "Absolutamente! Nossas turmas contam com alta participação feminina e turmas kids exclusivas com pedagogia marcial baseada em disciplina, respeito mútuo e zero violência."
   }
 ];
 
 window.COMBAT_DATA = {
-  lessons: INITIAL_LESSONS,
+  modalities: COMBAT_MODALITIES,
   schedules: SCHEDULE_DATA,
   instructors: INSTRUCTORS_DATA,
   facilities: FACILITIES_DATA,
   faq: FAQ_DATA
 };
 window.BORU_DATA = window.COMBAT_DATA;
-

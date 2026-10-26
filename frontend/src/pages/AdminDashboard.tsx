@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import NoticeCard from '../components/NoticeCard';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 import { adminApi, publicApi } from '../services/api';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
 
@@ -741,6 +742,9 @@ export default function AdminDashboard() {
     return (
       <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
         <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
+          <div className="flex justify-end mb-1">
+            <ThemeSwitcher compact />
+          </div>
           <div className="text-center mb-6">
             <img 
               src={ACADEMY_CONFIG.logoUrl} 
@@ -853,6 +857,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <ThemeSwitcher />
             {usuarioLogado?.cargo === 'ADMIN' && (
               <button 
                 onClick={() => setShowModalProf(true)}

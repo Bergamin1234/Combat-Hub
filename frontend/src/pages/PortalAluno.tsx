@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import NoticeCard from '../components/NoticeCard';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 import { publicApi, studentApi } from '../services/api';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
 
@@ -43,7 +44,7 @@ export default function PortalAluno() {
   // Mural de Avisos
   const [avisos, setAvisos] = useState<any[]>([]);
 
-  // Loja / Mercado Borü (Beta)
+  // Loja / Mercado da Academia (Combat Store)
   const [produtos, setProdutos] = useState<any[]>([]);
   const [filtroCategoria, setFiltroCategoria] = useState('TODOS');
 
@@ -294,6 +295,9 @@ export default function PortalAluno() {
     return (
       <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
         <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-7 sm:p-8 rounded-2xl w-full max-w-sm shadow-2xl relative z-10">
+          <div className="flex justify-end mb-1">
+            <ThemeSwitcher compact />
+          </div>
           <div className="text-center mb-6">
             <img 
               src={ACADEMY_CONFIG.logoUrl} 
@@ -459,6 +463,7 @@ export default function PortalAluno() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <ThemeSwitcher />
             <a 
               href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, sou o aluno(a) ${alunoLogado?.nome} e gostaria de tirar uma dúvida na recepção!`)}`}
               target="_blank"
