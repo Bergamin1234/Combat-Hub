@@ -22,7 +22,7 @@ echo.
 echo ========================================================
 echo   ACESSO AO SISTEMA:
 echo   - Site / Landing Page: http://localhost:5173
-echo   - Painel do Aluno:     http://localhost:5173/aluno
+echo   - Painel do Aluno:     http://localhost:5173/portal
 echo   - Painel de Gestao:    http://localhost:5173/admin
 echo.
 echo   CREDENCIAS DO ADMINISTRADOR:
