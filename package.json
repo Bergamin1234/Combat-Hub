@@ -1,5 +1,5 @@
 {
-  "name": "boru-workspace",
+  "name": "combat-hub-workspace",
   "private": true,
   "workspaces": [
     "backend",

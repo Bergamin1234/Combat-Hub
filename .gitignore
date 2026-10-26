@@ -29,7 +29,7 @@ backend/prisma/*.db-journal
 Thumbs.db
 
 # Portable & Demo Builds
-Boru-Portable*/
+*-Portable*/
 *.zip
 build_portable.ps1
 

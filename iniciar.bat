@@ -1,7 +1,7 @@
 @echo off
-title CT BORU - Sistema Muay Thai (Backend + Frontend)
+title COMBAT HUB - Sistema de Gestao Marcial (Backend + Frontend)
 echo ========================================================
-echo       CT BORU - Muay Thai e MMA
+echo       COMBAT HUB - Centro de Treinamento e Artes Marciais
 echo       Iniciando Servidores Backend e Frontend...
 echo ========================================================
 echo.

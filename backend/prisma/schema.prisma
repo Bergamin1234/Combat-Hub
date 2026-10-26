@@ -117,14 +117,14 @@ model Aviso {
   titulo      String
   conteudo    String
   tipo        String   @default("GERAL") // GERAL, URGENTE, GRADUACAO, EVENTO
-  autorNome   String   @default("Felipe Borü")
+  autorNome   String   @default("Coordenação Técnica")
   autorCargo  String   @default("Professor") // "Administrador" ou "Professor"
   fixado      Boolean  @default(false)
   criadoEm    DateTime @default(now())
 }
 
 // ==========================================
-// LOJA & MERCADO BORÜ (BETA)
+// LOJA & ESTOQUE DA ACADEMIA (BETA)
 // ==========================================
 model Produto {
   id          String   @id @default(uuid())

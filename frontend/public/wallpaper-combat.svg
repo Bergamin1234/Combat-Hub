@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+  <defs>
+    <radialGradient id="gradCenter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#DC2626" stop-opacity="0.12"/>
+      <stop offset="60%" stop-color="#0B0B0C" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#070708" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="slashGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DC2626" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#EF4444" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#0B0B0C"/>
+  <rect width="1920" height="1080" fill="url(#gradCenter)"/>
+
+  <!-- Geometric Combat Grid / Hexagonal Mesh -->
+  <g stroke="#27272A" stroke-width="1" opacity="0.15">
+    <line x1="0" y1="200" x2="1920" y2="200" />
+    <line x1="0" y1="400" x2="1920" y2="400" />
+    <line x1="0" y1="600" x2="1920" y2="600" />
+    <line x1="0" y1="800" x2="1920" y2="800" />
+    <line x1="400" y1="0" x2="400" y2="1080" />
+    <line x1="800" y1="0" x2="800" y2="1080" />
+    <line x1="1200" y1="0" x2="1200" y2="1080" />
+    <line x1="1600" y1="0" x2="1600" y2="1080" />
+  </g>
+
+  <!-- Dynamic Combat Slash Lines -->
+  <path d="M 0,0 L 800,1080 L 850,1080 L 50,0 Z" fill="url(#slashGrad)"/>
+  <path d="M 1200,0 L 1920,950 L 1920,1050 L 1100,0 Z" fill="url(#slashGrad)"/>
+  
+  <!-- Subtle Center Combat Octagon / Shield Silhouette -->
+  <polygon points="960,200 1300,380 1300,750 960,930 620,750 620,380" 
+           fill="none" stroke="#DC2626" stroke-width="2" opacity="0.08"/>
+  <polygon points="960,260 1220,410 1220,700 960,850 700,700 700,410" 
+           fill="none" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="10 8" opacity="0.06"/>
+</svg>

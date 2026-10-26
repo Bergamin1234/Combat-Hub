@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import NoticeCard from '../components/NoticeCard';
 import { publicApi, studentApi } from '../services/api';
+import { ACADEMY_CONFIG } from '../config/academyConfig';
 
 export default function PortalAluno() {
   const [aulas, setAulas] = useState<any[]>([]);
@@ -295,11 +296,11 @@ export default function PortalAluno() {
         <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-7 sm:p-8 rounded-2xl w-full max-w-sm shadow-2xl relative z-10">
           <div className="text-center mb-6">
             <img 
-              src="/logo-boru.jpg" 
-              alt="BORÜ Centro de Combate" 
-              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-cover" 
+              src={ACADEMY_CONFIG.logoUrl} 
+              alt={ACADEMY_CONFIG.nome} 
+              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-cover bg-zinc-950" 
             />
-            <h1 className="text-3xl font-black text-white tracking-widest mb-1">BORÜ</h1>
+            <h1 className="text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
             <p className="text-red-500 font-bold text-xs uppercase tracking-widest">
               {showRecuperarSenha ? 'Recuperar Acesso' : 'Portal do Aluno'}
             </p>
@@ -443,23 +444,23 @@ export default function PortalAluno() {
         {/* HEADER SUPERIOR */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-5">
           <div className="flex items-center gap-3">
-            <img src="/logo-boru.jpg" alt="BORÜ" className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover flex-shrink-0" />
+            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover flex-shrink-0 bg-zinc-950" />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
                   ÁREA DO <span className="text-red-600">ALUNO</span>
                 </h1>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
-                  BORÜ CT
+                  {ACADEMY_CONFIG.nome}
                 </span>
               </div>
-              <p className="text-zinc-400 text-xs sm:text-sm mt-0.5">Sawasdee Krap, <strong className="text-white">{alunoLogado?.nome}</strong>!</p>
+              <p className="text-zinc-400 text-xs sm:text-sm mt-0.5">Bem-vindo(a), <strong className="text-white">{alunoLogado?.nome}</strong>!</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             <a 
-              href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, sou o aluno(a) ${alunoLogado?.nome} e gostaria de tirar uma dúvida!`)}`}
+              href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, sou o aluno(a) ${alunoLogado?.nome} e gostaria de tirar uma dúvida na recepção!`)}`}
               target="_blank"
               rel="noreferrer"
               className="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1 shadow-sm"
@@ -542,7 +543,7 @@ export default function PortalAluno() {
                 <div>
                   <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Sua Graduação</span>
                   <h3 className="text-lg font-black text-white">{alunoLogado?.prajied || 'Branco'}</h3>
-                  <p className="text-[11px] text-zinc-500">Reconhecida pelo Mestre Felipe Borü</p>
+                  <p className="text-[11px] text-zinc-500">Reconhecida pela Coordenação Técnica</p>
                 </div>
               </div>
 
@@ -653,7 +654,7 @@ export default function PortalAluno() {
                         </div>
                         <h4 className="text-sm font-bold text-zinc-200">{aula.titulo}</h4>
                         <p className="text-xs text-zinc-400 mt-1">Dia: <strong className="text-zinc-200">{aula.diaDaSemana}</strong></p>
-                        <p className="text-[11px] text-zinc-500">Instrutor: Felipe Borü</p>
+                        <p className="text-[11px] text-zinc-500">Instrutor: {aula.professor?.nome || 'Mestre Responsável'}</p>
                       </div>
 
                       <div className="space-y-2">
@@ -897,8 +898,8 @@ export default function PortalAluno() {
         {abaAtiva === 'avisos' && (
           <div className="space-y-4">
             <div className="border-b border-zinc-800 pb-3">
-              <h2 className="text-xl font-bold text-white">📢 Mural de Avisos do CT</h2>
-              <p className="text-xs text-zinc-400">Fique atento aos recados oficiais do Professor Felipe Borü e da administração.</p>
+              <h2 className="text-xl font-bold text-white">📢 Mural de Avisos da Academia</h2>
+              <p className="text-xs text-zinc-400">Fique atento aos comunicados oficiais da coordenação técnica e administração.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -909,7 +910,7 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* CONTEÚDO DA ABA: LOJA & MERCADO BORÜ (BETA) */}
+        {/* CONTEÚDO DA ABA: LOJA & MERCADO (BETA) */}
         {abaAtiva === 'mercado' && (
           <div className="space-y-4">
             
@@ -917,13 +918,13 @@ export default function PortalAluno() {
             <div className="bg-gradient-to-r from-red-950/40 via-[#1A1A1E] to-zinc-900 border border-red-500/30 rounded-2xl p-5 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🛍️</span>
-                <h3 className="text-base font-black text-white">Mercado Borü - Versão BETA</h3>
+                <h3 className="text-base font-black text-white">Loja Oficial da Academia - Versão BETA</h3>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                   Em breve compras pelo app!
                 </span>
               </div>
               <p className="text-xs text-zinc-300 leading-relaxed">
-                Todos os equipamentos oficiais (Luvas, Protetores, Bandagens) e alimentos/suplementos para o treino estão disponíveis para retirada e compra <strong>presencial no balcão da recepção</strong> com o mestre!
+                Todos os equipamentos oficiais (Luvas, Protetores, Bandagens) e suplementos para o treino estão disponíveis para compra <strong>presencial no balcão da recepção</strong>!
               </p>
             </div>
 
@@ -979,7 +980,7 @@ export default function PortalAluno() {
                           R$ {prod.preco.toFixed(2).replace('.', ',')}
                         </span>
                         <a 
-                          href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de reservar o item "${prod.nome}" na recepção!`)}`}
+                          href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, gostaria de reservar o item "${prod.nome}" na recepção da ${ACADEMY_CONFIG.nome}!`)}`}
                           target="_blank"
                           rel="noreferrer"
                           className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-white transition flex items-center gap-1"
@@ -1087,7 +1088,7 @@ export default function PortalAluno() {
                 </div>
                 <div className="pt-2">
                   <a 
-                    href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de tirar uma dúvida sobre meu acesso por diária / passe no CT BORÜ!`)}`}
+                    href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, gostaria de tirar uma dúvida sobre meu acesso por diária / passe na ${ACADEMY_CONFIG.nome}!`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-900/30"
@@ -1140,7 +1141,7 @@ export default function PortalAluno() {
                   <h4 className="text-sm font-bold text-white uppercase tracking-wider">Pagamento Presencial na Recepção</h4>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  As mensalidades são acertadas diretamente no balcão de atendimento da academia com o Professor Felipe ou com a nossa recepção antes do início do seu treino.
+                  As mensalidades são acertadas diretamente no balcão de atendimento da academia com a nossa recepção ou mestres antes do início do seu treino.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1 text-xs text-zinc-400">
                   <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ PIX Presencial no Balcão</span>
@@ -1149,7 +1150,7 @@ export default function PortalAluno() {
                 </div>
                 <div className="pt-2">
                   <a 
-                    href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de tirar uma dúvida sobre a minha mensalidade do CT BORÜ!`)}`}
+                    href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, gostaria de tirar uma dúvida sobre a minha mensalidade na ${ACADEMY_CONFIG.nome}!`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-900/30"

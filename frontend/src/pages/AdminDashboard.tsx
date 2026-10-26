@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import NoticeCard from '../components/NoticeCard';
 import { adminApi, publicApi } from '../services/api';
+import { ACADEMY_CONFIG } from '../config/academyConfig';
 
 const graduacoesPorModalidade: Record<string, string[]> = {
   'Muay Thai': [
@@ -358,7 +359,7 @@ export default function AdminDashboard() {
     try {
       await adminApi.createNotice({
         ...novoAviso,
-        autorNome: usuarioLogado?.nome || 'Felipe Borü',
+        autorNome: usuarioLogado?.nome || 'Coordenação Técnica',
         autorCargo: usuarioLogado?.cargo === 'ADMIN' ? 'Administrador' : 'Professor'
       });
       alert('Aviso publicado no mural com sucesso!');
@@ -482,15 +483,15 @@ export default function AdminDashboard() {
     const dias = aluno.diasVencimento;
     let msg = '';
     if (isDiariaOuConvenio(aluno.plano)) {
-      msg = `Olá ${aluno.nome}, aqui é do CT BORÜ Muay Thai! Tudo bem? Passando para saber quando você vem treinar conosco esta semana! Qualquer dúvida sobre os horários ou validação de passe (Wellhub/TotalPass/Diária), estamos à disposição. Oss!`;
+      msg = `Olá ${aluno.nome}, aqui é da equipe da ${ACADEMY_CONFIG.nome}! Tudo bem? Passando para saber quando você vem treinar conosco esta semana! Qualquer dúvida sobre os horários ou validação de passe (Wellhub/TotalPass/Diária), estamos à disposição. Oss!`;
     } else if (dias === null) {
-      msg = `Olá ${aluno.nome}, aqui é do CT BORÜ Muay Thai! Tudo bem? Passando para regularizar sua matrícula presencialmente no balcão.`;
+      msg = `Olá ${aluno.nome}, aqui é da equipe da ${ACADEMY_CONFIG.nome}! Tudo bem? Passando para regularizar sua matrícula presencialmente no balcão.`;
     } else if (dias < 0) {
-      msg = `Olá ${aluno.nome}, tudo bem? Aqui é do CT BORÜ. Sua mensalidade venceu há ${Math.abs(dias)} dias. Por favor, acerte presencialmente na recepção ou via PIX (+55 69 9238-4491) para manter seu acesso aos treinos!`;
+      msg = `Olá ${aluno.nome}, tudo bem? Aqui é da ${ACADEMY_CONFIG.nome}. Sua mensalidade venceu há ${Math.abs(dias)} dias. Por favor, acerte presencialmente na recepção ou via PIX (${ACADEMY_CONFIG.chavePix}) para manter seu acesso aos treinos!`;
     } else if (dias === 0) {
-      msg = `Olá ${aluno.nome}, passando para avisar que sua mensalidade no CT BORÜ vence hoje! O acerto pode ser feito na recepção no início do treino.`;
+      msg = `Olá ${aluno.nome}, passando para avisar que sua mensalidade na ${ACADEMY_CONFIG.nome} vence hoje! O acerto pode ser feito na recepção no início do treino.`;
     } else {
-      msg = `Olá ${aluno.nome}, tudo bem? Passando para lembrar que sua mensalidade no CT BORÜ vence em ${dias} dias. Bons treinos!`;
+      msg = `Olá ${aluno.nome}, tudo bem? Passando para lembrar que sua mensalidade na ${ACADEMY_CONFIG.nome} vence em ${dias} dias. Bons treinos!`;
     }
     window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
@@ -697,7 +698,7 @@ export default function AdminDashboard() {
       alert(`O aluno ${aluno.nome} não possui telefone cadastrado.`);
       return;
     }
-    const msg = `Olá ${aluno.nome}, tudo bem? Aqui é da equipe do CT BORÜ Muay Thai! Sentimos sua falta nos treinos recentemente. Tá tudo certinho por aí? Esperamos você de volta ao tatame para continuarmos evoluindo juntos! Se precisar de algum ajuste nos seus horários, estamos à disposição. Oss! 🥊`;
+    const msg = `Olá ${aluno.nome}, tudo bem? Aqui é da equipe da ${ACADEMY_CONFIG.nome}! Sentimos sua falta nos treinos recentemente. Tá tudo certinho por aí? Esperamos você de volta ao tatame para continuarmos evoluindo juntos! Se precisar de algum ajuste nos seus horários, estamos à disposição. Oss! 🥊`;
     window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
 
@@ -742,11 +743,11 @@ export default function AdminDashboard() {
         <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
           <div className="text-center mb-6">
             <img 
-              src="/logo-boru.jpg" 
-              alt="BORÜ Centro de Combate" 
-              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-cover" 
+              src={ACADEMY_CONFIG.logoUrl} 
+              alt={ACADEMY_CONFIG.nome} 
+              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-cover bg-zinc-950" 
             />
-            <h1 className="text-3xl font-black text-white tracking-widest mb-1">BORÜ</h1>
+            <h1 className="text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
             <p className="text-red-500 font-bold text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
             <p className="text-zinc-400 text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
           </div>
@@ -829,11 +830,11 @@ export default function AdminDashboard() {
         {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
           <div className="flex items-center gap-3">
-            <img src="/logo-boru.jpg" alt="BORÜ" className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover flex-shrink-0" />
+            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover flex-shrink-0 bg-zinc-950" />
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-                  PAINEL <span className="text-red-600">BORÜ</span>
+                  PAINEL <span className="text-red-600">DE GESTÃO</span>
                 </h1>
                 {usuarioLogado?.cargo === 'ADMIN' ? (
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
@@ -1513,7 +1514,7 @@ export default function AdminDashboard() {
 
                             {item.telefone && (
                               <button
-                                onClick={() => window.open(formatarWhatsUrl(item.telefone, `Olá ${item.nome}, equipe CT BORÜ entrando em contato sobre o treino do dia ${diaSelecionadoGeral}.`), '_blank')}
+                                onClick={() => window.open(formatarWhatsUrl(item.telefone, `Olá ${item.nome}, equipe da ${ACADEMY_CONFIG.nome} entrando em contato sobre o treino do dia ${diaSelecionadoGeral}.`), '_blank')}
                                 className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px]"
                                 title="Enviar WhatsApp"
                               >
@@ -1770,7 +1771,7 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white">Mercado & Loja Borü</h2>
+                  <h2 className="text-xl font-bold text-white">Loja & Estoque da Academia</h2>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     VERSÃO BETA
                   </span>
@@ -2128,7 +2129,7 @@ export default function AdminDashboard() {
             <form onSubmit={criarProfessor} className="space-y-3">
               <div>
                 <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome Completo</label>
-                <input required type="text" value={novoProfessor.nome} onChange={(e) => setNovoProfessor({...novoProfessor, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Felipe Borü" />
+                <input required type="text" value={novoProfessor.nome} onChange={(e) => setNovoProfessor({...novoProfessor, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Mestre Carlos Silva" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2138,14 +2139,14 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
-                  <input type="text" value={novoProfessor.telefone} onChange={(e) => setNovoProfessor({...novoProfessor, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="(69) 99999-9999" />
+                  <input type="text" value={novoProfessor.telefone} onChange={(e) => setNovoProfessor({...novoProfessor, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="(11) 98765-4321" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail (Contato / Opcional)</label>
-                  <input type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="professor@boru.com" />
+                  <input type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="professor@academia.com" />
                 </div>
                 <div>
                   <label className="block text-amber-400 text-xs font-bold mb-1">Senha Inicial (Registrada pelo Admin)</label>

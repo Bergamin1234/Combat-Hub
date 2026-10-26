@@ -13,26 +13,26 @@ async function main() {
   await prisma.produto.deleteMany();
   await prisma.usuario.deleteMany();
 
-  console.log('Criando Usuários (Administrador e Professor)...');
+  console.log('Criando Usuários (Administrador e Professores)...');
   await prisma.usuario.create({
     data: {
       nome: 'Administrador Master',
-      email: 'brgadmin@boru.com',
+      email: 'admin@academia.com',
       senha: 'BoruCentroDeCombate98490@!',
       cargo: 'ADMIN',
-      telefone: '69999999999',
+      telefone: '11987654321',
       prajied: 'Prajied Preto'
     }
   });
 
   await prisma.usuario.create({
     data: {
-      nome: 'Felipe Borü',
-      email: 'felipe@boru.com',
+      nome: 'Mestre Carlos Silva',
+      email: 'carlos@academia.com',
       cpf: '12345678900',
-      senha: 'boru123',
+      senha: 'senha123',
       cargo: 'PROFESSOR',
-      telefone: '6992384491',
+      telefone: '11987654321',
       modalidade: 'Muay Thai',
       graduacao: 'Prajied Azul Escuro e Preto',
       prajied: 'Prajied Azul Escuro e Preto',
@@ -47,11 +47,11 @@ async function main() {
   await prisma.usuario.create({
     data: {
       nome: 'Carlos "Gracie" Silva',
-      email: 'carlos.bjj@boru.com',
+      email: 'carlos.bjj@academia.com',
       cpf: '98765432100',
-      senha: 'boru123',
+      senha: 'senha123',
       cargo: 'PROFESSOR',
-      telefone: '69991234567',
+      telefone: '11991234567',
       modalidade: 'Jiu-Jitsu',
       graduacao: 'Faixa Preta 2º Grau',
       prajied: 'Faixa Preta 2º Grau',
@@ -66,10 +66,10 @@ async function main() {
   await prisma.usuario.create({
     data: {
       nome: 'Marcos "Demolidor" Santos',
-      email: 'marcos.boxe@boru.com',
-      senha: 'boru123',
+      email: 'marcos.boxe@academia.com',
+      senha: 'senha123',
       cargo: 'PROFESSOR',
-      telefone: '69992345678',
+      telefone: '11992345678',
       modalidade: 'Boxe',
       graduacao: 'Sem faixa (Graduação por cartel e tempo)',
       prajied: 'Sem faixa',
@@ -84,10 +84,10 @@ async function main() {
   await prisma.usuario.create({
     data: {
       nome: 'Anderson "Spider" Costa',
-      email: 'anderson.mma@boru.com',
-      senha: 'boru123',
+      email: 'anderson.mma@academia.com',
+      senha: 'senha123',
       cargo: 'PROFESSOR',
-      telefone: '69993456789',
+      telefone: '11993456789',
       modalidade: 'MMA',
       graduacao: 'Sem faixa (Graduação por experiência e cartel)',
       prajied: 'Sem faixa',
@@ -102,10 +102,10 @@ async function main() {
   await prisma.usuario.create({
     data: {
       nome: 'Mestre Jin-Woo Park',
-      email: 'jin.tkd@boru.com',
-      senha: 'boru123',
+      email: 'jin.tkd@academia.com',
+      senha: 'senha123',
       cargo: 'PROFESSOR',
-      telefone: '69994567890',
+      telefone: '11994567890',
       modalidade: 'Taekwondo',
       graduacao: 'Faixa Preta 4º Dan',
       prajied: 'Faixa Preta 4º Dan',
@@ -117,11 +117,11 @@ async function main() {
     }
   });
 
-  console.log('Criando Produtos da Loja Borü (Beta)...');
+  console.log('Criando Produtos da Loja da Academia (Beta)...');
   await prisma.produto.createMany({
     data: [
       {
-        nome: 'Protetor Bucal Gel Termomoldável Borü',
+        nome: 'Protetor Bucal Gel Termomoldável Combat Pro',
         categoria: 'PROTETOR_BUCAL',
         preco: 45.00,
         estoque: 15,
@@ -130,7 +130,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Protetor Bucal Duplo Borü Fight',
+        nome: 'Protetor Bucal Duplo Combat Fight',
         categoria: 'PROTETOR_BUCAL',
         preco: 60.00,
         estoque: 8,
@@ -139,7 +139,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Luva Muay Thai Borü Combat 12oz',
+        nome: 'Luva Muay Thai Combat Pro 12oz',
         categoria: 'LUVAS',
         preco: 220.00,
         estoque: 6,
@@ -148,7 +148,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Luva Muay Thai Borü Combat 14oz',
+        nome: 'Luva Muay Thai Combat Pro 14oz',
         categoria: 'LUVAS',
         preco: 230.00,
         estoque: 10,
@@ -157,7 +157,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Luva Muay Thai Borü Combat 16oz',
+        nome: 'Luva Muay Thai Combat Pro 16oz',
         categoria: 'LUVAS',
         preco: 250.00,
         estoque: 5,
@@ -166,7 +166,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Caneleira Anatômica Borü Pro',
+        nome: 'Caneleira Anatômica Combat Pro',
         categoria: 'CANELEIRAS',
         preco: 180.00,
         estoque: 12,
@@ -175,7 +175,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Bandagem Elástica Borü Fight 4 Metros',
+        nome: 'Bandagem Elástica Combat Fight 4 Metros',
         categoria: 'BANDAGENS',
         preco: 35.00,
         estoque: 25,
@@ -184,7 +184,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Bandagem Algodão Borü Fight 5 Metros',
+        nome: 'Bandagem Algodão Combat Fight 5 Metros',
         categoria: 'BANDAGENS',
         preco: 45.00,
         estoque: 18,
@@ -202,7 +202,7 @@ async function main() {
         disponivel: true
       },
       {
-        nome: 'Paçoca de Amendoim Proteica Borü',
+        nome: 'Paçoca de Amendoim Proteica',
         categoria: 'ALIMENTOS',
         preco: 4.50,
         estoque: 50,
@@ -215,7 +215,7 @@ async function main() {
         categoria: 'ALIMENTOS',
         preco: 12.00,
         estoque: 20,
-        descricao: 'Gás total para aguentar os rounds mais intensos de Muay Thai.',
+        descricao: 'Gás total para aguentar os rounds mais intensos de artes marciais.',
         imagemUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80',
         disponivel: true
       },
@@ -235,33 +235,33 @@ async function main() {
   await prisma.aviso.createMany({
     data: [
       {
-        titulo: 'Exame Oficial de Graduação de Prajied',
-        conteudo: 'Atenção alunos: o próximo exame de graduação de Prajied de Muay Thai será realizado no último sábado deste mês às 09h. Mantenham a frequência e a disciplina afiadas nos treinos!',
+        titulo: 'Exame Oficial de Graduação de Faixas e Prajieds',
+        conteudo: 'Atenção alunos: o próximo exame de graduação será realizado no último sábado deste mês às 09h. Mantenham a frequência e a disciplina afiadas nos treinos!',
         tipo: 'GRADUACAO',
-        autorNome: 'Felipe Borü',
+        autorNome: 'Mestre Carlos Silva',
         autorCargo: 'Instrutor Chefe',
         fixado: true
       },
       {
         titulo: 'Lembrete: Pagamento de Mensalidades Presencial',
-        conteudo: 'Lembramos a todos os alunos que os pagamentos de mensalidades e diárias são realizados exclusivamente presencialmente na recepção da academia (PIX no balcão, Cartão ou Dinheiro).',
+        conteudo: 'Lembramos a todos os alunos que os pagamentos de mensalidades e diárias são realizados diretamente na recepção da academia (PIX no balcão, Cartão ou Dinheiro).',
         tipo: 'GERAL',
-        autorNome: 'Administração Borü',
+        autorNome: 'Administração Combat Hub',
         autorCargo: 'Recepção',
         fixado: true
       },
       {
-        titulo: 'Seminário Especial de Clinch e Cotoveladas',
-        conteudo: 'Treino especial com foco intensivo em técnicas de clinch, desequilíbrio e cotoveladas da Tailândia. Não perca! Vagas limitadas para alunos matriculados.',
+        titulo: 'Seminário Especial de Clinch e Técnicas Avançadas',
+        conteudo: 'Treino especial com foco intensivo em técnicas avançadas de combate e defesa pessoal. Não perca! Vagas limitadas para alunos matriculados.',
         tipo: 'EVENTO',
-        autorNome: 'Felipe Borü',
+        autorNome: 'Coordenação Técnica',
         autorCargo: 'Professor',
         fixado: false
       }
     ]
   });
 
-  console.log('Criando grade de horários de Muay Thai - Prof. Felipe Borü...');
+  console.log('Criando grade de horários de Muay Thai - Mestre Carlos Silva...');
   
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -306,7 +306,7 @@ async function main() {
 
         const evento = await prisma.eventoDeAula.create({
           data: {
-            titulo: `Muay Thai (${aula.pub}) - Prof. Felipe Borü`,
+            titulo: `Muay Thai (${aula.pub}) - Mestre Carlos Silva`,
             dataInicio,
             dataFim,
           }

@@ -29,7 +29,7 @@ app.post('/api/auth/login', async (req, res) => {
   const cpfLimpo = termo.replace(/\D/g, '');
 
   // 1. Verificação do Administrador Master (Acesso: BrgAdmin | Senha: BoruCentroDeCombate98490@!)
-  const isAdminLogin = (termoLower === 'brgadmin' || termoLower === 'brgadmin@boru.com' || termoLower === 'admin@boru.com' || termoLower === 'admin');
+  const isAdminLogin = (termoLower === 'brgadmin' || termoLower === 'admin' || termoLower === 'admin@academia.com' || termoLower === 'brgadmin@academia.com' || termoLower === 'brgadmin@boru.com' || termoLower === 'admin@boru.com');
 
   if (isAdminLogin) {
     if (senha !== 'BoruCentroDeCombate98490@!') {
@@ -40,6 +40,8 @@ app.post('/api/auth/login', async (req, res) => {
     let adminDb = await prisma.usuario.findFirst({
       where: {
         OR: [
+          { email: 'admin@academia.com' },
+          { email: 'brgadmin@academia.com' },
           { email: 'brgadmin@boru.com' },
           { email: 'admin@boru.com' },
           { cargo: 'ADMIN' }
@@ -51,10 +53,10 @@ app.post('/api/auth/login', async (req, res) => {
       adminDb = await prisma.usuario.create({
         data: {
           nome: 'Administrador Master',
-          email: 'brgadmin@boru.com',
+          email: 'admin@academia.com',
           senha: 'BoruCentroDeCombate98490@!',
           cargo: 'ADMIN',
-          telefone: '(69) 99238-4491',
+          telefone: '(11) 98765-4321',
           prajied: 'Prajied Preto'
         }
       });
@@ -62,7 +64,7 @@ app.post('/api/auth/login', async (req, res) => {
       adminDb = await prisma.usuario.update({
         where: { id: adminDb.id },
         data: {
-          email: 'brgadmin@boru.com',
+          email: 'admin@academia.com',
           senha: 'BoruCentroDeCombate98490@!'
         }
       });
@@ -175,7 +177,7 @@ app.post('/api/admin/professores', async (req, res) => {
 
   const cargoFinal = cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR';
   const cpfLimpo = cpf ? cpf.replace(/\D/g, '') : null;
-  const emailFinal = email ? email.trim().toLowerCase() : (cpfLimpo ? `${cpfLimpo}@boru.com` : `professor_${Date.now()}@boru.com`);
+  const emailFinal = email ? email.trim().toLowerCase() : (cpfLimpo ? `${cpfLimpo}@academia.com` : `professor_${Date.now()}@academia.com`);
 
   if (cargoFinal === 'PROFESSOR' && (!cpfLimpo || cpfLimpo.length < 11)) {
     return res.status(400).json({ erro: 'CPF válido (11 dígitos) é obrigatório para cadastrar o professor. O professor usará este CPF para fazer login no sistema.' });
@@ -351,7 +353,7 @@ app.post('/api/admin/avisos', async (req, res) => {
         titulo: titulo.trim(),
         conteudo: conteudo.trim(),
         tipo: tipo || 'GERAL',
-        autorNome: autorNome || 'Felipe Borü',
+        autorNome: autorNome || 'Coordenação Técnica',
         autorCargo: autorCargo || 'Professor',
         fixado: Boolean(fixado)
       }
@@ -494,7 +496,7 @@ app.post('/api/alunos/recuperar-senha', async (req, res) => {
       return res.status(404).json({ erro: 'Nenhum aluno encontrado com este contato.' });
     }
 
-    const senhaTemporaria = 'boru123';
+    const senhaTemporaria = 'senha123';
     
     await prisma.aluno.update({
       where: { id: aluno.id },
@@ -504,7 +506,7 @@ app.post('/api/alunos/recuperar-senha', async (req, res) => {
       }
     });
 
-    res.json({ mensagem: 'Sua senha foi redefinida para "boru123". Faça o login com essa senha e crie uma nova em seguida!' });
+    res.json({ mensagem: 'Sua senha foi redefinida para "senha123". Faça o login com essa senha e crie uma nova em seguida!' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro interno ao recuperar senha.' });
@@ -1637,5 +1639,5 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server Borü API rodando em http://localhost:${PORT}`);
+  console.log(`Server Combat API rodando em http://localhost:${PORT}`);
 });

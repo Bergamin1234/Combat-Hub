@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BORÜ Centro de Combate | CT de Artes Marciais & Alta Performance em Porto Velho</title>
-  <meta name="description" content="Conheça o Centro de Treinamento BORÜ em Porto Velho - RO. Estrutura de ponta, professores graduados em Muay Thai, Jiu-Jitsu, MMA, Kickboxing e Funcional. Agende sua aula experimental gratuita!">
-  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>COMBAT HUB | Centro de Treinamento em Artes Marciais & Alta Performance</title>
+  <meta name="description" content="Sistema e Plataforma Modelo para Centros de Treinamento e Academias de Luta. Estrutura profissional, professores graduados em Muay Thai, Jiu-Jitsu, MMA, Boxe e Kickboxing.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   
+  <!-- Configurações Globais da Academia -->
+  <script src="/academyConfig.js"></script>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -15,7 +18,7 @@
       theme: {
         extend: {
           colors: {
-            boru: {
+            combat: {
               black: '#0B0B0C',
               dark: '#141416',
               card: '#1A1A1E',
@@ -36,8 +39,8 @@
   
 
   <style>
-    /* Wallpaper global do Lobo BORÜ no fundo do site inteiro */
-    #global-boru-wallpaper {
+    /* Wallpaper global de combate no fundo do site inteiro */
+    #global-combat-wallpaper {
       position: fixed;
       top: 0;
       left: 0;
@@ -50,7 +53,7 @@
       overflow: hidden;
     }
 
-    #global-boru-wallpaper img {
+    #global-combat-wallpaper img {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -61,7 +64,7 @@
     }
 
     /* Vinheta suave para garantir contraste de leitura perfeito */
-    #global-boru-wallpaper::after {
+    #global-combat-wallpaper::after {
       content: "";
       position: absolute;
       inset: 0;
@@ -70,16 +73,16 @@
       pointer-events: none;
     }
 
-    body.react-active > *:not(#root):not(script):not(#global-boru-wallpaper) {
+    body.react-active > *:not(#root):not(script):not(#global-combat-wallpaper) {
       display: none !important;
     }
   </style>
 </head>
 <body class="bg-[#0B0B0C] text-zinc-100 min-h-screen selection:bg-red-600 selection:text-white relative">
 
-  <!-- WALLPAPER FIXO DO SITE INTEIRO (LOBO BORÜ) -->
-  <div id="global-boru-wallpaper" aria-hidden="true">
-    <img src="/wallpaper-boru.png" alt="Wallpaper Lobo BORÜ" />
+  <!-- WALLPAPER FIXO DO SITE INTEIRO (COMBAT THEME) -->
+  <div id="global-combat-wallpaper" aria-hidden="true">
+    <img src="/wallpaper-combat.svg" alt="Wallpaper Centro de Treinamento" />
   </div>
 
   <!-- ================= NAVBAR ================= -->
@@ -88,10 +91,10 @@
       
       <!-- Brand Logo -->
       <a href="#hero" class="flex items-center gap-3 group">
-        <img src="/logo-boru.jpg" alt="BORÜ Centro de Combate" class="w-12 h-12 rounded-full border-2 border-red-600 shadow-lg object-cover group-hover:scale-105 transition" />
+        <img src="/logo-combat.svg" alt="COMBAT HUB" class="w-12 h-12 rounded-full border-2 border-red-600 shadow-lg object-contain group-hover:scale-105 transition" />
         <div class="flex flex-col">
           <span class="font-display text-2xl sm:text-3xl tracking-widest font-black text-white leading-none group-hover:text-red-500 transition">
-            BORÜ
+            COMBAT HUB
           </span>
           <span class="text-[9px] tracking-[0.25em] font-semibold text-zinc-400 uppercase">
             Centro de Treinamento
@@ -142,7 +145,7 @@
       <nav class="flex flex-col space-y-3 text-base font-semibold">
         <a href="#planos" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Planos & Parcerias</a>
         <a href="#horarios" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Grade de Horários</a>
-        <a href="#o-que-e-o-ct" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">O Que É o CT BORÜ</a>
+        <a href="#o-que-e-o-ct" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">O Que É o Centro de Treinamento</a>
         <a href="#estrutura" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Estrutura & Espaço</a>
         <a href="#modalidades" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Modalidades de Luta</a>
         <a href="#professores" class="text-zinc-300 hover:text-red-500 py-1" onclick="closeMobileMenu()">Nossos Professores / Mestres</a>
@@ -181,7 +184,7 @@
           
           <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-950/60 border border-red-800/80 text-red-400 text-xs sm:text-sm font-semibold tracking-wide">
             <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-            <span>CENTRO DE TREINAMENTO DE ALTO NÍVEL EM PORTO VELHO - RO</span>
+            <span>CENTRO DE TREINAMENTO & ARTES MARCIAIS DE ALTO NÍVEL</span>
           </div>
 
           <h1 class="font-display text-4xl sm:text-6xl xl:text-7xl font-extrabold uppercase tracking-tight text-white leading-none">
@@ -192,7 +195,7 @@
           </h1>
 
           <p class="text-zinc-300 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-            O <strong>BORÜ Centro de Combate</strong> é o espaço definitivo em Rondônia para quem busca saúde, perda de peso, defesa pessoal, disciplina e alta performance em artes marciais.
+            O <strong>COMBAT HUB</strong> é o centro definitivo para quem busca saúde, perda de peso, autodefesa, disciplina e alta performance em artes marciais.
           </p>
 
           <!-- CTAs -->
@@ -229,15 +232,15 @@
         <!-- Hero Media Showcase Card -->
         <div class="lg:col-span-5 relative">
           <div class="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl bg-zinc-950 group">
-            <img src="/equipe-boru-hero.jpg" 
-                 alt="Equipe e Família BORÜ Centro de Combate" 
+            <img src="/equipe-treinamento.jpg" 
+                 alt="Equipe e Família no Centro de Combate" 
                  class="w-full h-[460px] object-cover object-center group-hover:scale-105 transition duration-700">
             
             <div class="absolute inset-0 bg-gradient-to-t from-[#0B0B0C] via-transparent to-black/20 pointer-events-none"></div>
 
             <div class="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md text-white text-xs font-black uppercase px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
               <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-              Porto Velho - RO
+              Unidade Central
             </div>
 
             <div class="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80">
@@ -468,12 +471,12 @@
         
         <div class="lg:col-span-5 space-y-4">
           <div class="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl">
-            <img src="/oque-e-ct-boru.jpg" 
-                 alt="Treino no BORÜ Centro de Combate" 
+            <img src="/treino-combate.jpg" 
+                 alt="Treino no Centro de Treinamento" 
                  class="w-full h-80 object-cover object-center">
             <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
             <div class="absolute bottom-4 left-4 right-4">
-              <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Ambiente de Respeito & Irmandade</span>
+              <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Ambiente de Respeito & Disciplina</span>
               <p class="text-sm font-semibold text-white mt-1">Onde o ego fica do lado de fora do tatame.</p>
             </div>
           </div>
@@ -497,11 +500,11 @@
           </div>
 
           <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-white uppercase leading-tight">
-            O Que É o <span class="text-red-500">CT BORÜ</span>?
+            O Que É o <span class="text-red-500">Centro de Treinamento</span>?
           </h2>
 
           <p class="text-zinc-300 text-base leading-relaxed">
-            O <strong>BORÜ Centro de Combate</strong> nasceu em Porto Velho com uma missão clara: 
+            O <strong>COMBAT HUB</strong> nasceu com uma missão clara: 
             <strong>democratizar as artes marciais de alto nível técnico</strong> em um ambiente seguro, acolhedor e com infraestrutura padrão internacional.
           </p>
 
@@ -618,7 +621,7 @@
         <div class="group rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-red-600 transition duration-300 flex flex-col justify-between card-combat">
           <div class="relative h-56 overflow-hidden">
             <img src="/modalidade-muaythai.jpg" 
-                 alt="Muay Thai Tradicional no CT BORÜ" 
+                 alt="Muay Thai Tradicional no Centro de Treinamento" 
                  class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
             <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/30 to-transparent"></div>
             <span class="absolute top-4 left-4 px-3 py-1 rounded bg-red-600 text-white text-xs font-bold uppercase">
@@ -664,7 +667,7 @@
         
         <!-- Foto 1: Chute & Manopla -->
         <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
-          <img src="/galeria-treino-chute.jpg" alt="Treino de Chute e Manopla no CT BORÜ" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <img src="/galeria-treino-chute.jpg" alt="Treino de Chute e Manopla no Tatame" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
             <span class="text-xs font-bold text-white uppercase tracking-wider bg-red-600/90 px-3 py-1 rounded shadow">Chute & Manopla</span>
           </div>
@@ -672,7 +675,7 @@
 
         <!-- Foto 2: Sparring Técnico -->
         <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
-          <img src="/hero-ct-combat.jpg" alt="Sparring e Disciplina no CT BORÜ" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <img src="/hero-ct-combat.jpg" alt="Sparring Técnico e Disciplina" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
             <span class="text-xs font-bold text-white uppercase tracking-wider bg-amber-500/90 text-black px-3 py-1 rounded shadow">Sparring Técnico</span>
           </div>
@@ -680,7 +683,7 @@
 
         <!-- Foto 3: Tatame & Saúde -->
         <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
-          <img src="/ct-boru-estrutura.jpg" alt="Estrutura e Tatame no CT BORÜ" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <img src="/estrutura-tatame.jpg" alt="Estrutura e Tatame de Alta Densidade" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
             <span class="text-xs font-bold text-white uppercase tracking-wider bg-red-700/90 px-3 py-1 rounded shadow">Tatame & Saúde</span>
           </div>
@@ -688,7 +691,7 @@
 
         <!-- Foto 4: Mestre & Aluno -->
         <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
-          <img src="/galeria-mestre-aluno.jpg" alt="Mestre Felipe Borü e Aluno no CT BORÜ" class="w-full h-full object-cover object-top group-hover:scale-110 transition duration-500">
+          <img src="/galeria-mestre-aluno.jpg" alt="Mestre e Aluno no Tatame" class="w-full h-full object-cover object-top group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
             <span class="text-xs font-bold text-white uppercase tracking-wider bg-red-600/90 px-3 py-1 rounded shadow">Irmandade & Treino</span>
           </div>
@@ -696,7 +699,7 @@
 
         <!-- Foto 5: Canto de Ringue -->
         <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
-          <img src="/modalidade-muaythai.jpg" alt="Canto de Ringue e Orientação no CT BORÜ" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <img src="/modalidade-muaythai.jpg" alt="Canto de Ringue e Orientação Técnica" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
             <span class="text-xs font-bold text-white uppercase tracking-wider bg-zinc-800 px-3 py-1 rounded shadow">Canto de Ringue</span>
           </div>
@@ -704,7 +707,7 @@
 
         <!-- Foto 6: Treino de Manoplas & Técnica -->
         <div class="relative rounded-2xl overflow-hidden group h-64 sm:h-72 bg-zinc-900 border border-zinc-800 shadow-lg">
-          <img src="/oque-e-ct-boru.jpg" alt="Treino Técnico de Manopla no CT BORÜ" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <img src="/treino-combate.jpg" alt="Treino Técnico de Manopla e Combate" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
             <span class="text-xs font-bold text-white uppercase tracking-wider bg-amber-600/90 text-white px-3 py-1 rounded shadow">Treino de Manoplas</span>
           </div>
@@ -744,10 +747,10 @@
         <div class="lg:col-span-6 space-y-6">
           <h2 class="text-red-500 font-bold uppercase tracking-widest text-xs sm:text-sm">Venha Nos Conhecer Pessoalmente</h2>
           <h3 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase">
-            Localização do CT em Porto Velho
+            Localização da Academia
           </h3>
           <p class="text-zinc-400 text-sm leading-relaxed">
-            Fácil acesso, estacionamento amplo, segurança e ambiente totalmente climatizado no coração da capital rondoniense.
+            Fácil acesso, estacionamento, segurança, vestiários com ducha e ambiente climatizado projetado para a sua melhor experiência de treino.
           </p>
 
           <div class="space-y-4 pt-2">
@@ -756,8 +759,8 @@
                 <i data-lucide="map-pin" class="w-5 h-5"></i>
               </div>
               <div>
-                <h5 class="text-sm font-bold text-white">Endereço do CT</h5>
-                <p class="text-xs text-zinc-400 mt-0.5">-8.76214249108049, -63.869645680116456 (Porto Velho - RO)</p>
+                <h5 class="text-sm font-bold text-white">Endereço da Unidade</h5>
+                <p class="text-xs text-zinc-400 mt-0.5">Av. das Artes Marciais, 1500 - Centro | Sua Cidade - UF</p>
               </div>
             </div>
 
@@ -767,7 +770,7 @@
               </div>
               <div>
                 <h5 class="text-sm font-bold text-white">Horário de Funcionamento</h5>
-                <p class="text-xs text-zinc-400 mt-0.5">Segunda a Sexta: 06h às 22h | Sábados: 08h às 13h</p>
+                <p class="text-xs text-zinc-400 mt-0.5">Segunda a Sexta: 06h às 22h | Sábados: 08h às 14h</p>
               </div>
             </div>
 
@@ -777,19 +780,19 @@
               </div>
               <div>
                 <h5 class="text-sm font-bold text-white">WhatsApp & Redes Sociais</h5>
-                <p class="text-xs text-zinc-400 mt-0.5">WhatsApp: (69) 99238-4491 | Instagram: @borucentrodecombate</p>
+                <p class="text-xs text-zinc-400 mt-0.5">WhatsApp: (11) 98765-4321 | Instagram: @academiadecombate</p>
               </div>
             </div>
           </div>
 
           <div class="pt-2 flex flex-wrap gap-4">
-            <a href="https://instagram.com/borucentrodecombate" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-sm font-semibold text-zinc-200">
+            <a href="https://instagram.com" target="_blank" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-sm font-semibold text-zinc-200">
               <i data-lucide="instagram" class="w-4 h-4 text-pink-500"></i>
-              @borucentrodecombate
+              @academiadecombate
             </a>
-            <a href="https://wa.me/556992384491?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20aulas%20de%20Muay%20Thai%20no%20CT%20BOR%C3%9C." target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm">
+            <a href="https://wa.me/5511987654321?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20aulas%20na%20academia." target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm">
               <i data-lucide="send" class="w-4 h-4"></i>
-              Conversar no WhatsApp (+55 69 9238-4491)
+              Conversar no WhatsApp ((11) 98765-4321)
             </a>
           </div>
         </div>
@@ -799,7 +802,7 @@
           <div class="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 p-2 shadow-2xl">
             <div class="relative h-[380px] w-full rounded-xl overflow-hidden bg-zinc-950 flex items-center justify-center">
               <iframe 
-                src="https://maps.google.com/maps?q=-8.76214249108049,-63.869645680116456&hl=pt-BR&z=17&output=embed" 
+                src="https://maps.google.com/maps?q=-23.550520,-46.633308&hl=pt-BR&z=17&output=embed" 
                 width="100%" 
                 height="100%" 
                 style="border:0; filter: invert(90%) hue-rotate(180deg);" 
@@ -808,8 +811,8 @@
                 referrerpolicy="no-referrer-when-downgrade">
               </iframe>
               <div class="absolute bottom-4 left-4 right-4 bg-zinc-900/90 backdrop-blur-md p-3 rounded-lg border border-zinc-700 text-xs flex items-center justify-between">
-                <span class="font-bold text-white">-8.76214249108049, -63.869645680116456</span>
-                <a href="https://maps.google.com/?q=-8.76214249108049,-63.869645680116456" target="_blank" class="text-red-400 font-bold hover:underline">Abrir no GPS</a>
+                <span class="font-bold text-white">Av. das Artes Marciais, 1500 - Centro</span>
+                <a href="https://maps.google.com/?q=-23.550520,-46.633308" target="_blank" class="text-red-400 font-bold hover:underline">Abrir no GPS</a>
               </div>
             </div>
           </div>
@@ -825,8 +828,8 @@
       <div class="flex flex-col md:flex-row items-center justify-between gap-6">
         
         <div class="flex items-center gap-3">
-          <img src="/logo-boru.jpg" alt="BORÜ" class="w-9 h-9 rounded-full border border-red-600/70 shadow-sm object-cover" />
-          <span class="font-display text-xl font-bold tracking-widest text-white">BORÜ</span>
+          <img src="/logo-combat.svg" alt="COMBAT HUB" class="w-9 h-9 rounded-full border border-red-600/70 shadow-sm object-contain" />
+          <span class="font-display text-xl font-bold tracking-widest text-white">COMBAT HUB</span>
           <span class="text-xs text-zinc-500">| Centro de Treinamento em Artes Marciais</span>
         </div>
 
@@ -839,7 +842,7 @@
         </div>
 
         <div class="text-xs text-center md:text-right flex flex-col gap-1 items-end">
-          <span>&copy; <span id="current-year"></span> BORÜ Centro de Combate. Todos os direitos reservados.</span>
+          <span>&copy; <span id="current-year"></span> COMBAT HUB - Centro de Treinamento. Todos os direitos reservados.</span>
           <a href="/admin" class="hover:text-red-500 transition opacity-30 hover:opacity-100 mt-1">Acesso de Professor</a>
         </div>
 

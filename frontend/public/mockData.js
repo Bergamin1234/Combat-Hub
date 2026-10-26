@@ -194,18 +194,32 @@ const INITIAL_LESSONS = [
 
 const INSTRUCTORS_DATA = [
   {
-    id: "felipe-boru",
-    name: "Felipe Borü",
-    role: "Head Coach de Muay Thai & Fundador",
-    cref: "Prajied Azul Escuro e Preto",
-    bio: "Mais de anos dedicados à arte marcial tailandesa. Formando atletas e transformando vidas através da disciplina e excelência técnica do Muay Thai.",
-    image: "/felipe-boru.jpg",
+    id: "carlos-silva",
+    name: "Mestre Carlos Silva",
+    role: "Coordenador Técnico & Head Coach",
+    cref: "Kru Formado & Faixa Preta",
+    bio: "Mais de 15 anos dedicados à arte marcial. Formando atletas de alto rendimento e transformando vidas através da disciplina e excelência técnica.",
+    image: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=800&q=80",
     specialties: ["Muay Thai Tradicional", "Clinch & Cotovelos", "Defesa Pessoal"],
     achievements: [
-      "Prajied Azul Escuro e Preto em Muay Thai",
-      "Fundador do CT BORÜ",
-      "Centenas de alunos formados no Norte do Brasil",
-      "Especialista em Metodologia de Ensino"
+      "Faixa Preta / Grau Superior em Artes Marciais",
+      "Coordenador Técnico da Academia",
+      "Centenas de alunos e instrutores graduados",
+      "Especialista em Metodologia de Ensino e Fisiologia"
+    ]
+  },
+  {
+    id: "marcos-prado",
+    name: "Prof. Marcos 'Gracie' Prado",
+    role: "Head Coach de Jiu-Jitsu (BJJ)",
+    cref: "Faixa Preta 2º Grau",
+    bio: "Especialista em finalizações, passagens de guarda e defesa pessoal. Dedicado a formar praticantes completos, desde crianças até adultos.",
+    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
+    specialties: ["Jiu-Jitsu Esportivo", "No-Gi / Submission", "Defesa Pessoal"],
+    achievements: [
+      "Faixa Preta 2º Grau",
+      "Campeão de eventos estaduais e regionais",
+      "Mais de 10 anos lecionando a arte suave"
     ]
   }
 ];
@@ -213,7 +227,7 @@ const INSTRUCTORS_DATA = [
 const FACILITIES_DATA = [
   {
     title: "Tatame Olímpico de Alta Densidade",
-    desc: "Mais de 180m² de tatame profissional com sistema anti-impacto que protege articulações em quedas e treinos intensos.",
+    desc: "Ampla área de tatame profissional com sistema anti-impacto que protege articulações em quedas e treinos intensos.",
     icon: "layers"
   },
   {
@@ -223,12 +237,12 @@ const FACILITIES_DATA = [
   },
   {
     title: "Estação de Sacos Pesados & Manoplas",
-    desc: "Sacos de couro de 60kg a 100kg, teto-solo, puching balls e manoplas tailandesas de primeira linha.",
+    desc: "Sacos de couro de 60kg a 100kg, teto-solo, punching balls e manoplas tailandesas de primeira linha.",
     icon: "target"
   },
   {
     title: "Ambiente 100% Climatizado",
-    desc: "Ar-condicionado central em todo o espaço de treino, garantindo conforto térmico ideal mesmo no calor de Rondônia.",
+    desc: "Ar-condicionado central em todo o espaço de treino, garantindo conforto térmico e ventilação ideal durante treinos de alta intensidade.",
     icon: "wind"
   },
   {
@@ -238,7 +252,7 @@ const FACILITIES_DATA = [
   },
   {
     title: "Lounge & Loja de Equipamentos",
-    desc: "Espaço de convivência, hidratação e aquisição de luvas, bandagens, kimonos e roupas oficiais BORÜ.",
+    desc: "Espaço de convivência, hidratação e aquisição de luvas, bandagens, kimonos e artigos oficiais para treinos.",
     icon: "coffee"
   }
 ];
@@ -247,33 +261,32 @@ const SCHEDULE_DATA = [
   {
     day: "Segunda, Quarta e Sexta",
     periods: [
-      { time: "16:00 - 17:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "tarde" },
-      { time: "18:00 - 19:00", modality: "Muay Thai (KIDS)", level: "Infantil", instructor: "Felipe Borü", shift: "noite" },
-      { time: "19:00 - 20:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "noite" },
-      { time: "20:00 - 21:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "noite" }
+      { time: "16:00 - 17:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "tarde" },
+      { time: "18:00 - 19:00", modality: "Muay Thai (KIDS)", level: "Infantil", instructor: "Prof. Carlos Silva", shift: "noite" },
+      { time: "19:00 - 20:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "noite" },
+      { time: "20:00 - 21:00", modality: "Jiu-Jitsu / BJJ", level: "Todos os Níveis", instructor: "Prof. Marcos Prado", shift: "noite" }
     ]
   },
   {
     day: "Terça e Quinta",
     periods: [
-      { time: "15:00 - 16:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "tarde" },
-      { time: "19:00 - 20:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "noite" },
-      { time: "20:00 - 21:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "noite" },
-      { time: "22:30 - 23:30", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "noite" }
+      { time: "15:00 - 16:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "tarde" },
+      { time: "19:00 - 20:00", modality: "Boxe & Kickboxing", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "noite" },
+      { time: "20:00 - 21:00", modality: "MMA & No-Gi", level: "Todos os Níveis", instructor: "Prof. Marcos Prado", shift: "noite" }
     ]
   },
   {
     day: "Sábado",
     periods: [
-      { time: "08:00 - 09:00", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "manha" },
-      { time: "12:30 - 13:30", modality: "Muay Thai (ADULTOS)", level: "Todos os Níveis", instructor: "Felipe Borü", shift: "tarde" }
+      { time: "08:00 - 09:00", modality: "Funcional Fight", level: "Todos os Níveis", instructor: "Prof. Carlos Silva", shift: "manha" },
+      { time: "10:00 - 11:30", modality: "Treino Livre / Open Mat", level: "Todos os Níveis", instructor: "Equipe de Professores", shift: "manha" }
     ]
   }
 ];
 
 const FAQ_DATA = [
   {
-    question: "Nunca pratiquei artes marciais na vida. O BORÜ é para mim?",
+    question: "Nunca pratiquei artes marciais na vida. A academia é para mim?",
     answer: "Com certeza! Mais de 70% dos nossos novos alunos começam do zero absoluto. Nossas turmas são divididas por níveis técnicos, e os professores acompanham individualmente seus primeiros passos com respeito ao seu ritmo e segurança total."
   },
   {
@@ -282,10 +295,10 @@ const FAQ_DATA = [
   },
   {
     question: "Como funciona o agendamento da Aula Experimental Gratuita?",
-    answer: "Basta clicar em qualquer botão de 'Agendar Aula Gratuita' no site, preencher seu nome, modalidade e turno de preferência. Você será direcionado para o WhatsApp da nossa recepção para confirmar o dia e horário."
+    answer: "Basta clicar em qualquer botão de 'Agendar Aula Gratuita' no site, preencher seu nome, modalidade e turno de preferência. Você será direcionado para o WhatsApp da recepção para confirmar o dia e horário."
   },
   {
-    question: "O BORÜ aceita planos corporativos como Wellhub (Gympass) ou TotalPass?",
+    question: "A academia aceita planos corporativos como Wellhub (Gympass) ou TotalPass?",
     answer: "Sim! Aceitamos os principais planos corporativos com check-in diário liberado para as modalidades de artes marciais e funcional."
   },
   {
@@ -294,10 +307,12 @@ const FAQ_DATA = [
   }
 ];
 
-window.BORU_DATA = {
+window.COMBAT_DATA = {
   lessons: INITIAL_LESSONS,
   schedules: SCHEDULE_DATA,
   instructors: INSTRUCTORS_DATA,
   facilities: FACILITIES_DATA,
   faq: FAQ_DATA
 };
+window.BORU_DATA = window.COMBAT_DATA;
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { publicApi } from '../services/api';
+import { ACADEMY_CONFIG } from '../config/academyConfig';
 
 export default function Checkout() {
   const location = useLocation();
@@ -64,8 +65,8 @@ export default function Checkout() {
           <Link to="/" className="text-zinc-500 hover:text-white transition flex items-center gap-2 text-xs sm:text-sm font-semibold">
             ← Voltar para o site principal
           </Link>
-          <a href="https://wa.me/556992384491" target="_blank" rel="noreferrer" className="text-zinc-400 hover:text-white text-xs transition">
-            Dúvidas? Recepção Borü: <strong className="text-emerald-400">+55 69 9238-4491</strong>
+          <a href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}`} target="_blank" rel="noreferrer" className="text-zinc-400 hover:text-white text-xs transition">
+            Dúvidas? Recepção: <strong className="text-emerald-400">{ACADEMY_CONFIG.telefoneFormatado}</strong>
           </a>
         </div>
 
@@ -74,9 +75,9 @@ export default function Checkout() {
           {/* Lado Esquerdo: Formulário */}
           <div>
             <div className="flex items-center gap-3 mb-5">
-              <img src="/logo-boru.jpg" alt="BORÜ" className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-cover" />
+              <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-contain" />
               <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-wider">
-                Matrícula <span className="text-red-600">Borü</span>
+                Matrícula <span className="text-red-600">{ACADEMY_CONFIG.nome}</span>
               </h1>
             </div>
             
@@ -131,10 +132,10 @@ export default function Checkout() {
                       <h3 className="text-sm font-bold text-white">Pagamento Presencial na Recepção</h3>
                     </div>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      Sua vaga ficará pré-reservada no sistema! Para começar a treinar, o pagamento da 1ª mensalidade é feito <strong>diretamente no balcão da academia</strong> com o Mestre Felipe ou na recepção.
+                      Sua vaga ficará pré-reservada no sistema! Para começar a treinar, o pagamento da 1ª mensalidade é feito <strong>diretamente no balcão da academia</strong> com os instrutores ou na recepção.
                     </p>
                     <div className="text-[11px] text-zinc-400 pt-1 space-y-1">
-                      <p>✓ Aceitamos PIX presencial com chave na recepção</p>
+                      <p>✓ Aceitamos PIX presencial com chave na recepção ({ACADEMY_CONFIG.chavePix})</p>
                       <p>✓ Aceitamos Cartão de Crédito e Débito na maquininha</p>
                       <p>✓ Aceitamos Dinheiro em espécie</p>
                     </div>
@@ -177,7 +178,7 @@ export default function Checkout() {
               <div className="flex justify-between items-start border-b border-zinc-800 pb-4">
                 <div>
                   <h3 className="text-lg font-black text-white">{planoNome}</h3>
-                  <p className="text-xs text-zinc-400 mt-0.5">Muay Thai Tradicional com Felipe Borü</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Turmas & Grade Oficial de Artes Marciais</p>
                 </div>
                 <div className="text-right">
                   <span className="text-2xl font-black text-red-500">R$ {planoValor.toFixed(2).replace('.', ',')}</span>
@@ -187,13 +188,13 @@ export default function Checkout() {
 
               <div className="space-y-2 text-xs text-zinc-300">
                 <p className="flex items-center gap-2">✓ Acesso às aulas da grade semanal</p>
-                <p className="flex items-center gap-2">✓ Graduação oficial de Prajied pelo Mestre</p>
+                <p className="flex items-center gap-2">✓ Graduação oficial pelo Mestre/Professor</p>
                 <p className="flex items-center gap-2">✓ Check-in e controle de frequência pelo app</p>
                 <p className="flex items-center gap-2">✓ Acesso ao Mural de Avisos e Eventos</p>
               </div>
 
               <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-[11px] text-zinc-400">
-                Endereço: Centro de Treinamento Borü - Muay Thai & Artes Marciais.
+                Endereço: {ACADEMY_CONFIG.enderecoCompleto} | {ACADEMY_CONFIG.cidadeEstado}
               </div>
             </div>
           </div>

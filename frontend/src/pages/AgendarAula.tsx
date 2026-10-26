@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { publicApi } from '../services/api';
+import { ACADEMY_CONFIG } from '../config/academyConfig';
 
 export default function AgendarAula() {
   const navigate = useNavigate();
@@ -58,11 +59,11 @@ export default function AgendarAula() {
             <br/><br/>Nossa equipe confirmará com você pelo WhatsApp em breve!
           </p>
           <a 
-            href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, agendei minha aula experimental de Muay Thai no CT BORÜ para ${diaSelecionado} às ${formData.horario}! Nome: ${formData.nome}`)}`}
+            href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá equipe ${ACADEMY_CONFIG.nome}, agendei minha aula experimental para ${diaSelecionado} às ${formData.horario}! Nome: ${formData.nome}`)}`}
             target="_blank"
             className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-green-600/30"
           >
-            <span>📲 Confirmar direto no WhatsApp (+55 69 9238-4491)</span>
+            <span>📲 Confirmar direto no WhatsApp ({ACADEMY_CONFIG.telefoneFormatado})</span>
           </a>
           <button onClick={() => navigate('/')} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 font-bold rounded-xl transition text-zinc-300">
             Voltar ao Site Inicial
@@ -84,9 +85,9 @@ export default function AgendarAula() {
 
         <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <img src="/logo-boru.jpg" alt="BORÜ" className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-lg object-cover" />
+            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-lg object-contain" />
             <h1 className="text-3xl font-black text-white uppercase tracking-wider mb-2">Aula Experimental</h1>
-            <p className="text-zinc-400 text-sm">Preencha os dados abaixo para agendar seu primeiro treino no CT BORÜ.</p>
+            <p className="text-zinc-400 text-sm">Preencha os dados abaixo para agendar seu primeiro treino no {ACADEMY_CONFIG.nome}.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

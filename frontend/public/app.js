@@ -42,9 +42,10 @@ function closeMobileMenu() {
 
 function renderFacilities() {
   const container = document.getElementById('facilities-grid');
-  if (!container || !window.BORU_DATA || !window.BORU_DATA.facilities) return;
+  const combatData = window.COMBAT_DATA || window.BORU_DATA;
+  if (!container || !combatData || !combatData.facilities) return;
 
-  const facilities = window.BORU_DATA.facilities;
+  const facilities = combatData.facilities;
   let html = '';
 
   facilities.forEach(item => {
@@ -64,9 +65,10 @@ function renderFacilities() {
 
 function renderInstructorsPortfolio() {
   const container = document.getElementById('instructors-portfolio-grid');
-  if (!container || !window.BORU_DATA || !window.BORU_DATA.instructors) return;
+  const combatData = window.COMBAT_DATA || window.BORU_DATA;
+  if (!container || !combatData || !combatData.instructors) return;
 
-  const instructors = window.BORU_DATA.instructors;
+  const instructors = combatData.instructors;
   let html = '';
 
   instructors.forEach(coach => {
@@ -127,9 +129,10 @@ function renderInstructorsPortfolio() {
 
 function renderSchedule(filterShift = 'all') {
   const container = document.getElementById('schedule-container');
-  if (!container || !window.BORU_DATA || !window.BORU_DATA.schedules) return;
+  const combatData = window.COMBAT_DATA || window.BORU_DATA;
+  if (!container || !combatData || !combatData.schedules) return;
 
-  const schedules = window.BORU_DATA.schedules;
+  const schedules = combatData.schedules;
   let html = '';
 
   schedules.forEach(daySchedule => {
@@ -213,9 +216,10 @@ function initScheduleFilters() {
 
 function renderFAQ() {
   const container = document.getElementById('faq-accordion-container');
-  if (!container || !window.BORU_DATA || !window.BORU_DATA.faq) return;
+  const combatData = window.COMBAT_DATA || window.BORU_DATA;
+  if (!container || !combatData || !combatData.faq) return;
 
-  const faqs = window.BORU_DATA.faq;
+  const faqs = combatData.faq;
   let html = '';
 
   faqs.forEach((item, index) => {
@@ -296,18 +300,23 @@ function handleBookingSubmit(event) {
     return;
   }
 
-  const textMessage = `*AGENDAMENTO DE AULA EXPERIMENTAL - CT BORÜ*%0A%0A` +
+  const cfg = window.ACADEMY_CONFIG || {
+    nome: 'COMBAT HUB',
+    whatsappNumero: '5511987654321'
+  };
+
+  const textMessage = `*AGENDAMENTO DE AULA EXPERIMENTAL - ${encodeURIComponent(cfg.nome)}*%0A%0A` +
     `🥋 *Nome:* ${encodeURIComponent(name)}%0A` +
     `📱 *WhatsApp:* ${encodeURIComponent(phone)}%0A` +
     `🥊 *Modalidade:* ${encodeURIComponent(modality)}%0A` +
     `⏰ *Turno Escolhido:* ${encodeURIComponent(shift)}%0A` +
     `📋 *Experiência:* ${encodeURIComponent(experience)}%0A%0A` +
-    `Olá equipe BORÜ! Vi a apresentação do CT no site e gostaria de confirmar minha aula experimental gratuita.`;
+    `Olá equipe ${encodeURIComponent(cfg.nome)}! Vi a apresentação da academia no site e gostaria de confirmar minha aula experimental gratuita.`;
 
-  const whatsappNumber = '556992384491';
+  const whatsappNumber = cfg.whatsappNumero || '5511987654321';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${textMessage}`;
 
-  showToast('Redirecionando para a recepção do CT BORÜ...', 'success');
+  showToast(`Redirecionando para a recepção de ${cfg.nome}...`, 'success');
 
   setTimeout(() => {
     window.open(whatsappUrl, '_blank');
