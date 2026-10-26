@@ -186,6 +186,31 @@ function renderInstructorsPortfolio() {
   container.innerHTML = html;
 }
 
+function getCombatModalityInfo(modality) {
+  const m = (modality || '').toLowerCase();
+  if (m.includes('boxe')) {
+    return { icon: '🥊', badge: 'Boxe', tag: 'Nobre Arte' };
+  } else if (m.includes('muay thai')) {
+    return { icon: '🥊', badge: 'Muay Thai', tag: '8 Armas' };
+  } else if (m.includes('kickboxing') || m.includes('k-1')) {
+    return { icon: '🥊', badge: 'Kickboxing', tag: 'K-1 Rules' };
+  } else if (m.includes('jiu-jitsu') || m.includes('bjj') || m.includes('open mat')) {
+    return { icon: '🥋', badge: 'Jiu-Jitsu', tag: 'BJJ Arte Suave' };
+  } else if (m.includes('judô') || m.includes('judo')) {
+    return { icon: '🥋', badge: 'Judô', tag: 'Quedas & Ippon' };
+  } else if (m.includes('taekwondo')) {
+    return { icon: '🥋', badge: 'Taekwondo', tag: 'Chutes Olímpicos' };
+  } else if (m.includes('mma') || m.includes('submission')) {
+    return { icon: '⚔️', badge: 'MMA Cage', tag: 'Combate Total' };
+  } else if (m.includes('defesa pessoal') || m.includes('krav maga')) {
+    return { icon: '🛡️', badge: 'Defesa Pessoal', tag: 'Autoproteção' };
+  } else if (m.includes('sparring')) {
+    return { icon: '🏆', badge: 'Sparring', tag: 'Treino de Luta' };
+  } else {
+    return { icon: '⚡', badge: 'Funcional', tag: 'Condicionamento' };
+  }
+}
+
 function renderSchedule(filterShift = 'all') {
   const container = document.getElementById('schedule-container');
   const combatData = window.COMBAT_DATA || window.BORU_DATA;
@@ -201,39 +226,76 @@ function renderSchedule(filterShift = 'all') {
 
     if (filteredPeriods.length === 0) return;
 
+    let dayIcon = '🥊';
+    if (daySchedule.day.toLowerCase().includes('terça')) dayIcon = '🥋';
+    if (daySchedule.day.toLowerCase().includes('sábado') || daySchedule.day.toLowerCase().includes('sabado')) dayIcon = '🏆';
+
     html += `
-      <div class="rounded-2xl card-combat overflow-hidden shadow-xl">
+      <div class="rounded-2xl card-combat overflow-hidden shadow-xl border border-[var(--color-border)] flex flex-col">
         <div class="p-4 sm:p-5 bg-[var(--color-bg-card-alt)] border-b border-[var(--color-border)] flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-3 h-3 rounded-full bg-[var(--color-primary)]"></div>
-            <h4 class="font-heading text-lg sm:text-xl font-bold uppercase">${daySchedule.day}</h4>
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">${dayIcon}</span>
+            <div>
+              <h4 class="font-display text-base sm:text-lg font-black uppercase text-[var(--color-text-main)] tracking-wide leading-tight">
+                ${daySchedule.day}
+              </h4>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)]">Grade Oficial do Tatame</span>
+            </div>
           </div>
-          <span class="text-xs px-2.5 py-1 rounded-full bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-muted)] font-medium">
+          <span class="text-xs px-2.5 py-1 rounded-full bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-muted)] font-bold whitespace-nowrap">
             ${filteredPeriods.length} ${filteredPeriods.length === 1 ? 'Aula' : 'Aulas'}
           </span>
         </div>
 
-        <div class="divide-y divide-[var(--color-border)]">
-          ${filteredPeriods.map(p => `
-            <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[var(--color-primary-light)] transition">
-              <div class="flex items-start gap-4">
-                <div class="px-3 py-1.5 rounded-lg bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] font-mono font-bold text-sm whitespace-nowrap">
-                  ${p.time}
-                </div>
-                <div>
-                  <h5 class="text-base font-bold">${p.modality}</h5>
-                  <div class="flex items-center gap-3 mt-1 text-xs text-[var(--color-text-muted)]">
-                    <span>🥋 ${p.level}</span>
-                    <span>•</span>
-                    <span>👤 ${p.instructor}</span>
-                  </div>
+        <div class="p-3 sm:p-4 space-y-3 flex-1">
+          ${filteredPeriods.map(p => {
+            const info = getCombatModalityInfo(p.modality);
+            return `
+            <div class="p-3.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-primary)] hover:shadow-md transition-all flex flex-col gap-2.5 group">
+              
+              <!-- Cabeçalho da Aula: Horário e Selo de Arte Marcial -->
+              <div class="flex items-center justify-between gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] font-bold text-xs text-[var(--color-text-main)] whitespace-nowrap">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-[var(--color-primary)]"></i>
+                  <span>${p.time}</span>
+                </span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary-border)] whitespace-nowrap">
+                  <span>${info.icon}</span>
+                  <span>${info.badge}</span>
+                </span>
+              </div>
+
+              <!-- Título da Modalidade & Nível -->
+              <div>
+                <h5 class="text-base font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition leading-snug">
+                  ${p.modality}
+                </h5>
+                <div class="flex items-center gap-2 mt-1 text-xs text-[var(--color-text-muted)] flex-wrap">
+                  <span class="inline-flex items-center gap-1 font-semibold text-[var(--color-text-main)]">
+                    <i data-lucide="user" class="w-3.5 h-3.5 text-[var(--color-primary)]"></i>
+                    ${p.instructor}
+                  </span>
+                  <span>•</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[var(--color-bg-card-alt)] text-[var(--color-text-muted)] border border-[var(--color-border)]">
+                    ${p.level}
+                  </span>
                 </div>
               </div>
-              <button onclick="openBookingModal('${p.modality}')" class="self-start sm:self-auto px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-primary)] bg-[var(--color-bg-card-alt)] text-[var(--color-text-main)] hover:text-[var(--color-primary)] text-xs font-bold transition">
-                Experimentar
-              </button>
+
+              <!-- Rodapé da Aula: Status de Vagas e Botão de Agendamento -->
+              <div class="pt-2 border-t border-[var(--color-border)] flex items-center justify-between gap-2">
+                <span class="text-[11px] font-semibold text-emerald-500 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Vagas Abertas
+                </span>
+                <button onclick="openBookingModal('${p.modality}')" class="px-3.5 py-1.5 rounded-lg theme-btn-primary font-bold text-xs flex items-center gap-1.5 shadow-sm hover:scale-105 active:scale-95 transition whitespace-nowrap">
+                  <span>Experimentar</span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       </div>
     `;
@@ -241,8 +303,10 @@ function renderSchedule(filterShift = 'all') {
 
   if (html === '') {
     html = `
-      <div class="text-center py-12 text-[var(--color-text-muted)]">
-        Nenhum horário disponível para o turno selecionado.
+      <div class="col-span-full text-center py-12 text-[var(--color-text-muted)] p-8 rounded-2xl card-combat">
+        <span class="text-3xl block mb-2">🥊</span>
+        <p class="font-bold">Nenhum horário disponível para o turno selecionado.</p>
+        <p class="text-xs mt-1">Selecione "Todos os Turnos" para visualizar a grade completa do CT.</p>
       </div>
     `;
   }

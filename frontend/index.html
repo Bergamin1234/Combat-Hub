@@ -641,158 +641,301 @@
 
   <!-- ================= SEÇÃO: PLANOS & CONVÊNIOS ================= -->
   <section id="planos" class="py-24 theme-section-alt border-y relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
-        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Valores Transparentes</h2>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full theme-badge text-xs font-bold uppercase tracking-wider">
+          <span>🥊</span>
+          <span>Investimento Transparente & Sem Pegadinhas</span>
+        </div>
         <h3 class="font-display text-4xl sm:text-5xl font-extrabold uppercase">
           Planos de Treinamento
         </h3>
-        <p class="text-zinc-400 text-sm">
-          Sem taxa de matrícula oculta. Condições facilitadas para você focar apenas na sua evolução.
+        <p class="text-[var(--color-text-muted)] text-sm sm:text-base">
+          Sem taxa oculta de matrícula. Estrutura completa de artes marciais para você focar 100% na sua evolução.
         </p>
       </div>
 
-      <!-- Planos Mensais -->
+      <!-- Grid de Planos com Símbolos Oficiais de Esportes de Contato -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         
-        <!-- 2x na semana -->
-        <div class="p-6 rounded-2xl card-combat flex flex-col justify-between">
-          <div class="space-y-4 text-center">
-            <h4 class="font-display text-3xl font-bold uppercase">2x</h4>
-            <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 block">na semana</span>
-            <div class="flex justify-center mt-4">
-              <i data-lucide="target" class="w-12 h-12 text-zinc-600"></i>
+        <!-- Plano 1: 2X NA SEMANA -->
+        <div class="p-6 sm:p-7 rounded-2xl card-combat border border-[var(--color-border)] flex flex-col justify-between hover:border-[var(--color-primary)] hover:shadow-xl transition-all duration-200">
+          <div>
+            <!-- Emblema de Esporte de Contato -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md bg-[var(--color-bg-card-alt)] text-[var(--color-text-muted)] border border-[var(--color-border)]">
+                Iniciação
+              </span>
+              <div class="w-10 h-10 rounded-xl bg-[var(--color-primary-light)] border border-[var(--color-primary-border)] flex items-center justify-center text-xl shadow-sm">
+                🥊
+              </div>
             </div>
-            <div class="flex items-baseline justify-center gap-1 mt-6">
-              <span class="text-sm font-semibold text-zinc-400">R$</span>
-              <span class="text-4xl font-extrabold">140</span>
-              <span class="text-sm text-zinc-400">,00</span>
+
+            <h4 class="font-display text-3xl font-black uppercase text-[var(--color-text-main)]">
+              2x <span class="text-lg font-bold text-[var(--color-text-muted)] block">na semana</span>
+            </h4>
+            <p class="text-xs text-[var(--color-text-muted)] mt-1">Ideal para quem está começando nas artes marciais.</p>
+
+            <div class="flex items-baseline gap-1 my-6 pt-4 border-t border-[var(--color-border)]">
+              <span class="text-sm font-bold text-[var(--color-text-muted)]">R$</span>
+              <span class="text-4xl sm:text-5xl font-extrabold text-[var(--color-text-main)]">140</span>
+              <span class="text-xs text-[var(--color-text-muted)] font-semibold">/ mês</span>
             </div>
+
+            <!-- Lista de Benefícios de Luta -->
+            <ul class="space-y-2.5 text-xs text-[var(--color-text-main)] mb-6">
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span><strong>2 Treinos semanais</strong> de sua escolha</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Boxe, Muay Thai ou Jiu-Jitsu</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Acompanhamento técnico com mestres</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Vestiários & Tatame Climatizado</span>
+              </li>
+            </ul>
           </div>
-          <div class="pt-6 mt-6 border-t border-[var(--color-border)]">
-            <a href="/checkout?plano=2x%20na%20semana&valor=140" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-sm transition">
-              Assinar Plano
+
+          <div class="pt-4 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=2x%20na%20semana&valor=140" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-xs uppercase tracking-wider transition">
+              🥊 Assinar Plano
             </a>
           </div>
         </div>
 
-        <!-- 3x na semana -->
-        <div class="p-6 rounded-2xl card-combat flex flex-col justify-between">
-          <div class="space-y-4 text-center">
-            <h4 class="font-display text-3xl font-bold uppercase">3x</h4>
-            <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 block">na semana</span>
-            <div class="flex justify-center mt-4">
-              <i data-lucide="flame" class="w-12 h-12 text-zinc-500"></i>
+        <!-- Plano 2: 3X NA SEMANA -->
+        <div class="p-6 sm:p-7 rounded-2xl card-combat border border-[var(--color-border)] flex flex-col justify-between hover:border-[var(--color-primary)] hover:shadow-xl transition-all duration-200">
+          <div>
+            <!-- Emblema de Esporte de Contato -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary-border)]">
+                Evolução
+              </span>
+              <div class="w-10 h-10 rounded-xl bg-[var(--color-primary-light)] border border-[var(--color-primary-border)] flex items-center justify-center text-xl shadow-sm">
+                🥋
+              </div>
             </div>
-            <div class="flex items-baseline justify-center gap-1 mt-6">
-              <span class="text-sm font-semibold text-zinc-400">R$</span>
-              <span class="text-4xl font-extrabold">160</span>
-              <span class="text-sm text-zinc-400">,00</span>
+
+            <h4 class="font-display text-3xl font-black uppercase text-[var(--color-text-main)]">
+              3x <span class="text-lg font-bold text-[var(--color-text-muted)] block">na semana</span>
+            </h4>
+            <p class="text-xs text-[var(--color-text-muted)] mt-1">Ritmo constante para defesa pessoal e queima calórica.</p>
+
+            <div class="flex items-baseline gap-1 my-6 pt-4 border-t border-[var(--color-border)]">
+              <span class="text-sm font-bold text-[var(--color-text-muted)]">R$</span>
+              <span class="text-4xl sm:text-5xl font-extrabold text-[var(--color-text-main)]">160</span>
+              <span class="text-xs text-[var(--color-text-muted)] font-semibold">/ mês</span>
             </div>
+
+            <!-- Lista de Benefícios de Luta -->
+            <ul class="space-y-2.5 text-xs text-[var(--color-text-main)] mb-6">
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span><strong>3 Aulas semanais</strong> intercaladas</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Striking (em pé) e Grappling (chão)</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Graduação oficial de faixas/prajied</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Acesso ao Portal do Aluno com check-in</span>
+              </li>
+            </ul>
           </div>
-          <div class="pt-6 mt-6 border-t border-[var(--color-border)]">
-            <a href="/checkout?plano=3x%20na%20semana&valor=160" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-sm transition">
-              Assinar Plano
+
+          <div class="pt-4 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=3x%20na%20semana&valor=160" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-xs uppercase tracking-wider transition">
+              🥋 Assinar Plano
             </a>
           </div>
         </div>
 
-        <!-- 5x na semana -->
-        <div class="p-6 rounded-2xl card-combat flex flex-col justify-between">
-          <div class="space-y-4 text-center">
-            <h4 class="font-display text-3xl font-bold uppercase">5x</h4>
-            <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 block">na semana</span>
-            <div class="flex justify-center mt-4">
-              <i data-lucide="zap" class="w-12 h-12 text-zinc-400"></i>
+        <!-- Plano 3: 5X NA SEMANA -->
+        <div class="p-6 sm:p-7 rounded-2xl card-combat border border-[var(--color-border)] flex flex-col justify-between hover:border-[var(--color-primary)] hover:shadow-xl transition-all duration-200">
+          <div>
+            <!-- Emblema de Esporte de Contato -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary-border)]">
+                Performance
+              </span>
+              <div class="w-10 h-10 rounded-xl bg-[var(--color-primary-light)] border border-[var(--color-primary-border)] flex items-center justify-center text-xl shadow-sm">
+                ⚔️
+              </div>
             </div>
-            <div class="flex items-baseline justify-center gap-1 mt-6">
-              <span class="text-sm font-semibold text-zinc-400">R$</span>
-              <span class="text-4xl font-extrabold">200</span>
-              <span class="text-sm text-zinc-400">,00</span>
+
+            <h4 class="font-display text-3xl font-black uppercase text-[var(--color-text-main)]">
+              5x <span class="text-lg font-bold text-[var(--color-text-muted)] block">na semana</span>
+            </h4>
+            <p class="text-xs text-[var(--color-text-muted)] mt-1">Treinos diários para alto rendimento e atletas.</p>
+
+            <div class="flex items-baseline gap-1 my-6 pt-4 border-t border-[var(--color-border)]">
+              <span class="text-sm font-bold text-[var(--color-text-muted)]">R$</span>
+              <span class="text-4xl sm:text-5xl font-extrabold text-[var(--color-text-main)]">200</span>
+              <span class="text-xs text-[var(--color-text-muted)] font-semibold">/ mês</span>
             </div>
+
+            <!-- Lista de Benefícios de Luta -->
+            <ul class="space-y-2.5 text-xs text-[var(--color-text-main)] mb-6">
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span><strong>5 Aulas por semana</strong> (Seg a Sex)</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Acesso a Sparrings e Octógono</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Sacos pesados, manoplas e grade MMA</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-emerald-500 font-bold">✓</span>
+                <span>Condicionamento físico marcial de elite</span>
+              </li>
+            </ul>
           </div>
-          <div class="pt-6 mt-6 border-t border-[var(--color-border)]">
-            <a href="/checkout?plano=5x%20na%20semana&valor=200" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-sm transition">
-              Assinar Plano
+
+          <div class="pt-4 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=5x%20na%20semana&valor=200" class="block text-center w-full py-3 rounded-xl theme-btn-secondary font-bold text-xs uppercase tracking-wider transition">
+              ⚔️ Assinar Plano
             </a>
           </div>
         </div>
 
-        <!-- Livre -->
-        <div class="p-6 rounded-2xl border-2 theme-border-primary card-combat flex flex-col justify-between relative shadow-2xl transform lg:-translate-y-2 overflow-hidden">
-          <div class="absolute top-0 right-0 bg-[var(--color-primary)] text-[var(--color-btn-text)] text-[10px] font-black uppercase px-3 py-1 rounded-bl-xl tracking-wider shadow">
-            Mais Escolhido
+        <!-- Plano 4: PASSE LIVRE (DESTACADO) -->
+        <div class="p-6 sm:p-7 rounded-2xl border-2 theme-border-primary card-combat flex flex-col justify-between relative shadow-2xl transform lg:-translate-y-2 overflow-hidden">
+          <div class="absolute top-0 right-0 bg-[var(--color-primary)] text-[var(--color-btn-text)] text-[10px] font-black uppercase px-3 py-1.5 rounded-bl-xl tracking-wider shadow flex items-center gap-1">
+            <span>⭐</span>
+            <span>Mais Escolhido do CT</span>
           </div>
-          <div class="space-y-2 text-center pt-2">
-            <h4 class="font-display text-4xl font-bold uppercase">Livre</h4>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] block">6x na semana<br>Todos os horários</span>
-            <div class="flex justify-center mt-2 pb-2">
-              <i data-lucide="award" class="w-14 h-14 theme-text-primary drop-shadow-md"></i>
+
+          <div>
+            <!-- Emblema de Esporte de Contato -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary-border)]">
+                Champion Pass
+              </span>
+              <div class="w-12 h-12 rounded-xl bg-[var(--color-primary)] text-[var(--color-btn-text)] flex items-center justify-center text-2xl shadow-lg">
+                🏆
+              </div>
             </div>
-            <div class="flex items-baseline justify-center gap-1 mt-4">
-              <span class="text-sm font-semibold text-[var(--color-text-muted)]">R$</span>
-              <span class="text-5xl font-extrabold">280</span>
-              <span class="text-sm text-[var(--color-text-muted)]">,00</span>
+
+            <h4 class="font-display text-4xl font-black uppercase text-[var(--color-text-main)]">
+              Livre
+            </h4>
+            <span class="text-xs font-bold uppercase tracking-wider theme-text-primary block mt-0.5">
+              6x na semana • Todos os Horários
+            </span>
+            <p class="text-xs text-[var(--color-text-muted)] mt-1">Liberdade total para treinar quando e o que quiser.</p>
+
+            <div class="flex items-baseline gap-1 my-6 pt-4 border-t border-[var(--color-border)]">
+              <span class="text-sm font-bold text-[var(--color-text-muted)]">R$</span>
+              <span class="text-5xl sm:text-6xl font-black text-[var(--color-text-main)]">280</span>
+              <span class="text-xs text-[var(--color-text-muted)] font-semibold">/ mês</span>
             </div>
+
+            <!-- Lista de Benefícios de Luta -->
+            <ul class="space-y-2.5 text-xs text-[var(--color-text-main)] mb-6">
+              <li class="flex items-center gap-2">
+                <span class="theme-text-primary font-black">🥋</span>
+                <span><strong>Acesso 100% Ilimitado</strong> a todas as artes</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="theme-text-primary font-black">🥊</span>
+                <span>Muay Thai, BJJ, Boxe, MMA, Judô e Taekwondo</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="theme-text-primary font-black">🏆</span>
+                <span>Sparrings aos Sábados & Open Mat BJJ</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="theme-text-primary font-black">📱</span>
+                <span>Portal do Aluno com Gamificação & Check-in</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="theme-text-primary font-black">🛡️</span>
+                <span>Sem taxa de matrícula ou fidelidade oculta</span>
+              </li>
+            </ul>
           </div>
-          <div class="pt-6 mt-4 border-t border-[var(--color-border)]">
-            <a href="/checkout?plano=Livre&valor=280" class="block text-center w-full py-3 rounded-xl theme-btn-primary font-black text-sm uppercase tracking-wider shadow-lg transition">
-              Garantir
+
+          <div class="pt-4 border-t border-[var(--color-border)]">
+            <a href="/checkout?plano=Livre&valor=280" class="block text-center w-full py-3.5 rounded-xl theme-btn-primary font-black text-sm uppercase tracking-wider shadow-lg transition transform hover:scale-[1.02] active:scale-95">
+              🏆 Garantir Passe Livre
             </a>
           </div>
         </div>
 
       </div>
 
-      <!-- Diária Banner -->
-      <div class="mt-8 rounded-2xl p-6 card-combat flex flex-col sm:flex-row items-center justify-between gap-4">
+      <!-- Diária / Day Pass Banner com Símbolo de Combate -->
+      <div class="mt-8 rounded-2xl p-6 sm:p-7 card-combat border border-[var(--color-border)] flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-[var(--color-primary)] transition">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-full bg-[var(--color-primary-light)] flex items-center justify-center">
-            <i data-lucide="ticket" class="w-6 h-6 theme-text-primary"></i>
+          <div class="w-14 h-14 rounded-2xl bg-[var(--color-primary-light)] border border-[var(--color-primary-border)] flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+            🥊
           </div>
           <div>
-            <h5 class="text-lg font-bold uppercase">Treino Avulso / Diária</h5>
-            <p class="text-sm text-zinc-400">Quer treinar apenas hoje? Pague somente pelo dia.</p>
+            <div class="flex items-center gap-2">
+              <h5 class="text-lg font-black uppercase text-[var(--color-text-main)]">Treino Avulso / Day Pass Tatame</h5>
+              <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded theme-badge">Diária</span>
+            </div>
+            <p class="text-xs sm:text-sm text-[var(--color-text-muted)] mt-1">Quer treinar apenas um dia, fazer um sparring ou participar do Open Mat? Pague por aula avulsa.</p>
           </div>
         </div>
-        <div class="flex items-center gap-6">
+        <div class="flex items-center gap-6 flex-shrink-0">
           <div class="flex items-baseline gap-1">
-            <span class="text-sm font-semibold text-zinc-400">R$</span>
-            <span class="text-3xl font-extrabold">25</span>
-            <span class="text-sm text-zinc-400">,00</span>
+            <span class="text-sm font-bold text-[var(--color-text-muted)]">R$</span>
+            <span class="text-4xl font-black text-[var(--color-text-main)]">25</span>
+            <span class="text-xs text-[var(--color-text-muted)]">/ treino</span>
           </div>
-          <a href="/checkout?plano=Diária&valor=25" class="px-6 py-2.5 rounded-lg theme-btn-secondary font-bold text-sm transition">
-            Agendar
+          <a href="/checkout?plano=Diária&valor=25" class="px-6 py-3 rounded-xl theme-btn-primary font-bold text-xs uppercase tracking-wider transition whitespace-nowrap shadow-md">
+            Agendar Day Pass
           </a>
         </div>
       </div>
 
       <!-- Parceiros Corporativos (Wellhub / TotalPass) -->
-      <div class="mt-16 p-8 rounded-2xl card-combat text-center">
-        <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-6">Parceiros Corporativos Aceitos no CT</h4>
-        <div class="flex flex-wrap items-center justify-center gap-10 md:gap-16 opacity-80 hover:opacity-100 transition">
+      <div class="mt-12 p-8 rounded-2xl card-combat border border-[var(--color-border)] text-center">
+        <h4 class="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-6 flex items-center justify-center gap-2">
+          <span>🥋</span>
+          <span>Parceiros Corporativos & Convênios Aceitos no CT</span>
+          <span>🥋</span>
+        </h4>
+        <div class="flex flex-wrap items-center justify-center gap-10 md:gap-16 opacity-90 hover:opacity-100 transition">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center font-black text-white text-lg">W</div>
+            <div class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center font-black text-white text-lg shadow-md">W</div>
             <div class="text-left">
-              <span class="font-bold text-base">Wellhub</span>
-              <span class="block text-[11px] text-zinc-400">(Antigo Gympass)</span>
+              <span class="font-bold text-base text-[var(--color-text-main)]">Wellhub</span>
+              <span class="block text-[11px] text-[var(--color-text-muted)]">(Antigo Gympass) • Check-in no Tatame</span>
             </div>
           </div>
 
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white text-lg">T</div>
+            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white text-lg shadow-md">T</div>
             <div class="text-left">
-              <span class="font-bold text-base">TotalPass</span>
-              <span class="block text-[11px] text-zinc-400">Check-in Liberado</span>
+              <span class="font-bold text-base text-[var(--color-text-main)]">TotalPass</span>
+              <span class="block text-[11px] text-[var(--color-text-muted)]">Check-in Imediato sem restrição</span>
             </div>
           </div>
 
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center font-black text-zinc-900 text-lg">B</div>
+            <div class="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center font-black text-zinc-900 text-lg shadow-md">CT</div>
             <div class="text-left">
-              <span class="font-bold text-base">Convênios Locais</span>
-              <span class="block text-[11px] text-zinc-400">Empresas & Parceiros</span>
+              <span class="font-bold text-base text-[var(--color-text-main)]">Convênios Locais</span>
+              <span class="block text-[11px] text-[var(--color-text-muted)]">Empresas e Forças de Segurança</span>
             </div>
           </div>
         </div>
@@ -803,31 +946,38 @@
 
   <!-- ================= SEÇÃO: GRADE DE HORÁRIOS ================= -->
   <section id="horarios" class="py-20 theme-section-main border-b relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
       
       <div class="text-center max-w-3xl mx-auto mb-12 space-y-3">
-        <h2 class="theme-text-primary font-bold uppercase tracking-widest text-xs sm:text-sm">Grade Completa</h2>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full theme-badge text-xs font-bold uppercase tracking-wider">
+          <span>🥋</span>
+          <span>Tatame Oficial & Grade Semanal</span>
+        </div>
         <h3 class="font-display text-3xl sm:text-5xl font-extrabold uppercase">
           Horários de Treino
         </h3>
-        <p class="text-zinc-400 text-sm">
-          Filtre por turno para encontrar o melhor horário para seu dia a dia.
+        <p class="text-[var(--color-text-muted)] text-sm sm:text-base">
+          Filtre por turno para encontrar o melhor horário para sua rotina de treinamento marcial.
         </p>
       </div>
 
       <!-- Shift Filter Tabs -->
-      <div class="flex flex-wrap items-center justify-center gap-2 mb-8" id="schedule-filters">
-        <button class="schedule-filter-btn active px-5 py-2.5 rounded-lg text-sm font-bold transition theme-btn-primary" data-filter="all">
-          Todos os Turnos
+      <div class="flex flex-wrap items-center justify-center gap-2.5 mb-10" id="schedule-filters">
+        <button class="schedule-filter-btn active px-5 py-2.5 rounded-xl text-sm font-bold transition theme-btn-primary flex items-center gap-2" data-filter="all">
+          <span>🥊</span>
+          <span>Todos os Turnos</span>
         </button>
-        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition theme-btn-secondary" data-filter="manha">
-          <i data-lucide="sun" class="w-4 h-4 inline mr-1 text-amber-400"></i> Manhã (06h - 11h)
+        <button class="schedule-filter-btn px-5 py-2.5 rounded-xl text-sm font-semibold transition theme-btn-secondary flex items-center gap-2" data-filter="manha">
+          <span>🌅</span>
+          <span>Manhã (06h - 11h)</span>
         </button>
-        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition theme-btn-secondary" data-filter="tarde">
-          <i data-lucide="cloud-sun" class="w-4 h-4 inline mr-1 text-orange-400"></i> Tarde (12h - 17h)
+        <button class="schedule-filter-btn px-5 py-2.5 rounded-xl text-sm font-semibold transition theme-btn-secondary flex items-center gap-2" data-filter="tarde">
+          <span>☀️</span>
+          <span>Tarde (12h - 17h)</span>
         </button>
-        <button class="schedule-filter-btn px-5 py-2.5 rounded-lg text-sm font-semibold transition theme-btn-secondary" data-filter="noite">
-          <i data-lucide="moon" class="w-4 h-4 inline mr-1 text-indigo-400"></i> Noite (17h - 22h)
+        <button class="schedule-filter-btn px-5 py-2.5 rounded-xl text-sm font-semibold transition theme-btn-secondary flex items-center gap-2" data-filter="noite">
+          <span>🌙</span>
+          <span>Noite (17h - 22h)</span>
         </button>
       </div>
 
