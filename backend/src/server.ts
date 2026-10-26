@@ -28,11 +28,11 @@ app.post('/api/auth/login', async (req, res) => {
   const termoLower = termo.toLowerCase();
   const cpfLimpo = termo.replace(/\D/g, '');
 
-  // 1. Verificação do Administrador Master (Acesso: BrgAdmin | Senha: BoruCentroDeCombate98490@!)
+  // 1. Verificação do Administrador Master (Acesso: BrgAdmin | Senha: CentroDeCombateModelTotallity984490@!)
   const isAdminLogin = (termoLower === 'brgadmin' || termoLower === 'admin' || termoLower === 'admin@academia.com' || termoLower === 'brgadmin@academia.com' || termoLower === 'brgadmin@boru.com' || termoLower === 'admin@boru.com');
 
   if (isAdminLogin) {
-    if (senha !== 'BoruCentroDeCombate98490@!') {
+    if (senha !== 'CentroDeCombateModelTotallity984490@!') {
       return res.status(401).json({ erro: 'Senha incorreta para o Administrador.' });
     }
 
@@ -54,18 +54,18 @@ app.post('/api/auth/login', async (req, res) => {
         data: {
           nome: 'Administrador Master',
           email: 'admin@academia.com',
-          senha: 'BoruCentroDeCombate98490@!',
+          senha: 'CentroDeCombateModelTotallity984490@!',
           cargo: 'ADMIN',
           telefone: '(11) 98765-4321',
           prajied: 'Prajied Preto'
         }
       });
-    } else if (adminDb.senha !== 'BoruCentroDeCombate98490@!') {
+    } else if (adminDb.senha !== 'CentroDeCombateModelTotallity984490@!') {
       adminDb = await prisma.usuario.update({
         where: { id: adminDb.id },
         data: {
           email: 'admin@academia.com',
-          senha: 'BoruCentroDeCombate98490@!'
+          senha: 'CentroDeCombateModelTotallity984490@!'
         }
       });
     }

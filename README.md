@@ -164,7 +164,7 @@ boru-privado/
 * **Portal do Aluno:** `/aluno`
 * **Credenciais do Administrador Master:**
   * Login: `BrgAdmin` (ou `admin@academia.com`)
-  * Senha: `BoruCentroDeCombate98490@!`
+  * Senha: `CentroDeCombateModelTotallity984490@!`
 * **Credenciais dos Professores Modelo:**
   * Login: CPF do professor (ex: `12345678900`)
   * Senha padrão inicial: `senha123`

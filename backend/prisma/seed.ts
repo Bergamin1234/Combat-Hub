@@ -18,7 +18,7 @@ async function main() {
     data: {
       nome: 'Administrador Master',
       email: 'admin@academia.com',
-      senha: 'BoruCentroDeCombate98490@!',
+      senha: 'CentroDeCombateModelTotallity984490@!',
       cargo: 'ADMIN',
       telefone: '11987654321',
       prajied: 'Prajied Preto'
