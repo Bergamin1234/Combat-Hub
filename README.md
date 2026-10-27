@@ -127,32 +127,6 @@ boru-privado/
 
 ---
 
-## 🚀 Como Executar Localmente
-
-### Pré-requisitos
-* **Node.js** 18 ou superior instalado.
-* **npm** ou **yarn**.
-
-### Passo a Passo
-
-1. Instale as dependências:
-   ```bash
-   npm install
-   ```
-
-2. Inicialize o banco de dados e execute o seed com os dados modelo:
-   ```bash
-   cd backend
-   npx prisma db push
-   npx prisma db seed
-   cd ..
-   ```
-
-3. Inicie os servidores de desenvolvimento:
-   ```bash
-   npm run dev
-   ```
-
 * **Frontend:** `http://localhost:5173`
 * **API Backend:** `http://localhost:3001`
 
@@ -162,9 +136,6 @@ boru-privado/
 
 * **Painel Administrativo:** `/admin`
 * **Portal do Aluno:** `/aluno`
-* **Credenciais do Administrador Master:**
-  * Login: `BrgAdmin` (ou `admin@academia.com`)
-  * Senha: `CentroDeCombateModelTotallity984490@!`
 * **Credenciais dos Professores Modelo:**
   * Login: CPF do professor (ex: `12345678900`)
   * Senha padrão inicial: `senha123`
