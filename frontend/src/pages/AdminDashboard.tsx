@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import NoticeCard from '../components/NoticeCard';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { adminApi, publicApi } from '../services/api';
+import { AdminGamificationTab } from '../components/AdminGamificationTab';
+import { CombatHubSandboxModal } from '../components/CombatHubSandboxModal';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
 
 const graduacoesPorModalidade: Record<string, string[]> = {
@@ -98,6 +100,7 @@ export default function AdminDashboard() {
 
   // Abas: 'alunos' | 'calendario_geral' | 'presencas' | 'avisos' | 'loja' | 'agendamentos' | 'professores'
   const [abaAtiva, setAbaAtiva] = useState('alunos');
+  const [showSandboxModal, setShowSandboxModal] = useState(false);
   const [subAbaExperimental, setSubAbaExperimental] = useState<'pendentes' | 'posAula'>('pendentes');
 
   // Filtros e busca de Alunos
@@ -973,6 +976,20 @@ export default function AdminDashboard() {
           >
             🎯 Leads & Aulas Exp.
           </button>
+          <button 
+            onClick={() => setAbaAtiva('gamificacao')}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'gamificacao' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
+            }`}
+          >
+            🏆 Gestão de Gamificação
+          </button>
+          <button 
+            onClick={() => setShowSandboxModal(true)}
+            className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-black transition whitespace-nowrap flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-red-600 text-black shadow-lg"
+          >
+            🎮 Visualizar Demo Interativa
+          </button>
           {usuarioLogado?.cargo === 'ADMIN' && (
             <button 
               onClick={() => setAbaAtiva('professores')}
@@ -1576,6 +1593,13 @@ export default function AdminDashboard() {
                 >
                   <span>⚡ Confirmar Todos Agendados (1 Clique)</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setAbaAtiva('gamificacao')}
+                  className="px-3.5 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black border border-amber-500/40 text-xs font-black transition flex items-center gap-1.5 uppercase tracking-wider"
+                >
+                  <span>🏅 Check-in Especial / Trilha Nak Muay</span>
+                </button>
               </div>
             </div>
 
@@ -1739,6 +1763,18 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: GESTÃO DE GAMIFICAÇÃO & APROVAÇÃO RÁPIDA (TRILHA DO NAK MUAY) */}
+        {abaAtiva === 'gamificacao' && (
+          <AdminGamificationTab
+            cargoUsuario={usuarioLogado?.cargo || 'ADMIN'}
+            professorId={usuarioLogado?.id}
+            alunosLista={alunos}
+            isCombatHub={true}
+            onOpenSandbox={() => setShowSandboxModal(true)}
+            onRefreshDashboard={carregarDashboard}
+          />
         )}
 
         {/* CONTEÚDO DA ABA: MURAL DE AVISOS */}
@@ -2835,6 +2871,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      <CombatHubSandboxModal isOpen={showSandboxModal} onClose={() => setShowSandboxModal(false)} />
     </div>
   );
 }
