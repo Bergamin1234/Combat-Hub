@@ -311,7 +311,7 @@ export default function PortalAluno() {
   // TELA DE LOGIN DO ALUNO + MÓDULO 3: CHECK-IN RÁPIDO PÚBLICO
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 py-6 relative overflow-y-auto">
+      <div className="min-h-screen w-full bg-[#0B0B0C] flex items-center justify-center p-4 py-8 relative z-10">
         <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start my-auto relative z-10">
           {/* Card de Login */}
           <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-7 sm:p-8 rounded-2xl w-full shadow-2xl">
