@@ -4,6 +4,8 @@ import PortalAluno from './pages/PortalAluno';
 import AdminDashboard from './pages/AdminDashboard';
 import Checkout from './pages/Checkout';
 import AgendarAula from './pages/AgendarAula';
+import FighterDashboard from './pages/FighterDashboard';
+import FighterProfile from './pages/FighterProfile';
 
 // Componente auxiliar para interceptar cliques nos links do index.html estático
 function GlobalLinkInterceptor() {
@@ -55,6 +57,8 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/agendar" element={<AgendarAula />} />
+        <Route path="/dashboard-lutador" element={<FighterDashboard />} />
+        <Route path="/perfil-lutador" element={<FighterProfile />} />
       </Routes>
     </Router>
   );
