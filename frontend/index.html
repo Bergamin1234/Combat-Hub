@@ -788,6 +788,80 @@
     </div>
   </section>
 
+  <!-- ================= GRADE DE CARDS MODERNOS (TORNEIOS / RANKING / STATS) ================= -->
+  <section id="destaques-competitivos" class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-16 pb-16">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Card 1: Próximos Torneios -->
+      <div class="group relative bg-[#141720]/90 backdrop-blur-xl border border-[#252B3B] hover:border-red-500/60 rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-3xl">🏆</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-600/10 px-2.5 py-1 rounded-full border border-red-500/20">
+              Inscrições Abertas
+            </span>
+          </div>
+          <h3 class="text-xl font-black text-white group-hover:text-red-400 transition">🏆 Próximos Torneios</h3>
+          <p class="text-xs text-gray-400 mt-2.5 leading-relaxed font-medium">
+            Confira o calendário oficial de brackets, eliminatórias regionais e copas de artes marciais. Inscreva-se em chaves oficiais e compita pelo pódio.
+          </p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#252B3B] flex items-center justify-between">
+          <a href="/portal" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-gray-700/80 hover:border-red-500 bg-transparent text-gray-300 hover:text-white text-xs font-bold transition">
+            <span>Saiba mais</span>
+            <span class="text-red-400 group-hover:translate-x-1 transition">-></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2: Ranking Global -->
+      <div class="group relative bg-[#141720]/90 backdrop-blur-xl border border-[#252B3B] hover:border-pink-500/60 rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-3xl">🌍</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-pink-400 bg-pink-600/10 px-2.5 py-1 rounded-full border border-pink-500/20">
+              MMR Atualizado
+            </span>
+          </div>
+          <h3 class="text-xl font-black text-white group-hover:text-pink-400 transition">🌍 Ranking Global</h3>
+          <p class="text-xs text-gray-400 mt-2.5 leading-relaxed font-medium">
+            Classificação geral por divisão de peso, graduação e taxa de finalizações. Veja quem lidera o ranking do tatame e compare seus pontos com atletas de todo o circuito.
+          </p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#252B3B] flex items-center justify-between">
+          <a href="/portal" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-gray-700/80 hover:border-pink-500 bg-transparent text-gray-300 hover:text-white text-xs font-bold transition">
+            <span>Saiba mais</span>
+            <span class="text-pink-400 group-hover:translate-x-1 transition">-></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3: Estatísticas de Desempenho -->
+      <div class="group relative bg-[#141720]/90 backdrop-blur-xl border border-[#252B3B] hover:border-yellow-500/60 rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-3xl">📊</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-yellow-400 bg-yellow-600/10 px-2.5 py-1 rounded-full border border-yellow-500/20">
+              Analytics Ao Vivo
+            </span>
+          </div>
+          <h3 class="text-xl font-black text-white group-hover:text-yellow-400 transition">📊 Estatísticas de Desempenho</h3>
+          <p class="text-xs text-gray-400 mt-2.5 leading-relaxed font-medium">
+            Métricas de assiduidade, aproveitamento de golpes, taxa de vitórias e frequência semanal. Dados consolidados para impulsionar sua evolução física e técnica.
+          </p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-[#252B3B] flex items-center justify-between">
+          <a href="/dashboard-lutador" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-gray-700/80 hover:border-yellow-500 bg-transparent text-gray-300 hover:text-white text-xs font-bold transition">
+            <span>Saiba mais</span>
+            <span class="text-yellow-400 group-hover:translate-x-1 transition">-></span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
 
   <!-- ================= SEÇÃO: PLANOS & CONVÊNIOS ================= -->
   <section id="planos" class="py-24 theme-section-alt border-y relative z-10">
@@ -1472,7 +1546,284 @@
     </div>
   </section>
 
-  <!-- ================= FOOTER ================= -->
+  
+  <!-- ========================================================================
+       SEÇÃO 1: PAINEL INTERATIVO DE MÓDULOS (TABS COM ACENTOS DOURADOS)
+       ======================================================================== -->
+  <section id="modulos-sistema" class="py-20 sm:py-28 border-t border-zinc-800/80 relative z-10 bg-[#0a0a0a]">
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <span class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-widest text-yellow-500 bg-yellow-500/10 border border-yellow-500/30">
+          <span>⚙️</span> Ecossistema Completo
+        </span>
+        <h2 class="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white">
+          Tudo o que sua academia precisa <br />
+          <span class="text-yellow-500">em um único lugar</span>
+        </h2>
+        <p class="text-zinc-400 text-sm sm:text-base leading-relaxed">
+          Projetado por e para quem vive o tatame. Ferramentas ágeis para automatizar sua gestão e focar no ensino e na técnica.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Menu Lateral Vertical (Esquerda) -->
+        <div class="lg:col-span-4 bg-[#121214] border border-zinc-800 rounded-3xl p-3 sm:p-4 shadow-xl space-y-2">
+          
+          <button type="button" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl bg-zinc-900/90 text-yellow-500 border-l-4 border-yellow-500 font-black text-sm tracking-wide text-left transition shadow-md shadow-yellow-500/5">
+            <span class="flex items-center gap-3">
+              <span class="text-base">👥</span>
+              <span>Gestão de alunos</span>
+            </span>
+            <span class="text-xs text-yellow-500">●</span>
+          </button>
+
+          <button type="button" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-800/40 border-l-4 border-transparent font-bold text-sm tracking-wide text-left transition">
+            <span class="flex items-center gap-3">
+              <span class="text-base">💰</span>
+              <span>Financeiro</span>
+            </span>
+            <span class="text-zinc-600 text-xs">→</span>
+          </button>
+
+          <button type="button" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-800/40 border-l-4 border-transparent font-bold text-sm tracking-wide text-left transition">
+            <span class="flex items-center gap-3">
+              <span class="text-base">📅</span>
+              <span>Agenda e check-in</span>
+            </span>
+            <span class="text-zinc-600 text-xs">→</span>
+          </button>
+
+          <button type="button" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-800/40 border-l-4 border-transparent font-bold text-sm tracking-wide text-left transition">
+            <span class="flex items-center gap-3">
+              <span class="text-base">🥋</span>
+              <span>Graduações</span>
+            </span>
+            <span class="text-zinc-600 text-xs">→</span>
+          </button>
+
+          <button type="button" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-800/40 border-l-4 border-transparent font-bold text-sm tracking-wide text-left transition">
+            <span class="flex items-center gap-3">
+              <span class="text-base">📱</span>
+              <span>Aplicativo para alunos</span>
+            </span>
+            <span class="text-zinc-600 text-xs">→</span>
+          </button>
+
+          <button type="button" class="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-800/40 border-l-4 border-transparent font-bold text-sm tracking-wide text-left transition">
+            <span class="flex items-center gap-3">
+              <span class="text-base">🏆</span>
+              <span>Engajamento</span>
+            </span>
+            <span class="text-zinc-600 text-xs">→</span>
+          </button>
+
+        </div>
+
+        <!-- Grande Painel Central (Aba Ativa) -->
+        <div class="lg:col-span-8 bg-[#121214] border border-yellow-500/30 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="space-y-6 relative z-10">
+            <div class="w-14 h-14 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-3xl text-yellow-500 shadow-inner">
+              👥
+            </div>
+
+            <div>
+              <h2 class="text-2xl sm:text-3xl font-black uppercase text-white tracking-wide">
+                GESTÃO DE ALUNOS
+              </h2>
+              <p class="text-zinc-400 text-sm sm:text-base mt-2 leading-relaxed">
+                Controle integral e simplificado do ciclo de vida de cada praticante. Da matrícula ao acompanhamento médico e frequência no tatame, tudo em poucos cliques.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div class="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 hover:border-yellow-500/40 transition">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-6 h-6 rounded-lg bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-xs font-black shrink-0">✓</span>
+                  <h4 class="text-sm font-bold text-white">Cadastro completo</h4>
+                </div>
+                <p class="text-xs text-zinc-400 mt-2 leading-relaxed">
+                  Dados pessoais, CPF, fotos de perfil, planos vinculados e contratos com assinatura eletrônica.
+                </p>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 hover:border-yellow-500/40 transition">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-6 h-6 rounded-lg bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-xs font-black shrink-0">⚡</span>
+                  <h4 class="text-sm font-bold text-white">Contato de emergência</h4>
+                </div>
+                <p class="text-xs text-zinc-400 mt-2 leading-relaxed">
+                  Acesso rápido com botão de discagem e WhatsApp direto aos responsáveis durante treinos e sparrings.
+                </p>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 hover:border-yellow-500/40 transition">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-6 h-6 rounded-lg bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-xs font-black shrink-0">📋</span>
+                  <h4 class="text-sm font-bold text-white">Histórico médico</h4>
+                </div>
+                <p class="text-xs text-zinc-400 mt-2 leading-relaxed">
+                  Prontuário com restrições físicas, atestados de saúde, lesões anteriores e medicamentos de uso contínuo.
+                </p>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 hover:border-yellow-500/40 transition">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-6 h-6 rounded-lg bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-xs font-black shrink-0">🔔</span>
+                  <h4 class="text-sm font-bold text-white">Alertas inteligentes</h4>
+                </div>
+                <p class="text-xs text-zinc-400 mt-2 leading-relaxed">
+                  Notificações automáticas de evasão para alunos ausentes há mais de 14 dias e avisos de graduação próxima.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-zinc-800/80 flex items-center justify-between flex-wrap gap-4 relative z-10">
+            <span class="text-xs text-zinc-400 font-medium">Pronto para modernizar seu centro de combate?</span>
+            <button type="button" onclick="window.location.href='/admin'" class="px-6 py-3 rounded-xl border-2 border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-yellow-500/10 active:scale-95">
+              Cadastrar minha academia
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SEÇÃO 2: GAMIFICAÇÃO E RETENÇÃO
+       ======================================================================== -->
+  <section id="gamificacao-retencao" class="py-20 sm:py-28 border-t border-zinc-800/80 relative z-10 bg-[#0a0a0a]">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] bg-yellow-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-16">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-3">
+        <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-yellow-500">
+          GAMIFICAÇÃO E ENGAJAMENTO
+        </span>
+        <h2 class="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white leading-tight">
+          FAÇA O ALUNO QUERER VOLTAR PARA O PRÓXIMO TREINO
+        </h2>
+        <p class="text-zinc-400 text-sm sm:text-base leading-relaxed">
+          Transforme cada gota de suor em progresso visível. Recompense a disciplina com níveis de XP, pódios mensais e medalhas exclusivas conquistadas no tatame.
+        </p>
+      </div>
+
+      <!-- PÓDIO DE RANKING (3 POSIÇÕES) -->
+      <div class="max-w-4xl mx-auto pt-8">
+        <div class="grid grid-cols-3 gap-2 sm:gap-6 items-end">
+          
+          <!-- 2º LUGAR -->
+          <div class="flex flex-col items-center">
+            <div class="relative mb-3 group">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" alt="2º Lugar" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-slate-300 shadow-xl" />
+              <span class="absolute -top-3 -right-2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-300 text-zinc-900 border border-white shadow">2º</span>
+            </div>
+            <p class="text-xs sm:text-sm font-black text-white truncate max-w-[110px] sm:max-w-none text-center">Marcus Miller</p>
+            <span class="text-[11px] font-mono font-bold text-slate-300">3,450 XP</span>
+
+            <div class="w-full mt-4 h-32 sm:h-40 rounded-t-2xl bg-gradient-to-b from-slate-400/20 to-slate-900/60 border-t-2 border-x-2 border-slate-300/60 flex flex-col items-center justify-center shadow-lg">
+              <span class="text-2xl sm:text-3xl font-black text-slate-300">#2</span>
+              <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Prata</span>
+            </div>
+          </div>
+
+          <!-- 1º LUGAR (CAMPEÃO) -->
+          <div class="flex flex-col items-center -mt-6">
+            <div class="text-3xl sm:text-4xl mb-1 animate-bounce">👑</div>
+            <div class="relative mb-3 group">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80" alt="1º Lugar" class="w-20 h-20 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-yellow-500 shadow-2xl ring-4 ring-yellow-500/30" />
+              <span class="absolute -top-3 -right-2 px-2.5 py-0.5 rounded-full text-xs font-black uppercase bg-yellow-500 text-black border border-yellow-300 shadow-lg shadow-yellow-500/40">1º</span>
+            </div>
+            <p class="text-sm sm:text-base font-black text-yellow-400 truncate max-w-[130px] sm:max-w-none text-center">Ítalo Bergamin</p>
+            <span class="text-xs sm:text-sm font-mono font-black text-white">4,820 XP</span>
+
+            <div class="w-full mt-4 h-44 sm:h-56 rounded-t-2xl bg-gradient-to-b from-yellow-500/25 to-yellow-950/40 border-t-4 border-x-2 border-yellow-500 flex flex-col items-center justify-center shadow-2xl shadow-yellow-500/10">
+              <span class="text-3xl sm:text-4xl font-black text-yellow-400">#1</span>
+              <span class="text-[10px] sm:text-xs font-black uppercase tracking-widest text-yellow-500 mt-1">Campeão</span>
+            </div>
+          </div>
+
+          <!-- 3º LUGAR -->
+          <div class="flex flex-col items-center">
+            <div class="relative mb-3 group">
+              <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&q=80" alt="3º Lugar" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-amber-700 shadow-xl" />
+              <span class="absolute -top-3 -right-2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-700 text-white border border-amber-500 shadow">3º</span>
+            </div>
+            <p class="text-xs sm:text-sm font-black text-white truncate max-w-[110px] sm:max-w-none text-center">Renato Silva</p>
+            <span class="text-[11px] font-mono font-bold text-amber-500">2,910 XP</span>
+
+            <div class="w-full mt-4 h-24 sm:h-32 rounded-t-2xl bg-gradient-to-b from-amber-700/20 to-amber-950/60 border-t-2 border-x-2 border-amber-700/60 flex flex-col items-center justify-center shadow-lg">
+              <span class="text-xl sm:text-2xl font-black text-amber-600">#3</span>
+              <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-500 mt-1">Bronze</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- GRID DE CONQUISTAS (BADGES COM RARIDADE) -->
+      <div class="pt-6 border-t border-zinc-800/80 space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="text-xs sm:text-sm font-black uppercase tracking-widest text-yellow-500">
+              DESBLOQUEIE NOVAS CONQUISTAS
+            </h3>
+            <p class="text-xs text-zinc-400 mt-0.5">Medalhas exclusivas acumuladas ao bater metas no treino diário.</p>
+          </div>
+          <span class="text-[11px] font-bold text-zinc-500 font-mono">30 Conquistas Disponíveis</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 overflow-x-auto pb-2">
+          <div class="bg-[#141416] border border-zinc-600/60 hover:border-zinc-400 rounded-2xl p-4 flex flex-col items-center text-center transition hover:-translate-y-1 group shadow-md">
+            <span class="text-3xl mb-2 group-hover:scale-110 transition">🥊</span>
+            <h4 class="text-xs font-bold text-white leading-tight">Primeiro Treino</h4>
+            <span class="text-[9px] font-mono font-semibold text-zinc-400 mt-1 uppercase tracking-wider">Normal</span>
+          </div>
+
+          <div class="bg-[#141416] border border-blue-500/60 hover:border-blue-400 rounded-2xl p-4 flex flex-col items-center text-center transition hover:-translate-y-1 group shadow-md shadow-blue-500/5">
+            <span class="text-3xl mb-2 group-hover:scale-110 transition">⚡</span>
+            <h4 class="text-xs font-bold text-white leading-tight">50 Treinos</h4>
+            <span class="text-[9px] font-mono font-semibold text-blue-400 mt-1 uppercase tracking-wider">Rara</span>
+          </div>
+
+          <div class="bg-[#141416] border border-blue-500/60 hover:border-blue-400 rounded-2xl p-4 flex flex-col items-center text-center transition hover:-translate-y-1 group shadow-md shadow-blue-500/5">
+            <span class="text-3xl mb-2 group-hover:scale-110 transition">🥋</span>
+            <h4 class="text-xs font-bold text-white leading-tight">Sparring Concluído</h4>
+            <span class="text-[9px] font-mono font-semibold text-blue-400 mt-1 uppercase tracking-wider">Rara</span>
+          </div>
+
+          <div class="bg-[#141416] border border-purple-500/60 hover:border-purple-400 rounded-2xl p-4 flex flex-col items-center text-center transition hover:-translate-y-1 group shadow-md shadow-purple-500/5">
+            <span class="text-3xl mb-2 group-hover:scale-110 transition">🛡️</span>
+            <h4 class="text-xs font-bold text-white leading-tight">100 Treinos</h4>
+            <span class="text-[9px] font-mono font-semibold text-purple-400 mt-1 uppercase tracking-wider">Épica</span>
+          </div>
+
+          <div class="bg-[#141416] border border-purple-500/60 hover:border-purple-400 rounded-2xl p-4 flex flex-col items-center text-center transition hover:-translate-y-1 group shadow-md shadow-purple-500/5">
+            <span class="text-3xl mb-2 group-hover:scale-110 transition">🔥</span>
+            <h4 class="text-xs font-bold text-white leading-tight">Assiduidade 100%</h4>
+            <span class="text-[9px] font-mono font-semibold text-purple-400 mt-1 uppercase tracking-wider">Épica</span>
+          </div>
+
+          <div class="bg-[#141416] border border-yellow-500 hover:border-yellow-300 rounded-2xl p-4 flex flex-col items-center text-center transition hover:-translate-y-1 group shadow-lg shadow-yellow-500/10">
+            <span class="text-3xl mb-2 group-hover:scale-110 transition">🏆</span>
+            <h4 class="text-xs font-bold text-yellow-400 leading-tight">Mestre do Tatame</h4>
+            <span class="text-[9px] font-mono font-black text-yellow-500 mt-1 uppercase tracking-wider">Lendária</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+<!-- ================= FOOTER ================= -->
   <footer class="theme-section-main backdrop-blur-sm border-t py-12 text-zinc-500 text-sm relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col md:flex-row items-center justify-between gap-6">
