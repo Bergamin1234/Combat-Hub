@@ -1,6 +1,6 @@
 <div align="center">
   <img src="frontend/public/logo-combat.svg" alt="Combat Hub - Sistema Modelo para Academias" width="120" />
-  <h1>COMBAT HUB</h1>
+  <h1>COMBAT PASS</h1>
   <p><strong>Sistema Modelo White-Label para Centros de Treinamento e Academias de Luta</strong></p>
   <p>Plataforma Integrada de Gestão Marcial, Frequência em Tempo Real, Portal do Aluno & Presença Digital</p>
 
