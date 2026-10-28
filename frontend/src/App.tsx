@@ -6,6 +6,7 @@ import Checkout from './pages/Checkout';
 import AgendarAula from './pages/AgendarAula';
 import FighterDashboard from './pages/FighterDashboard';
 import FighterProfile from './pages/FighterProfile';
+import StudentGlobalRanking from './components/StudentGlobalRanking';
 
 // Componente auxiliar para interceptar cliques nos links do index.html estático
 function GlobalLinkInterceptor() {
@@ -59,6 +60,7 @@ function App() {
         <Route path="/agendar" element={<AgendarAula />} />
         <Route path="/dashboard-lutador" element={<FighterDashboard />} />
         <Route path="/perfil-lutador" element={<FighterProfile />} />
+        <Route path="/ranking" element={<StudentGlobalRanking />} />
       </Routes>
     </Router>
   );
