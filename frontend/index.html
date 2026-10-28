@@ -304,7 +304,106 @@
 .boru-scrollbar::-webkit-scrollbar-track { background: #141416; border-radius: 9999px; border: 1px solid rgba(63,63,70,0.5); margin: 0 4px; }
 .boru-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #7f1d1d 0%, #dc2626 50%, #ef4444 100%); border-radius: 9999px; box-shadow: 0 0 8px rgba(220,38,38,0.35); }
 .boru-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(90deg, #dc2626 0%, #ef4444 60%, #f59e0b 100%); }
-</style>
+
+    /* Adaptação Dinâmica Total para Páginas SPA / React */
+    [data-theme] body.react-active {
+      background-color: var(--color-bg-main) !important;
+      color: var(--color-text-main) !important;
+    }
+
+    [data-theme] .bg-\[\#0B0B0C\], 
+    [data-theme] .bg-\[\#0b0b0c\] {
+      background-color: var(--color-bg-main) !important;
+    }
+
+    [data-theme] .bg-\[\#141416\],
+    [data-theme] .bg-\[\#141416\]\/90,
+    [data-theme] .bg-\[\#111114\],
+    [data-theme] .bg-\[\#111114\]\/90,
+    [data-theme] .bg-\[\#1A1A1E\],
+    [data-theme] .bg-\[\#1a1a1e\] {
+      background-color: var(--color-bg-card) !important;
+      border-color: var(--color-border) !important;
+    }
+
+    [data-theme] .border-zinc-800,
+    [data-theme] .border-zinc-800\/90,
+    [data-theme] .border-zinc-800\/80,
+    [data-theme] .border-zinc-800\/60,
+    [data-theme] .border-zinc-700,
+    [data-theme] .border-zinc-700\/80 {
+      border-color: var(--color-border) !important;
+    }
+
+    [data-theme] .text-zinc-100,
+    [data-theme] .text-zinc-200,
+    [data-theme] .text-white {
+      color: var(--color-text-main) !important;
+    }
+
+    [data-theme] .text-zinc-400,
+    [data-theme] .text-zinc-500 {
+      color: var(--color-text-muted) !important;
+    }
+
+    /* Cores Primárias Dinâmicas (Substitui Red pelo Primary do Tema Ativo) */
+    [data-theme] .bg-red-600,
+    [data-theme] .bg-red-700 {
+      background-color: var(--color-primary) !important;
+      color: var(--color-btn-text) !important;
+    }
+    [data-theme] .hover\:bg-red-700:hover,
+    [data-theme] .hover\:bg-red-600:hover {
+      background-color: var(--color-primary-hover) !important;
+    }
+
+    [data-theme] .text-red-500,
+    [data-theme] .text-red-400,
+    [data-theme] .text-red-600 {
+      color: var(--color-primary) !important;
+    }
+
+    [data-theme] .border-red-600,
+    [data-theme] .border-red-500 {
+      border-color: var(--color-primary) !important;
+    }
+
+    [data-theme] .border-red-500\/50,
+    [data-theme] .border-red-500\/40,
+    [data-theme] .border-red-500\/30 {
+      border-color: var(--color-primary-border) !important;
+    }
+
+    [data-theme] .bg-red-950\/40,
+    [data-theme] .bg-red-600\/20,
+    [data-theme] .bg-red-600\/10 {
+      background-color: var(--color-primary-light) !important;
+      color: var(--color-primary) !important;
+    }
+
+    /* Scrollbars que acompanham o tema */
+    [data-theme] .boru-scrollbar::-webkit-scrollbar-track {
+      background: var(--color-bg-card) !important;
+      border-color: var(--color-border) !important;
+    }
+    [data-theme] .boru-scrollbar::-webkit-scrollbar-thumb {
+      background: var(--color-primary) !important;
+      box-shadow: 0 0 8px var(--color-primary-light) !important;
+    }
+    [data-theme] .boru-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: var(--color-primary-hover) !important;
+    }
+
+    /* Inputs e Selects dinâmicos no React */
+    [data-theme] input,
+    [data-theme] select,
+    [data-theme] textarea {
+      background-color: var(--color-bg-card-alt) !important;
+      color: var(--color-text-main) !important;
+      border-color: var(--color-border) !important;
+    }
+
+  </style>
 </head>
 <body class="text-zinc-100 min-h-screen selection:bg-red-600 selection:text-white relative">
 
