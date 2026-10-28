@@ -989,7 +989,7 @@ export default function AdminDashboard() {
   // ==========================================
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen w-full bg-[#0B0B0C] flex items-center justify-center p-4 relative z-10">
+      <div className="min-h-screen w-full flex items-center justify-center p-4 relative z-10">
         <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
           <div className="flex justify-end mb-2">
             <ThemeSwitcher compact />
@@ -1000,9 +1000,9 @@ export default function AdminDashboard() {
               alt={ACADEMY_CONFIG.nome} 
               className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-contain bg-[#1A1A1E] p-1.5" 
             />
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-widest mb-1 leading-tight">{ACADEMY_CONFIG.nome}</h1>
-            <p className="text-amber-500 font-black text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
-            <p className="text-zinc-400 text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-widest mb-1 leading-tight drop-shadow-sm">{ACADEMY_CONFIG.nome}</h1>
+            <p className="text-amber-400 font-extrabold text-xs uppercase tracking-widest drop-shadow-sm">Painel Administrativo & Professores</p>
+            <p className="text-zinc-300 text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -1086,7 +1086,7 @@ export default function AdminDashboard() {
   // PAINEL LOGADO
   // ==========================================
   return (
-    <div className="min-h-screen bg-[#0B0B0C] text-zinc-100 font-sans p-3 sm:p-6 pb-20 relative z-10">
+    <div className="min-h-screen text-zinc-100 font-sans p-3 sm:p-6 pb-20 relative z-10">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}

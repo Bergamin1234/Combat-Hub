@@ -306,33 +306,77 @@
 .boru-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(90deg, #dc2626 0%, #ef4444 60%, #f59e0b 100%); }
 
 
-    /* Adaptação Dinâmica Total e Fundo Escuro Perfeito para SPA / React */
+
+    /* Respeito Total ao Tema Ativo (Dark vs Light) */
     html, body {
-      background-color: #0B0B0C !important;
+      background-color: var(--color-bg-main) !important;
+      color: var(--color-text-main) !important;
       min-height: 100vh;
     }
     body.react-active {
-      background-color: #0B0B0C !important;
-      color: #F4F4F5 !important;
+      background-color: var(--color-bg-main) !important;
+      color: var(--color-text-main) !important;
     }
     body.react-active #root {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      background-color: var(--color-bg-main) !important;
     }
-    /* Inputs sempre nítidos com fundo escuro elegante e texto branco legível */
-    input, select, textarea {
+
+    /* MODO ESCURO (DARK) */
+    [data-theme-mode="dark"] input,
+    [data-theme-mode="dark"] select,
+    [data-theme-mode="dark"] textarea {
       background-color: #1A1A1E !important;
       color: #FFFFFF !important;
       border-color: #3F3F46 !important;
     }
-    input::placeholder, textarea::placeholder {
+    [data-theme-mode="dark"] input::placeholder,
+    [data-theme-mode="dark"] textarea::placeholder {
       color: #71717A !important;
     }
-    /* Estilização para botões de ação e abas acompanhando a cor tema de forma harmoniosa */
-    [data-theme] .theme-text-primary {
-      color: var(--color-primary) !important;
+
+    /* MODO CLARO (LIGHT - Dourado & Branco, etc) */
+    /* Fundo da tela fica BRANCO/CLEAN, e os cards/abas ficam em preto/grafite elegante ou fundo card contrastante */
+    [data-theme-mode="light"] {
+      --color-bg-main: #F4F5F7 !important;
     }
+    [data-theme-mode="light"] body,
+    [data-theme-mode="light"] html,
+    [data-theme-mode="light"] body.react-active,
+    [data-theme-mode="light"] body.react-active #root {
+      background-color: #F4F5F7 !important;
+      color: #0F172A !important;
+    }
+    [data-theme-mode="light"] .theme-card-contrast,
+    [data-theme-mode="light"] .bg-\[\#141416\]\/95,
+    [data-theme-mode="light"] .bg-\[\#141416\],
+    [data-theme-mode="light"] .bg-\[\#111114\]\/90,
+    [data-theme-mode="light"] .bg-\[\#111114\] {
+      background-color: #111216 !important; /* Card / Aba em preto elegante */
+      color: #FFFFFF !important;
+      border-color: #27272A !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important;
+    }
+    /* Inputs em modo claro dentro do card escuro */
+    [data-theme-mode="light"] input,
+    [data-theme-mode="light"] select,
+    [data-theme-mode="light"] textarea {
+      background-color: #1A1A1E !important;
+      color: #FFFFFF !important;
+      border-color: #3F3F46 !important;
+    }
+    [data-theme-mode="light"] input::placeholder {
+      color: #A1A1AA !important;
+    }
+
+    /* Garante que o texto de títulos no card fique sempre nítido e visível */
+    [data-theme-mode="light"] .text-white,
+    [data-theme-mode="dark"] .text-white {
+      color: #FFFFFF !important;
+    }
+
 
 
   </style>
