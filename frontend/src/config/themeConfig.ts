@@ -24,6 +24,67 @@ export interface ThemeDefinition {
 
 export const THEMES_LIST: ThemeDefinition[] = [
   {
+    id: "cyberpunk-combat",
+    name: "Esports & Cyberpunk Neon",
+    mode: "dark",
+    primary: "#FF003C", // Vermelho Neon Intenso
+    primaryHover: "#FF2A5F",
+    primaryLight: "rgba(255, 0, 60, 0.18)",
+    primaryBorder: "rgba(255, 0, 60, 0.45)",
+    accent: "#00E5FF", // Azul Elétrico Neon
+    gradient: "linear-gradient(135deg, #FF003C 0%, #D50032 50%, #00E5FF 100%)",
+    bgMain: "#0A0B0E", // Onyx Gamer
+    bgSectionAlt: "#101218",
+    bgCard: "#141720", // Dark Slate
+    bgCardAlt: "#1B202C",
+    textMain: "#FFFFFF",
+    textMuted: "#94A3B8",
+    border: "#252B3B",
+    btnText: "#FFFFFF",
+    preview: ["#FF003C", "#00E5FF"]
+  },
+  {
+    id: "martial-impact",
+    name: "Artes Marciais & Treino (Impact)",
+    mode: "dark",
+    primary: "#FF3D00", // Laranja Sangue (Blood Orange)
+    primaryHover: "#E63600",
+    primaryLight: "rgba(255, 61, 0, 0.16)",
+    primaryBorder: "rgba(255, 61, 0, 0.4)",
+    accent: "#E2E8F0", // Cinza Metálico (Metallic Silver)
+    gradient: "linear-gradient(135deg, #FF5722 0%, #FF3D00 50%, #BF360C 100%)",
+    bgMain: "#121214", // Charcoal Black
+    bgSectionAlt: "#18181C",
+    bgCard: "#202024",
+    bgCardAlt: "#2A2A30",
+    textMain: "#F8FAFC",
+    textMuted: "#94A3B8",
+    border: "#3E4450", // Metallic Silver Border
+    btnText: "#FFFFFF",
+    preview: ["#FF3D00", "#121214"]
+  },
+  {
+    id: "clean-competitive",
+    name: "Clean & Competitivo (Off-White)",
+    mode: "light",
+    primary: "#DC143C", // Carmesim Red
+    primaryHover: "#B01030",
+    primaryLight: "rgba(220, 20, 60, 0.12)",
+    primaryBorder: "rgba(220, 20, 60, 0.35)",
+    accent: "#0B0C10", // Obsidian Black
+    gradient: "linear-gradient(135deg, #DC143C 0%, #B01030 100%)",
+    bgMain: "#F8F9FA", // Off-White
+    bgSectionAlt: "#EDF0F2",
+    bgCard: "#FFFFFF",
+    bgCardAlt: "#F1F3F5",
+    textMain: "#0B0C10", // Obsidian
+    textMuted: "#495057",
+    border: "#DDE2E5",
+    btnText: "#FFFFFF",
+    preview: ["#DC143C", "#FFFFFF"]
+  },
+
+  {
     id: 'neutral-dark',
     name: 'Neutro Titânio & Carbono',
     mode: 'dark',
