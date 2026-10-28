@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderInstructorsPortfolio();
   initInstructorsCarousel();
   initModuleTabsInteractivity();
+  initSpotlightCards();
+  initTiltEffect();
   renderSchedule('all');
   initScheduleFilters();
   renderFAQ();
@@ -707,6 +709,58 @@ function initModuleTabsInteractivity() {
           if (p) p.textContent = item.desc;
         }
       });
+    });
+  });
+}
+
+
+// ==========================================
+// 4. SPOTLIGHT SEGUIDOR DE CURSOR NOS CARDS
+// ==========================================
+function initSpotlightCards() {
+  document.querySelectorAll('.spotlight-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  });
+}
+
+// ==========================================
+// 5. TILT 3D SUAVE NOS CARDS (GPU 60 FPS)
+// ==========================================
+function initTiltEffect() {
+  const elements = document.querySelectorAll('.tilt-card');
+
+  elements.forEach(el => {
+    let ticking = false;
+
+    el.addEventListener('mousemove', (e) => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const rect = el.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+
+          const rotateX = ((y - centerY) / centerY) * -5.5;
+          const rotateY = ((x - centerX) / centerX) * 5.5;
+
+          el.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-3px)`;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    el.addEventListener('mouseleave', () => {
+      el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
     });
   });
 }
