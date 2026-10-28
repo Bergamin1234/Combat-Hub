@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderModalitiesGrid();
   renderFacilities();
   renderInstructorsPortfolio();
+  initInstructorsCarousel();
+  initModuleTabsInteractivity();
   renderSchedule('all');
   initScheduleFilters();
   renderFAQ();
@@ -516,3 +518,195 @@ document.addEventListener('keydown', (e) => {
     if (dropdown) dropdown.classList.add('hidden');
   }
 });
+
+
+// ==========================================
+// 1. CARROSSEL DE PROFESSORES: AUTO-PLAY + PAUSE ON HOVER + SETAS
+// ==========================================
+function initInstructorsCarousel() {
+  const container = document.getElementById('instructors-portfolio-grid');
+  const prevBtn = document.getElementById('prof-carousel-prev');
+  const nextBtn = document.getElementById('prof-carousel-next');
+
+  if (!container) return;
+
+  let autoplayTimer = null;
+  const slideStep = () => {
+    const card = container.querySelector('.shrink-0');
+    return card ? card.offsetWidth + 24 : 500;
+  };
+
+  const scrollNext = () => {
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    if (container.scrollLeft >= maxScroll - 10) {
+      container.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      container.scrollBy({ left: slideStep(), behavior: 'smooth' });
+    }
+  };
+
+  const scrollPrev = () => {
+    if (container.scrollLeft <= 10) {
+      container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+    } else {
+      container.scrollBy({ left: -slideStep(), behavior: 'smooth' });
+    }
+  };
+
+  if (nextBtn) nextBtn.addEventListener('click', () => { scrollNext(); restartAutoplay(); });
+  if (prevBtn) prevBtn.addEventListener('click', () => { scrollPrev(); restartAutoplay(); });
+
+  const startAutoplay = () => {
+    stopAutoplay();
+    autoplayTimer = setInterval(scrollNext, 5000);
+  };
+
+  const stopAutoplay = () => {
+    if (autoplayTimer) {
+      clearInterval(autoplayTimer);
+      autoplayTimer = null;
+    }
+  };
+
+  const restartAutoplay = () => {
+    stopAutoplay();
+    startAutoplay();
+  };
+
+  container.addEventListener('mouseenter', stopAutoplay);
+  container.addEventListener('mouseleave', startAutoplay);
+
+  startAutoplay();
+}
+
+// ==========================================
+// 3. MICRO-INTERACOES DO PAINEL DE GESTAO (TABS SLIDE-UP + FADE-IN)
+// ==========================================
+const TAB_CONTENTS = {
+  'alunos': {
+    icon: '👥',
+    title: 'GESTÃO DE ALUNOS',
+    desc: 'Controle integral e simplificado do ciclo de vida de cada praticante. Da matrícula ao acompanhamento médico e frequência no tatame, tudo em poucos cliques.',
+    items: [
+      { ic: '✓', title: 'Cadastro completo', desc: 'Dados pessoais, CPF, fotos de perfil, planos vinculados e contratos com assinatura eletrônica.' },
+      { ic: '⚡', title: 'Contato de emergência', desc: 'Acesso rápido com botão de discagem e WhatsApp direto aos responsáveis durante treinos e sparrings.' },
+      { ic: '📋', title: 'Histórico médico', desc: 'Prontuário com restrições físicas, atestados de saúde, lesões anteriores e medicamentos de uso contínuo.' },
+      { ic: '🔔', title: 'Alertas inteligentes', desc: 'Notificações automáticas de evasão para alunos ausentes há mais de 14 dias e avisos de graduação próxima.' }
+    ]
+  },
+  'financeiro': {
+    icon: '💰',
+    title: 'MÓDULO FINANCEIRO & ERP',
+    desc: 'Visão em tempo real do faturamento da academia. Mensalidades, faturas em atraso, controle de produtos e fechamento diário de caixa.',
+    items: [
+      { ic: '💳', title: 'Baixa Rápida & PIX', desc: 'Confirmação instantânea de pagamentos presenciais ou via chave PIX sem burocracia.' },
+      { ic: '📊', title: 'Relatórios de Inadimplência', desc: 'Lista detalhada de matrículas pendentes com lembretes automáticos para o aluno.' },
+      { ic: '🧾', title: 'Venda de Equipamentos (PDV)', desc: 'Controle de protetores bucais, luvas, caneleiras e suplementação com saída de estoque.' },
+      { ic: '📈', title: 'Previsibilidade de Caixa', desc: 'Projeção de entradas do mês baseada nas datas de vencimento cadastradas.' }
+    ]
+  },
+  'agenda': {
+    icon: '📅',
+    title: 'AGENDA & CHECK-IN INTELIGENTE',
+    desc: 'Grade de horários semanal dos tatames, marcação de presenças com validação do professor e chamada dividida em tempo real.',
+    items: [
+      { ic: '🥋', title: 'Check-in em 1 Clique', desc: 'Aluno confirma sua presença pelo celular ou na recepção através do número de CPF.' },
+      { ic: '⏱️', title: 'Chamada Dividida', desc: 'Separação automática entre alunos presentes que já treinaram e faltantes da aula.' },
+      { ic: '🌅', title: 'Gestão por Turnos', desc: 'Filtros dinâmicos para turmas da manhã, tarde e noite com limite de vagas por tatame.' },
+      { ic: '🏥', title: 'Justificativas Médicas', desc: 'Atestados anexados diretamente na data do calendário do aluno sem perda de assiduidade.' }
+    ]
+  },
+  'graduacoes': {
+    icon: '🥋',
+    title: 'SISTEMA DE GRADUAÇÕES & FAIXAS',
+    desc: 'Histórico de evolução técnica de cada praticante, requisitos de exames e contagem de horas mínimas no tatame para promoção.',
+    items: [
+      { ic: '🎖️', title: 'Prajieds & Faixas Oficiais', desc: 'Escala completa de Muay Thai, Jiu-Jitsu, Taekwondo, Boxe e MMA pré-configurada.' },
+      { ic: '⏳', title: 'Tempo Mínimo de Tatame', desc: 'Cálculo automatizado de meses e treinos necessários para estar apto à próxima faixa.' },
+      { ic: '📜', title: 'Certificados Digitais', desc: 'Geração e registro das graduações conferidas com data e assinatura do professor responsável.' },
+      { ic: '🥊', title: 'Cartel de Sparring', desc: 'Registro de lutas internas, exames práticos e evolução técnica por modalidade.' }
+    ]
+  },
+  'app': {
+    icon: '📱',
+    title: 'PORTAL DO ALUNO WEB & MOBILE',
+    desc: 'Experiência imersiva para o praticante acessar pelo celular ou computador sem precisar instalar nada na loja de aplicativos.',
+    items: [
+      { ic: '📲', title: 'Acesso Rápido por CPF', desc: 'Login imediato com segurança e opção de redefinição de senha em poucos passos.' },
+      { ic: '🏆', title: 'Gamificação & Ranking', desc: 'Visualização de pontos de XP, patentes conquistadas e posição no pódio da academia.' },
+      { ic: '📅', title: 'Calendário de Presença', desc: 'Histórico pessoal de treinos com status de cada dia (verde para presente, azul para doente).' },
+      { ic: '🛍️', title: 'Loja do CT Integrada', desc: 'Catálogo de materiais esportivos e produtos oficiais com reserva direta no balcão.' }
+    ]
+  },
+  'engajamento': {
+    icon: '🏆',
+    title: 'RETENÇÃO & GAMIFICAÇÃO ATIVA',
+    desc: 'Metodologia comprovada para combater a evasão de alunos, celebrando cada marco de frequência com conquistas colecionáveis.',
+    items: [
+      { ic: '🥇', title: 'Pódio Mensal Top 3', desc: 'Destaque visual dos alunos mais dedicados no mural da academia e no portal digital.' },
+      { ic: '🏅', title: '30 Conquistas Base', desc: 'Medalhas automáticas para o primeiro treino, 50 aulas, assiduidade 100% e treinos matinais.' },
+      { ic: '🔥', title: 'Sequência em Chamas (Streak)', desc: 'Incentivo diário para o atleta não quebrar o ritmo de treinamento semanal.' },
+      { ic: '📢', title: 'Mural de Avisos Dinâmico', desc: 'Comunicação oficial de seminários, campeonatos e avisos urgentes aos alunos.' }
+    ]
+  }
+};
+
+function initModuleTabsInteractivity() {
+  const tabButtons = document.querySelectorAll('#modulos-sistema .lg\\:col-span-4 button');
+  const panel = document.querySelector('#modulos-sistema .lg\\:col-span-8');
+
+  if (!tabButtons.length || !panel) return;
+
+  const tabKeys = ['alunos', 'financeiro', 'agenda', 'graduacoes', 'app', 'engajamento'];
+
+  tabButtons.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      const key = tabKeys[index] || 'alunos';
+      const data = TAB_CONTENTS[key];
+      if (!data) return;
+
+      tabButtons.forEach(b => {
+        b.className = 'w-full flex items-center justify-between px-5 py-4 rounded-2xl text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-bg-card-alt)] border-l-4 border-transparent font-bold text-sm tracking-wide text-left transition';
+        const indicator = b.querySelector('span:last-child');
+        if (indicator) {
+          indicator.textContent = '→';
+          indicator.className = 'text-xs text-[var(--color-text-muted)]';
+        }
+      });
+
+      btn.className = 'w-full flex items-center justify-between px-5 py-4 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] border-l-4 border-[var(--color-primary)] font-black text-sm tracking-wide text-left transition shadow-sm';
+      const ind = btn.querySelector('span:last-child');
+      if (ind) {
+        ind.textContent = '●';
+        ind.className = 'text-xs text-[var(--color-primary)]';
+      }
+
+      panel.classList.remove('animate-card-slide-up');
+      void panel.offsetWidth;
+      panel.classList.add('animate-card-slide-up');
+
+      const iconEl = panel.querySelector('.text-3xl');
+      if (iconEl) iconEl.textContent = data.icon;
+
+      const titleEl = panel.querySelector('h2');
+      if (titleEl) titleEl.textContent = data.title;
+
+      const descEl = panel.querySelector('p.text-sm');
+      if (descEl) descEl.textContent = data.desc;
+
+      const gridCards = panel.querySelectorAll('.grid > div');
+      data.items.forEach((item, i) => {
+        if (gridCards[i]) {
+          const badgeIcon = gridCards[i].querySelector('span.text-xs');
+          if (badgeIcon) badgeIcon.textContent = item.ic;
+
+          const h4 = gridCards[i].querySelector('h4');
+          if (h4) h4.textContent = item.title;
+
+          const p = gridCards[i].querySelector('p');
+          if (p) p.textContent = item.desc;
+        }
+      });
+    });
+  });
+}

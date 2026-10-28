@@ -425,11 +425,55 @@
       color: #0B0C10 !important;
     }
 
+  
+    /* ========================================================
+       COMBAT-HUB: ANIMAÇÃO DE FUNDO E MICRO-INTERAÇÕES CSS PURO
+       ======================================================== */
+    /* Animação de Fundo Sutil (Partículas e Linhas Marciais) */
+    @keyframes combatFlow {
+      0% { transform: translate(0, 0) rotate(0deg); opacity: 0.04; }
+      50% { transform: translate(-30px, -20px) rotate(1deg); opacity: 0.08; }
+      100% { transform: translate(0, 0) rotate(0deg); opacity: 0.04; }
+    }
+    .combat-bg-animated {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background: radial-gradient(circle at 50% 50%, var(--color-primary-light) 0%, transparent 60%),
+                  repeating-linear-gradient(45deg, transparent, transparent 40px, var(--color-primary-light) 40px, var(--color-primary-light) 41px);
+      animation: combatFlow 18s ease-in-out infinite;
+    }
+
+    /* Micro-interação: Fade In + Slide Up */
+    @keyframes cardSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-card-slide-up {
+      animation: cardSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Micro-interação: Glow Pulse no Botão Cadastrar Academia */
+    @keyframes goldGlowPulse {
+      0%, 100% { box-shadow: 0 0 10px var(--color-primary-light); }
+      50% { box-shadow: 0 0 25px var(--color-primary-border); }
+    }
+    .btn-glow-pulse:hover {
+      animation: goldGlowPulse 2s infinite ease-in-out;
+      transform: translateY(-1px);
+    }
+
+    /* Esconde barra de rolagem mas mantém drag/scroll */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
   </style>
 </head>
 <body class="text-zinc-100 min-h-screen selection:bg-red-600 selection:text-white relative">
 
   <!-- WALLPAPER FIXO DO SITE INTEIRO (COMBAT THEME) -->
+  <div class="combat-bg-animated" aria-hidden="true"></div>
   <div id="global-combat-wallpaper" aria-hidden="true">
     <img src="/wallpaper-combat.svg" alt="Wallpaper Centro de Treinamento" />
   </div>
@@ -1686,7 +1730,7 @@
 
           <div class="mt-8 pt-6 border-t border-[var(--color-border)] flex items-center justify-between flex-wrap gap-4 relative z-10">
             <span class="text-xs text-[var(--color-text-muted)] font-medium">Pronto para modernizar seu centro de combate?</span>
-            <button type="button" onclick="window.location.href='/admin'" class="px-6 py-3 rounded-xl border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-btn-text)] font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-[var(--color-primary-light)] active:scale-95">
+            <button type="button" onclick="window.location.href='/admin'" class="px-6 py-3 rounded-xl border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-btn-text)] font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-[var(--color-primary-light)] active:scale-95 btn-glow-pulse">
               Cadastrar minha academia
             </button>
           </div>
