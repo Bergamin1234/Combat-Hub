@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { studentApi } from '../services/api';
+import { BadgeOrImagePreview } from './FileUploadInput';
 
 interface RankItem {
   id: string;
@@ -62,6 +63,17 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<string>('TODAS');
   const [celebrationItem, setCelebrationItem] = useState<AchievementItem | null>(null);
   const [copiadoMsg, setCopiadoMsg] = useState(false);
+  const [buscaConquista, setBuscaConquista] = useState('');
+  const [limiteMobile, setLimiteMobile] = useState(6);
+  const [mostrarVoltarTopo, setMostrarVoltarTopo] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setMostrarVoltarTopo(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const ranks: RankItem[] = gamificacaoData?.ranks || [];
   const conquistas: AchievementItem[] = gamificacaoData?.conquistas || [];
@@ -102,7 +114,7 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
   };
 
   const handleShareAchievement = async (item: AchievementItem) => {
-    const textoShare = `🥊🔥 LEVEL UP NA TRILHA DO NAK MUAY!\n\nAcabei de desbloquear a conquista "${item.badge_icon_url} ${item.title}" (${item.description})!\n🏅 Rank Atual: ${rankAtual?.badge_icon_url || '🥊'} ${rankAtual?.name || 'Guerreiro'}\n⚡ XP Total: ${xpTotal} XP | 🔥 Sequência: ${streak} treinos!\n\n#MuayThai #TrilhaDoNakMuay #Disciplina`;
+    const textoShare = `🥊🔥 LEVEL UP NA TRILHA DO NAK MUAY!\n\nAcabei de desbloquear a conquista "${item.title}" (${item.description})!\n🏅 Rank Atual: ${rankAtual?.name || 'Guerreiro'}\n⚡ XP Total: ${xpTotal} XP | 🔥 Sequência: ${streak} treinos!\n\n#MuayThai #TrilhaDoNakMuay #Disciplina`;
 
     if (navigator.share) {
       try {
@@ -127,13 +139,21 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
   };
 
   const handleShareWhatsApp = (item: AchievementItem) => {
-    const textoShare = `🥊🔥 *LEVEL UP NA TRILHA DO NAK MUAY!*\n\n Guerreiro(a) *${alunoNome}* desbloqueou a conquista: *${item.badge_icon_url} ${item.title}*!\n_"${item.description}"_\n\n🏆 *Rank Atual:* ${rankAtual?.badge_icon_url || '🥊'} ${rankAtual?.name || 'Nak Muay'}\n⚡ *XP Acumulado:* ${xpTotal} XP\n🔥 *Streak Ativo:* ${streak} treinos seguidos!`;
+    const textoShare = `🥊🔥 *LEVEL UP NA TRILHA DO NAK MUAY!*\n\n Guerreiro(a) *${alunoNome}* desbloqueou a conquista: *${item.title}*!\n_"${item.description}"_\n\n🏆 *Rank Atual:* ${rankAtual?.name || 'Nak Muay'}\n⚡ *XP Acumulado:* ${xpTotal} XP\n🔥 *Streak Ativo:* ${streak} treinos seguidos!`;
     window.open(`https://wa.me/?text=${encodeURIComponent(textoShare)}`, '_blank');
   };
 
   const conquistasFiltradas = conquistas.filter((c) => {
     if (statusFilter !== 'ALL' && c.status !== statusFilter) return false;
     if (categoryFilter !== 'TODAS' && c.category !== categoryFilter) return false;
+    if (buscaConquista.trim()) {
+      const termo = buscaConquista.trim().toLowerCase();
+      const bate =
+        c.title.toLowerCase().includes(termo) ||
+        c.description.toLowerCase().includes(termo) ||
+        (CATEGORY_LABELS[c.category]?.label || '').toLowerCase().includes(termo);
+      if (!bate) return false;
+    }
     return true;
   });
 
@@ -174,8 +194,12 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Esquerda: Insígnia do Rank Atual */}
           <div className="flex items-start sm:items-center gap-4 sm:gap-5">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-red-600/30 to-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center text-4xl sm:text-5xl shadow-xl shadow-red-950/40 shrink-0">
-              {rankAtual?.badge_icon_url || '🥊'}
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-red-600/30 to-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center text-4xl sm:text-5xl shadow-xl shadow-red-950/40 shrink-0 overflow-hidden">
+              <BadgeOrImagePreview
+                src={rankAtual?.badge_icon_url}
+                fallbackText="🥊"
+                className="w-full h-full text-4xl sm:text-5xl"
+              />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -244,7 +268,7 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
               </span>
               {proximoRank ? (
                 <span className="font-black text-amber-400">
-                  {proximoRank.badge_icon_url} {proximoRank.name} ({proximoRank.required_checkins_min} check-ins)
+                  {proximoRank.name} ({proximoRank.required_checkins_min} check-ins)
                 </span>
               ) : (
                 <span className="font-black text-emerald-400">
@@ -282,7 +306,8 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {/* Grid / Carrossel dos Ranks: deslize horizontal no mobile para não ocupar altura excessiva */}
+        <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-6 gap-3 overflow-x-auto boru-scrollbar pb-2.5 snap-x">
           {ranks.map((r, idx) => {
             const atingido = totalPresencas >= r.required_checkins_min;
             const isCurrent =
@@ -292,7 +317,7 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
             return (
               <div
                 key={r.id || idx}
-                className={`rounded-xl p-3.5 border transition relative flex flex-col justify-between ${
+                className={`rounded-xl p-3.5 border transition relative flex flex-col justify-between min-w-[155px] sm:min-w-0 snap-start shrink-0 sm:shrink ${
                   isCurrent
                     ? 'bg-gradient-to-b from-amber-500/20 to-red-950/30 border-amber-500 shadow-lg shadow-amber-500/10'
                     : atingido
@@ -302,7 +327,13 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
               >
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-2xl">{r.badge_icon_url}</span>
+                    <div className="w-8 h-8 flex items-center justify-center text-2xl overflow-hidden">
+                      <BadgeOrImagePreview
+                        src={r.badge_icon_url}
+                        fallbackText="🥊"
+                        className="w-full h-full text-2xl"
+                      />
+                    </div>
                     <span
                       className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
                         isCurrent
@@ -333,7 +364,7 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
         </div>
       </div>
 
-      {/* VITRINE DE CONQUISTAS (30 CONQUISTAS DESBLOQUEÁVEIS) */}
+      {/* VITRINE DE CONQUISTAS (DIVIDIDA EM DESBLOQUEADAS, EM ANDAMENTO, BLOQUEADAS) */}
       <div className="bg-[#1A1A1E] border border-zinc-800 rounded-2xl p-5 space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -346,7 +377,7 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
             </p>
           </div>
 
-          {/* Filtro por Status */}
+          {/* Filtro por Status: Desbloqueadas, Em Andamento, Bloqueadas */}
           <div className="flex flex-wrap gap-1.5 bg-[#121215] p-1.5 rounded-xl border border-zinc-800">
             {[
               { id: 'ALL', label: `Todas (${resumo.total})` },
@@ -369,27 +400,48 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
           </div>
         </div>
 
-        {/* Filtro por Categoria */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {Object.entries(CATEGORY_LABELS).map(([key, info]) => (
-            <button
-              key={key}
-              onClick={() => setCategoryFilter(key)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap border transition flex items-center gap-1.5 ${
-                categoryFilter === key
-                  ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                  : 'bg-[#121215] border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
-              }`}
-            >
-              <span>{info.icon}</span>
-              <span>{info.label}</span>
-            </button>
-          ))}
+        {/* Filtro por Categoria e Busca Rápida */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto boru-scrollbar pb-1 flex-1">
+            {Object.entries(CATEGORY_LABELS).map(([key, info]) => (
+              <button
+                key={key}
+                onClick={() => setCategoryFilter(key)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap border transition flex items-center gap-1.5 ${
+                  categoryFilter === key
+                    ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                    : 'bg-[#121215] border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                }`}
+              >
+                <span>{info.icon}</span>
+                <span>{info.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="relative min-w-[220px]">
+            <input
+              type="text"
+              value={buscaConquista}
+              onChange={(e) => setBuscaConquista(e.target.value)}
+              placeholder="🔍 Buscar conquista..."
+              className="w-full bg-[#121215] border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 transition"
+            />
+            {buscaConquista && (
+              <button
+                type="button"
+                onClick={() => setBuscaConquista('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs font-bold"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Grid das Conquistas */}
+        {/* Grid das Conquistas (Com Limite Ágil no Mobile para evitar rolagem infinita) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {conquistasFiltradas.map((item) => {
+          {conquistasFiltradas.slice(0, limiteMobile).map((item) => {
             const isUnlocked = item.status === 'completed';
             const isInProgress = item.status === 'in_progress';
 
@@ -410,7 +462,7 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 border ${
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 border overflow-hidden ${
                         isUnlocked
                           ? 'bg-emerald-500/20 border-emerald-500/40'
                           : isInProgress
@@ -418,7 +470,15 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
                           : 'bg-zinc-900 border-zinc-800 grayscale'
                       }`}
                     >
-                      {item.is_secret && !isUnlocked ? '❓' : item.badge_icon_url}
+                      {item.is_secret && !isUnlocked ? (
+                        '❓'
+                      ) : (
+                        <BadgeOrImagePreview
+                          src={item.badge_icon_url}
+                          fallbackText="🏅"
+                          className="w-full h-full text-2xl"
+                        />
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -502,7 +562,64 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
             );
           })}
         </div>
+
+        {/* CONTROLES ÁGEIS DE ROLAGEM NO MOBILE: VER MAIS / VER TODAS / RECOLHER */}
+        {conquistasFiltradas.length > 6 && (
+          <div className="pt-4 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="text-zinc-400 text-xs">
+              Exibindo <strong className="text-white">{Math.min(limiteMobile, conquistasFiltradas.length)}</strong> de{' '}
+              <strong className="text-amber-400">{conquistasFiltradas.length}</strong> conquistas
+            </span>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {limiteMobile < conquistasFiltradas.length && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setLimiteMobile((prev) => prev + 6)}
+                    className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold transition text-xs"
+                  >
+                    ⬇️ Ver Mais (+6)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLimiteMobile(conquistasFiltradas.length)}
+                    className="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black border border-amber-500/40 font-black transition text-xs"
+                  >
+                    👁️ Ver Todas ({conquistasFiltradas.length})
+                  </button>
+                </>
+              )}
+
+              {limiteMobile > 6 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLimiteMobile(6);
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white font-bold transition text-xs"
+                >
+                  ⬆️ Recolher Lista
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* BOTÃO FLUTUANTE VOLTAR AO TOPO (ESSENCIAL PARA TELAS MOBILE) */}
+      {mostrarVoltarTopo && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-20 right-4 z-40 px-3.5 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-black text-xs shadow-2xl shadow-red-900/60 flex items-center gap-1.5 border border-red-400/50 transition-all transform hover:scale-105 active:scale-95"
+          title="Voltar ao topo da página"
+        >
+          <span>⬆️</span>
+          <span>Topo</span>
+        </button>
+      )}
 
       {/* MODAL DE CELEBRAÇÃO ("LEVEL UP!" / CONQUISTA DESBLOQUEADA) */}
       {celebrationItem && (
@@ -514,8 +631,12 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
               <span>+{celebrationItem.xp_points} XP</span>
             </div>
 
-            <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-amber-500/30 to-red-600/30 border-2 border-amber-400 flex items-center justify-center text-5xl shadow-xl mb-4">
-              {celebrationItem.badge_icon_url}
+            <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-amber-500/30 to-red-600/30 border-2 border-amber-400 flex items-center justify-center text-5xl shadow-xl mb-4 overflow-hidden">
+              <BadgeOrImagePreview
+                src={celebrationItem.badge_icon_url}
+                fallbackText="🏅"
+                className="w-full h-full text-5xl"
+              />
             </div>
 
             <h3 className="text-2xl font-black text-white">
@@ -538,7 +659,7 @@ export const StudentGamificationTab: React.FC<StudentGamificationProps> = ({
 
             <div className="mt-5 pt-4 border-t border-zinc-800 flex items-center justify-around text-xs text-zinc-400">
               <div>
-                <p className="font-bold text-white">{rankAtual?.badge_icon_url} {rankAtual?.name}</p>
+                <p className="font-bold text-white">{rankAtual?.name}</p>
                 <p className="text-[10px]">Rank Atual</p>
               </div>
               <div>

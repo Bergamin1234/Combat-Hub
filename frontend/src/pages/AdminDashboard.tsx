@@ -6,6 +6,10 @@ import { adminApi, publicApi } from '../services/api';
 import { AdminGamificationTab } from '../components/AdminGamificationTab';
 import { CombatHubSandboxModal } from '../components/CombatHubSandboxModal';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
+import { FileUploadInput } from '../components/FileUploadInput';
+import { DevDashboardTab } from '../components/DevDashboardTab';
+import { FinancialDashboardTab } from '../components/FinancialDashboardTab';
+import { SplitRollCallTab } from '../components/SplitRollCallTab';
 
 const graduacoesPorModalidade: Record<string, string[]> = {
   'Muay Thai': [
@@ -62,6 +66,19 @@ const graduacoesPorModalidade: Record<string, string[]> = {
     '5 a 10 anos de prática',
     'Mais de 10 anos / Veterano',
     'Ex-Atleta Profissional'
+  ],
+  '[DEV-SYSTEM]': [
+    'Desenvolvedor do Sistema [DEV-SYSTEM]',
+    'Arquiteto & Engenheiro de Software Full-Stack',
+    'Tech Lead & DevOps / Cloud',
+    'Administrador Técnico do Sistema',
+    'Segurança & Infraestrutura de TI'
+  ],
+  'Administração Geral': [
+    'Gestão Operacional & Financeira',
+    'Diretoria & Coordenação Geral',
+    'Supervisão & Atendimento',
+    'Financeiro & Contabilidade'
   ]
 };
 
@@ -100,7 +117,6 @@ export default function AdminDashboard() {
 
   // Abas: 'alunos' | 'calendario_geral' | 'presencas' | 'avisos' | 'loja' | 'agendamentos' | 'professores'
   const [abaAtiva, setAbaAtiva] = useState('alunos');
-  const [showSandboxModal, setShowSandboxModal] = useState(false);
   const [subAbaExperimental, setSubAbaExperimental] = useState<'pendentes' | 'posAula'>('pendentes');
 
   // Filtros e busca de Alunos
@@ -109,6 +125,7 @@ export default function AdminDashboard() {
 
   // Filtros e lote em Chamada & Presenças
   const [filtroChamada, setFiltroChamada] = useState<'TODOS' | 'PRESENTE' | 'FALTA' | 'DOENCA' | 'AGENDADO'>('TODOS');
+  const [buscaPresenca, setBuscaPresenca] = useState('');
   const [selecionadosLote, setSelecionadosLote] = useState<string[]>([]);
   const [loteLoading, setLoteLoading] = useState(false);
 
@@ -118,16 +135,44 @@ export default function AdminDashboard() {
   const [mesFrequenciaGeral, setMesFrequenciaGeral] = useState(new Date().getMonth() + 1);
   const [anoFrequenciaGeral, setAnoFrequenciaGeral] = useState(new Date().getFullYear());
   const [diaSelecionadoGeral, setDiaSelecionadoGeral] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [buscaAlunoDiaGeral, setBuscaAlunoDiaGeral] = useState('');
 
-  // Modal Lançar Aluno no Dia do Calendário Geral
+  // Modal Lançar Aluno no Dia do Calendário Geral (Individual & Em Lote via Tabela)
   const [modalLancarDia, setModalLancarDia] = useState(false);
+  const [modoLancarDia, setModoLancarDia] = useState<'LOTE' | 'INDIVIDUAL'>('LOTE');
   const [alunoLancarDia, setAlunoLancarDia] = useState('');
+  const [buscaAlunoLancarIndividual, setBuscaAlunoLancarIndividual] = useState('');
   const [statusLancarDia, setStatusLancarDia] = useState('PRESENTE');
   const [justificativaLancarDia, setJustificativaLancarDia] = useState('');
+  const [buscaLancarDia, setBuscaLancarDia] = useState('');
+  const [filtroPlanoLancarDia, setFiltroPlanoLancarDia] = useState('TODOS');
+  const [apenasNaoLancadosDia, setApenasNaoLancadosDia] = useState(false);
+  const [alunosSelecionadosDia, setAlunosSelecionadosDia] = useState<string[]>([]);
+  const [salvandoLoteDia, setSalvandoLoteDia] = useState(false);
+
+  // Busca em Aulas Experimentais / Agendamentos
+  const [buscaAgendamento, setBuscaAgendamento] = useState('');
+
+  // Ref para rolagem suave da barra de abas com identidade visual Borü
+  const tabsScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsScrollRef.current) {
+      tabsScrollRef.current.scrollBy({
+        left: direction === 'left' ? -280 : 280,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   // Modal Novo Aluno
   const [showModal, setShowModal] = useState(false);
-  const [novoAluno, setNovoAluno] = useState({ nome: '', cpf: '', email: '', telefone: '', plano: '2x na semana' });
+  const [novoAluno, setNovoAluno] = useState({ nome: '', cpf: '', email: '', telefone: '', plano: '2x na semana', is_bolsista: false });
+
+  // Modal Baixa Manual com DatePicker (Módulo 5)
+  const [alunoBaixaModal, setAlunoBaixaModal] = useState<any>(null);
+  const [dataPagamentoBaixa, setDataPagamentoBaixa] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [metodoPagamentoBaixa, setMetodoPagamentoBaixa] = useState<string>('PIX / Presencial');
+  const [salvandoBaixaRapida, setSalvandoBaixaRapida] = useState(false);
 
   // Modal Novo Professor (Apenas Admin)
   const [showModalProf, setShowModalProf] = useState(false);
@@ -140,6 +185,8 @@ export default function AdminDashboard() {
     telefone: '',
     modalidade: 'Muay Thai',
     graduacao: 'Prajied Azul Escuro e Preto',
+    prajied_faixa: 'Prajied Azul Escuro e Preto',
+    fotoPerfilUrl: '',
     tempoPratica: '',
     tempoDocencia: '3 a 5 anos dando aulas',
     tempoAula: '60 min',
@@ -160,8 +207,9 @@ export default function AdminDashboard() {
     fixado: false
   });
 
-  // Modal Novo Produto na Loja
+  // Modal Novo / Editar Produto na Loja
   const [showModalProduto, setShowModalProduto] = useState(false);
+  const [produtoEditandoId, setProdutoEditandoId] = useState<string | null>(null);
   const [novoProduto, setNovoProduto] = useState({
     nome: '',
     categoria: 'PROTETOR_BUCAL',
@@ -196,6 +244,49 @@ export default function AdminDashboard() {
       carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
     }
   }, [isLoggedIn]);
+
+  // Travar o scroll da página de fundo (116 alunos) sempre que qualquer modal estiver aberto
+  useEffect(() => {
+    const algumModalAberto = Boolean(
+      alunoSelecionado ||
+      modalLancarDia ||
+      showModalProduto ||
+      showModal ||
+      alunoBaixaModal ||
+      showModalProf ||
+      showModalEditarProf ||
+      showModalAviso ||
+      modalAcaoDia ||
+      leadParaConverter
+    );
+
+    if (algumModalAberto) {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = 'hidden';
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [
+    alunoSelecionado,
+    modalLancarDia,
+    showModalProduto,
+    showModal,
+    alunoBaixaModal,
+    showModalProf,
+    showModalEditarProf,
+    showModalAviso,
+    modalAcaoDia,
+    leadParaConverter
+  ]);
 
   const carregarDashboard = async () => {
     setLoading(true);
@@ -252,7 +343,11 @@ export default function AdminDashboard() {
       return;
     }
     try {
-      await adminApi.createTeacher(novoProfessor);
+      await adminApi.createTeacher({
+        ...novoProfessor,
+        prajied_faixa: novoProfessor.prajied_faixa || novoProfessor.graduacao,
+        horarios_aula: novoProfessor.horariosAula ? novoProfessor.horariosAula.split(/[,|]/).map((s) => s.trim()).filter(Boolean) : []
+      });
       alert(`Professor ${novoProfessor.nome} cadastrado com sucesso!\n\nEle poderá acessar o painel informando o CPF e a senha cadastrada.`);
       setShowModalProf(false);
       setNovoProfessor({
@@ -264,6 +359,8 @@ export default function AdminDashboard() {
         telefone: '',
         modalidade: 'Muay Thai',
         graduacao: 'Prajied Azul Escuro e Preto',
+        prajied_faixa: 'Prajied Azul Escuro e Preto',
+        fotoPerfilUrl: '',
         tempoPratica: '',
         tempoDocencia: '3 a 5 anos dando aulas',
         tempoAula: '60 min',
@@ -293,20 +390,24 @@ export default function AdminDashboard() {
   };
 
   const abrirModalEdicaoProf = (prof: any) => {
-    const mod = prof.modalidade || 'Muay Thai';
+    if (!prof) return;
+    const mod = prof.modalidade || (prof.is_dev ? '[DEV-SYSTEM]' : 'Muay Thai');
+    const grad = prof.prajied_faixa || prof.graduacao || prof.prajied || (graduacoesPorModalidade[mod]?.[0] || (prof.is_dev ? 'Desenvolvedor do Sistema [DEV-SYSTEM]' : ''));
     setProfessorParaEditar({
       id: prof.id,
-      nome: prof.nome,
-      email: prof.email,
+      nome: prof.nome || '',
+      email: prof.email || '',
       cpf: prof.cpf || '',
       telefone: prof.telefone || '',
       cargo: prof.cargo || 'PROFESSOR',
       modalidade: mod,
-      graduacao: prof.graduacao || prof.prajied || (graduacoesPorModalidade[mod]?.[0] || ''),
+      graduacao: grad,
+      prajied_faixa: grad,
+      fotoPerfilUrl: prof.fotoPerfilUrl || '',
       tempoPratica: prof.tempoPratica || '',
-      tempoDocencia: prof.tempoDocencia || '',
-      tempoAula: prof.tempoAula || '60 min',
-      horariosAula: prof.horariosAula || '',
+      tempoDocencia: prof.tempoDocencia || (prof.is_dev ? 'Engenharia & Arquitetura de Software' : ''),
+      tempoAula: prof.tempoAula || (prof.is_dev ? 'Disponibilidade Dev' : '60 min'),
+      horariosAula: prof.horariosAula || (Array.isArray(prof.horarios_aula) ? prof.horarios_aula.join(', ') : (prof.horarios_aula || (prof.is_dev ? 'Suporte & Atualizações Contínuas' : ''))),
       cargaHorariaSemanal: prof.cargaHorariaSemanal || '',
       senha: ''
     });
@@ -317,24 +418,42 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!professorParaEditar) return;
     try {
+      const horariosTexto = professorParaEditar.horariosAula ? String(professorParaEditar.horariosAula).trim() : '';
       const payload: any = {
-        nome: professorParaEditar.nome,
-        cpf: professorParaEditar.cpf,
-        telefone: professorParaEditar.telefone,
+        nome: professorParaEditar.nome ? String(professorParaEditar.nome).trim() : '',
+        email: professorParaEditar.email ? String(professorParaEditar.email).trim().toLowerCase() : undefined,
+        cpf: professorParaEditar.cpf ? String(professorParaEditar.cpf).trim() : '',
+        telefone: professorParaEditar.telefone ? String(professorParaEditar.telefone).trim() : '',
         cargo: professorParaEditar.cargo,
         modalidade: professorParaEditar.modalidade,
         graduacao: professorParaEditar.graduacao,
-        tempoPratica: professorParaEditar.tempoPratica,
-        tempoDocencia: professorParaEditar.tempoDocencia,
-        tempoAula: professorParaEditar.tempoAula,
-        horariosAula: professorParaEditar.horariosAula,
-        cargaHorariaSemanal: professorParaEditar.cargaHorariaSemanal
+        prajied_faixa: professorParaEditar.prajied_faixa || professorParaEditar.graduacao,
+        fotoPerfilUrl: professorParaEditar.fotoPerfilUrl || null,
+        tempoPratica: professorParaEditar.tempoPratica || '',
+        tempoDocencia: professorParaEditar.tempoDocencia || '',
+        tempoAula: professorParaEditar.tempoAula || '60 min',
+        horariosAula: horariosTexto,
+        horarios_aula: horariosTexto,
+        cargaHorariaSemanal: professorParaEditar.cargaHorariaSemanal || ''
       };
       if (professorParaEditar.senha && professorParaEditar.senha.trim().length > 0) {
         payload.senha = professorParaEditar.senha.trim();
       }
-      await adminApi.updateTeacher(professorParaEditar.id, payload);
-      alert('Dados do professor atualizados com sucesso!');
+      const response = await adminApi.updateTeacher(professorParaEditar.id, payload);
+      alert('Dados atualizados com sucesso!');
+
+      // Sincroniza usuário logado caso ele tenha editado seu próprio perfil
+      if (response.data?.professor && (
+        professorParaEditar.id === usuarioLogado?.id ||
+        professorParaEditar.email === usuarioLogado?.email ||
+        (usuarioLogado?.cpf && professorParaEditar.cpf && usuarioLogado.cpf.replace(/\D/g, '') === professorParaEditar.cpf.replace(/\D/g, ''))
+      )) {
+        setUsuarioLogado((prev: any) => ({
+          ...prev,
+          ...response.data.professor
+        }));
+      }
+
       setShowModalEditarProf(false);
       setProfessorParaEditar(null);
       carregarDashboard();
@@ -392,14 +511,33 @@ export default function AdminDashboard() {
   const criarProduto = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await adminApi.createProduct(novoProduto);
-      alert('Produto adicionado ao catálogo da loja!');
+      if (produtoEditandoId) {
+        await adminApi.updateProduct(produtoEditandoId, novoProduto);
+        alert('Produto atualizado com sucesso!');
+      } else {
+        await adminApi.createProduct(novoProduto);
+        alert('Produto adicionado ao catálogo da loja!');
+      }
       setShowModalProduto(false);
+      setProdutoEditandoId(null);
       setNovoProduto({ nome: '', categoria: 'PROTETOR_BUCAL', preco: '', estoque: '10', descricao: '', imagemUrl: '' });
       carregarDashboard();
     } catch (error) {
-      alert('Erro ao cadastrar produto.');
+      alert('Erro ao salvar produto.');
     }
+  };
+
+  const abrirEditarProduto = (prod: any) => {
+    setProdutoEditandoId(prod.id);
+    setNovoProduto({
+      nome: prod.nome || '',
+      categoria: prod.categoria || 'PROTETOR_BUCAL',
+      preco: String(prod.preco ?? ''),
+      estoque: String(prod.estoque ?? '0'),
+      descricao: prod.descricao || '',
+      imagemUrl: prod.imagemUrl || ''
+    });
+    setShowModalProduto(true);
   };
 
   const removerProduto = async (id: string) => {
@@ -423,25 +561,71 @@ export default function AdminDashboard() {
       alert(`Aluno criado com sucesso!\n\nSenha temporária gerada: ${response.data.senhaTemporaria}\n(Envie isso para o aluno acessar o portal)`);
       carregarDashboard();
       setShowModal(false);
-      setNovoAluno({ nome: '', cpf: '', email: '', telefone: '', plano: '2x na semana' });
+      setNovoAluno({ nome: '', cpf: '', email: '', telefone: '', plano: '2x na semana', is_bolsista: false });
     } catch (error: any) {
       alert(error.response?.data?.erro || 'Erro ao criar aluno.');
     }
   };
 
+  // MÓDULO 5: Abre o Modal com DatePicker (Calendário) para Baixa Manual
   const handleRegistrarPagamento = async (aluno: any) => {
-    if (confirm(`Confirmar recebimento presencial da mensalidade de ${aluno.nome} (Dinheiro/PIX/Cartão no balcão) e renovar por +30 dias?`)) {
-      try {
-        const response = await adminApi.registerPayment(aluno.id);
-        alert(response.data.mensagem);
-        carregarDashboard();
-        if (alunoSelecionado && alunoSelecionado.id === aluno.id) {
-          abrirCalendarioAluno(alunoSelecionado);
-        }
-      } catch (error: any) {
-        alert(error.response?.data?.erro || 'Erro ao registrar pagamento.');
+    setAlunoBaixaModal(aluno);
+    setDataPagamentoBaixa(new Date().toISOString().split('T')[0]);
+    setMetodoPagamentoBaixa('PIX / Presencial');
+  };
+
+  const confirmarBaixaComCalendario = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!alunoBaixaModal) return;
+    setSalvandoBaixaRapida(true);
+    try {
+      const response = await adminApi.registerPayment(alunoBaixaModal.id, {
+        dataPagamento: dataPagamentoBaixa,
+        metodoPagamento: metodoPagamentoBaixa
+      });
+      alert(response.data.mensagem);
+      setAlunoBaixaModal(null);
+      carregarDashboard();
+      if (alunoSelecionado && alunoSelecionado.id === alunoBaixaModal.id) {
+        abrirCalendarioAluno(alunoSelecionado);
       }
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao registrar pagamento.');
+    } finally {
+      setSalvandoBaixaRapida(false);
     }
+  };
+
+  // MÓDULO 1: Alternar flag is_bolsista
+  const handleToggleBolsista = async (aluno: any) => {
+    const novoStatus = !aluno.is_bolsista;
+    if (!confirm(`Deseja definir ${aluno.nome} como ${novoStatus ? 'ALUNO BOLSISTA (Isento de mensalidades)' : 'ALUNO MENSALISTA REGULAR'}?`)) return;
+    try {
+      await adminApi.toggleStudentBolsista(aluno.id, novoStatus);
+      carregarDashboard();
+    } catch (error: any) {
+      alert(error.response?.data?.erro || 'Erro ao atualizar status de bolsista.');
+    }
+  };
+
+  // MÓDULO 4: Automação de WhatsApp para Aula Experimental
+  const handleAvisarExperimentalWhatsApp = (ag: any) => {
+    const nomeAlunos = ag.nome || 'Aluno(a)';
+    const nomeProfessor = ag.professorNome || usuarioLogado?.nome || 'Coordenação Técnica';
+    const dataHoraFormatada = `${ag.data || 'Data a confirmar'} às ${ag.horario || 'Horário a confirmar'}`;
+
+    const textoMensagem = `${nomeAlunos}, agendada sua aula experimental de Muay Thai com o Professor ${nomeProfessor}, ${dataHoraFormatada} no CENTRO DE COMBATE (COMBAT-HUB).\n📍 Rua Doutor Agenor de Carvalho, n° 1168 - Bairro Agenor de Carvalho\nAguardamos vocês! Recomendamos chegar com 10 minutos de antecedência. Bem vindos(as)! 🐺`;
+
+    let numeroLimpo = (ag.telefone || '').replace(/\D/g, '');
+    if (numeroLimpo && !numeroLimpo.startsWith('55') && (numeroLimpo.length === 10 || numeroLimpo.length === 11)) {
+      numeroLimpo = '55' + numeroLimpo;
+    }
+
+    const url = numeroLimpo
+      ? `https://wa.me/${numeroLimpo}?text=${encodeURIComponent(textoMensagem)}`
+      : `https://wa.me/?text=${encodeURIComponent(textoMensagem)}`;
+
+    window.open(url, '_blank');
   };
 
   const atualizarPrajied = async (alunoId: string, prajied: string) => {
@@ -487,15 +671,15 @@ export default function AdminDashboard() {
     const dias = aluno.diasVencimento;
     let msg = '';
     if (isDiariaOuConvenio(aluno.plano)) {
-      msg = `Olá ${aluno.nome}, aqui é da equipe da ${ACADEMY_CONFIG.nome}! Tudo bem? Passando para saber quando você vem treinar conosco esta semana! Qualquer dúvida sobre os horários ou validação de passe (Wellhub/TotalPass/Diária), estamos à disposição. Oss!`;
+      msg = `Olá ${aluno.nome}, aqui é do CENTRO DE COMBATE Muay Thai! Tudo bem? Passando para saber quando você vem treinar conosco esta semana! Qualquer dúvida sobre os horários ou validação de passe (Wellhub/TotalPass/Diária), estamos à disposição. Oss!`;
     } else if (dias === null) {
-      msg = `Olá ${aluno.nome}, aqui é da equipe da ${ACADEMY_CONFIG.nome}! Tudo bem? Passando para regularizar sua matrícula presencialmente no balcão.`;
+      msg = `Olá ${aluno.nome}, aqui é do CENTRO DE COMBATE Muay Thai! Tudo bem? Passando para regularizar sua matrícula presencialmente no balcão.`;
     } else if (dias < 0) {
-      msg = `Olá ${aluno.nome}, tudo bem? Aqui é da ${ACADEMY_CONFIG.nome}. Sua mensalidade venceu há ${Math.abs(dias)} dias. Por favor, acerte presencialmente na recepção ou via PIX (${ACADEMY_CONFIG.chavePix}) para manter seu acesso aos treinos!`;
+      msg = `Olá ${aluno.nome}, tudo bem? Aqui é do CENTRO DE COMBATE. Sua mensalidade venceu há ${Math.abs(dias)} dias. Por favor, acerte presencialmente na recepção ou via PIX (+55 69 9238-4491) para manter seu acesso aos treinos!`;
     } else if (dias === 0) {
-      msg = `Olá ${aluno.nome}, passando para avisar que sua mensalidade na ${ACADEMY_CONFIG.nome} vence hoje! O acerto pode ser feito na recepção no início do treino.`;
+      msg = `Olá ${aluno.nome}, passando para avisar que sua mensalidade no CENTRO DE COMBATE vence hoje! O acerto pode ser feito na recepção no início do treino.`;
     } else {
-      msg = `Olá ${aluno.nome}, tudo bem? Passando para lembrar que sua mensalidade na ${ACADEMY_CONFIG.nome} vence em ${dias} dias. Bons treinos!`;
+      msg = `Olá ${aluno.nome}, tudo bem? Passando para lembrar que sua mensalidade no CENTRO DE COMBATE vence em ${dias} dias. Bons treinos!`;
     }
     window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
@@ -505,9 +689,13 @@ export default function AdminDashboard() {
   // ==========================================
   const abrirCalendarioAluno = async (aluno: any) => {
     setAlunoSelecionado(aluno);
-    setMesCalendario(new Date().getMonth() + 1);
-    setAnoCalendario(new Date().getFullYear());
-    await carregarDadosCalendario(aluno.id, new Date().getMonth() + 1, new Date().getFullYear());
+    setCalendarioDados(null);
+    setLoadingCalendario(true);
+    const mes = new Date().getMonth() + 1;
+    const ano = new Date().getFullYear();
+    setMesCalendario(mes);
+    setAnoCalendario(ano);
+    await carregarDadosCalendario(aluno.id, mes, ano);
   };
 
   const carregarDadosCalendario = async (alunoId: string, mes: number, ano: number) => {
@@ -697,12 +885,70 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLancarPresencaLoteDiaGeral = async () => {
+    if (alunosSelecionadosDia.length === 0) {
+      alert('Selecione pelo menos 1 aluno na tabela para lançar em lote.');
+      return;
+    }
+    if (!diaSelecionadoGeral) return;
+
+    setSalvandoLoteDia(true);
+    try {
+      const tipoJust = statusLancarDia === 'DOENCA' ? 'DOENCA' : (statusLancarDia === 'JUSTIFICADO' ? 'TRABALHO' : null);
+      try {
+        await adminApi.batchSaveGeneralAttendance({
+          alunoIds: alunosSelecionadosDia,
+          data: diaSelecionadoGeral,
+          status: statusLancarDia,
+          justificativa: justificativaLancarDia || null,
+          tipoJustificativa: tipoJust,
+        });
+      } catch {
+        // Fallback caso a rota em lote ainda esteja atualizando no servidor
+        for (const aId of alunosSelecionadosDia) {
+          await adminApi.saveStudentAttendance(aId, {
+            data: diaSelecionadoGeral,
+            status: statusLancarDia,
+            justificativa: justificativaLancarDia || null,
+            tipoJustificativa: tipoJust,
+          });
+        }
+      }
+      alert(`✅ Sucesso! ${alunosSelecionadosDia.length} aluno(s) foram lançados como ${statusLancarDia} no dia ${new Date(diaSelecionadoGeral + 'T12:00:00').toLocaleDateString('pt-BR')}!`);
+      setAlunosSelecionadosDia([]);
+      setJustificativaLancarDia('');
+      setModalLancarDia(false);
+      carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+      carregarDashboard();
+    } catch (error) {
+      alert('Erro ao registrar presenças em lote.');
+    } finally {
+      setSalvandoLoteDia(false);
+    }
+  };
+
+  const handleLancarAlunoRapidoNaTabela = async (alunoId: string, statusRapido = 'PRESENTE') => {
+    if (!diaSelecionadoGeral) return;
+    try {
+      await adminApi.saveStudentAttendance(alunoId, {
+        data: diaSelecionadoGeral,
+        status: statusRapido,
+        justificativa: justificativaLancarDia || null,
+        tipoJustificativa: statusRapido === 'DOENCA' ? 'DOENCA' : null,
+      });
+      carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+      carregarDashboard();
+    } catch {
+      alert('Erro ao lançar aluno rapidamente.');
+    }
+  };
+
   const handleMensagemAssiduidade = (aluno: any) => {
     if (!aluno.telefone) {
       alert(`O aluno ${aluno.nome} não possui telefone cadastrado.`);
       return;
     }
-    const msg = `Olá ${aluno.nome}, tudo bem? Aqui é da equipe da ${ACADEMY_CONFIG.nome}! Sentimos sua falta nos treinos recentemente. Tá tudo certinho por aí? Esperamos você de volta ao tatame para continuarmos evoluindo juntos! Se precisar de algum ajuste nos seus horários, estamos à disposição. Oss! 🥊`;
+    const msg = `Olá ${aluno.nome}, tudo bem? Aqui é da equipe do CENTRO DE COMBATE Muay Thai! Sentimos sua falta nos treinos recentemente. Tá tudo certinho por aí? Esperamos você de volta ao tatame para continuarmos evoluindo juntos! Se precisar de algum ajuste nos seus horários, estamos à disposição. Oss! 🥊`;
     window.open(formatarWhatsUrl(aluno.telefone, msg), '_blank');
   };
 
@@ -743,8 +989,8 @@ export default function AdminDashboard() {
   // ==========================================
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 bg-[var(--color-bg-main)]/85 backdrop-blur-sm flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
-        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10 text-[var(--color-text-main)] transition-colors">
+      <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
+        <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
           <div className="flex justify-end mb-2">
             <ThemeSwitcher compact />
           </div>
@@ -752,35 +998,35 @@ export default function AdminDashboard() {
             <img 
               src={ACADEMY_CONFIG.logoUrl} 
               alt={ACADEMY_CONFIG.nome} 
-              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-[var(--color-primary-border)] shadow-xl object-contain bg-[var(--color-bg-main)] p-2" 
+              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-contain bg-[#1A1A1E] p-1.5" 
             />
-            <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-main)] tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
-            <p className="text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
-            <p className="text-[var(--color-text-muted)] text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
+            <p className="text-red-500 font-bold text-xs uppercase tracking-widest">Painel Administrativo & Professores</p>
+            <p className="text-zinc-400 text-xs mt-1">Controle de Alunos, Aulas, Modalidades e Equipe</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">Login de Acesso</label>
+              <label className="block text-zinc-400 text-xs font-semibold mb-1">Login de Acesso</label>
               <input 
                 type="text" 
                 value={loginInput}
                 onChange={(e) => setLoginInput(e.target.value)}
-                className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
-                placeholder="Usuário (BrgAdmin) ou CPF do Professor"
+                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                placeholder="Usuário ou CPF do Professor"
                 required
               />
-              <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
+              <p className="text-[11px] text-zinc-500 mt-1">
                 * Professores acessam informando o seu <strong>CPF</strong> (com ou sem pontuação) e senha cadastrada.
               </p>
             </div>
             <div>
-              <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">Senha de Acesso</label>
+              <label className="block text-zinc-400 text-xs font-semibold mb-1">Senha de Acesso</label>
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
+                className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
                 placeholder="Sua senha de acesso"
                 required
               />
@@ -788,16 +1034,16 @@ export default function AdminDashboard() {
             <button 
               type="submit" 
               disabled={loginLoading}
-              className="w-full theme-btn-primary disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg text-sm uppercase tracking-wider"
+              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm uppercase tracking-wider"
             >
               {loginLoading ? 'Verificando...' : 'Entrar no Painel'}
             </button>
-            <p className="text-[11px] text-[var(--color-text-muted)] text-center mt-3">
+            <p className="text-[11px] text-zinc-500 text-center mt-3">
               Esqueceu a senha de professor? A redefinição de senha é feita diretamente com a Administração.
             </p>
           </form>
 
-          <Link to="/" className="block text-center mt-5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] text-xs transition">
+          <Link to="/" className="block text-center mt-5 text-zinc-500 hover:text-white text-xs transition">
             ← Voltar ao site principal
           </Link>
         </div>
@@ -823,55 +1069,87 @@ export default function AdminDashboard() {
   });
 
   const presencasFiltradas = presencas.filter(p => {
-    if (filtroChamada === 'TODOS') return true;
-    return p.status === filtroChamada;
+    if (filtroChamada !== 'TODOS' && p.status !== filtroChamada) return false;
+    if (buscaPresenca.trim()) {
+      const termo = buscaPresenca.trim().toLowerCase();
+      const nome = (p.aluno?.nome || '').toLowerCase();
+      const plano = (p.aluno?.plano || '').toLowerCase();
+      const titulo = (p.evento?.titulo || '').toLowerCase();
+      if (!nome.includes(termo) && !plano.includes(termo) && !titulo.includes(termo)) {
+        return false;
+      }
+    }
+    return true;
   });
 
   // ==========================================
   // PAINEL LOGADO
   // ==========================================
   return (
-    <div className="min-h-screen bg-[#0B0B0C]/80 backdrop-blur-[1px] text-zinc-100 font-sans p-3 sm:p-6 pb-20 relative z-10">
+    <div className="min-h-screen bg-[#0B0B0C] text-zinc-100 font-sans p-3 sm:p-6 pb-20 relative z-10">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* BARRA SUPERIOR & PERFIL DO USUÁRIO */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-5">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
           <div className="flex items-center gap-3">
-            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-[var(--color-primary-border)] shadow-md object-contain flex-shrink-0 bg-[var(--color-bg-card)] p-1" />
+            {usuarioLogado?.fotoPerfilUrl ? (
+              <img 
+                src={usuarioLogado.fotoPerfilUrl} 
+                alt={usuarioLogado.nome} 
+                className="w-12 h-12 rounded-full border-2 border-amber-500 shadow-md object-cover flex-shrink-0" 
+              />
+            ) : (
+              <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-contain flex-shrink-0 bg-[#141416] p-1" />
+            )}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-[var(--color-text-main)]">
-                  PAINEL <span className="text-[var(--color-primary)]">DE GESTÃO</span>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
+                  PAINEL <span className="text-red-600">COMBAT-HUB</span>
                 </h1>
                 {usuarioLogado?.cargo === 'ADMIN' ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                    👑 ADMINISTRADOR
-                  </span>
+                  <>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                      👑 ADMINISTRADOR
+                    </span>
+                    {(usuarioLogado?.is_dev || usuarioLogado?.email === 'brgadmin@boru.com' || usuarioLogado?.email === 'admin@academia.com') && (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-600/30 text-purple-300 border border-purple-500/50 flex items-center gap-1">
+                        💻 [DEV-SYSTEM] (BrgAdmin)
+                      </span>
+                    )}
+                  </>
                 ) : (
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
                     🥋 PROFESSOR
                   </span>
                 )}
               </div>
-              <p className="text-[var(--color-text-muted)] text-xs sm:text-sm mt-1">
-                Olá, <strong className="text-[var(--color-text-main)]">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
-              </p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <p className="text-zinc-400 text-xs sm:text-sm">
+                  Olá, <strong className="text-white">{usuarioLogado?.nome}</strong> ({usuarioLogado?.prajied || 'Prajied Oficial'})
+                </p>
+                <button
+                  onClick={() => abrirModalEdicaoProf(usuarioLogado)}
+                  className="px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 text-[11px] text-amber-400 hover:text-amber-300 font-semibold border border-amber-500/30 flex items-center gap-1 transition"
+                  title="Editar minhas informações de perfil, foto e dados"
+                >
+                  <span>✏️</span> Editar meus dados
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <ThemeSwitcher />
-            {usuarioLogado?.cargo === 'ADMIN' && (
-              <button 
-                onClick={() => setShowModalProf(true)}
-                className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-900/30"
-              >
-                <span>➕ Criar Novo Professor</span>
-              </button>
-            )}
+            <button 
+              onClick={() => abrirModalEdicaoProf(usuarioLogado)}
+              className="px-3 py-2 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-xs font-bold text-amber-400 hover:text-amber-300 transition border border-amber-500/30 flex items-center gap-1.5 shadow-sm"
+              title="Editar minhas informações de perfil, foto e dados"
+            >
+              <span>👤</span> Meu Perfil
+            </button>
             <button 
               onClick={() => setShowModal(true)}
-              className="px-3.5 py-2 rounded-lg theme-btn-primary text-xs font-bold transition flex items-center gap-1.5 shadow-md"
+              className="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
             >
               <span>➕ Novo Aluno</span>
             </button>
@@ -884,123 +1162,242 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* CARDS DE MÉTRICAS */}
+        {/* CARDS DE MÉTRICAS (INTERATIVOS COM ATALHO DIRETO) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
-            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Total de Alunos</p>
+          <div 
+            onClick={() => { setAbaAtiva('alunos'); setFiltroAssiduidade('TODOS'); }}
+            className="bg-[#141416] border border-zinc-800 hover:border-zinc-700 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
+            title="Ver todos os alunos matriculados"
+          >
+            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-white transition">Total de Alunos</p>
             <p className="text-2xl sm:text-3xl font-black text-white">{metricas.totalAlunos}</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5">Matriculados ativos</span>
+            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-zinc-400 transition">Matriculados ativos →</span>
           </div>
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
-            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Em Dia</p>
+          <div 
+            onClick={() => { if (usuarioLogado?.cargo === 'ADMIN') setAbaAtiva('financeiro_gestao'); else setAbaAtiva('alunos'); }}
+            className="bg-[#141416] border border-zinc-800 hover:border-green-600/50 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
+            title="Ver assinaturas e mensalidades em dia"
+          >
+            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-green-400 transition">Em Dia</p>
             <p className="text-2xl sm:text-3xl font-black text-green-500">{metricas.assinaturasAtivas}</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5">Mensalidade vigente</span>
+            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-green-400/70 transition">Mensalidade vigente →</span>
           </div>
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
-            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Atrasados / Pendentes</p>
+          <div 
+            onClick={() => { if (usuarioLogado?.cargo === 'ADMIN') setAbaAtiva('financeiro_gestao'); else setAbaAtiva('alunos'); }}
+            className="bg-[#141416] border border-zinc-800 hover:border-red-600/50 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
+            title="Ver inadimplências e pendências"
+          >
+            <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-red-400 transition">Atrasados / Pendentes</p>
             <p className="text-2xl sm:text-3xl font-black text-red-500">{metricas.inadimplentes}</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5">Vencidas ou sem plano</span>
+            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-red-400/70 transition">Vencidas ou sem plano →</span>
           </div>
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4">
+          <div 
+            onClick={() => setAbaAtiva('chamada_diaria')}
+            className="bg-[#141416] border border-zinc-800 hover:border-cyan-600/50 rounded-xl p-3 sm:p-4 cursor-pointer transition group"
+            title="Abrir Chamada & Frequência de hoje"
+          >
             <div className="flex items-center justify-between">
-              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Assiduidade Geral</p>
+              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-cyan-400 transition">Assiduidade Geral</p>
               <span className="text-xs">📊</span>
             </div>
             <p className="text-2xl sm:text-3xl font-black text-cyan-400">{metricas.taxaPresencaMedia ?? 100}%</p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5">Taxa de presença no mês</span>
+            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-cyan-400/70 transition">Chamada & Frequência →</span>
           </div>
-          <div className="bg-[#141416] border border-zinc-800 rounded-xl p-3 sm:p-4 col-span-2 sm:col-span-1">
+          <div 
+            onClick={() => { setAbaAtiva('alunos'); setFiltroAssiduidade('RISCO'); }}
+            className="bg-[#141416] border border-zinc-800 hover:border-amber-600/50 rounded-xl p-3 sm:p-4 col-span-2 sm:col-span-1 cursor-pointer transition group"
+            title="Filtrar alunos em risco de evasão"
+          >
             <div className="flex items-center justify-between">
-              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">Alunos em Risco</p>
+              <p className="text-zinc-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1 group-hover:text-amber-400 transition">Alunos em Risco</p>
               <span className="text-xs">⚠️</span>
             </div>
             <p className={`text-2xl sm:text-3xl font-black ${(metricas.alunosEmRisco || 0) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
               {metricas.alunosEmRisco || 0}
             </p>
-            <span className="text-[10px] text-zinc-500 block mt-0.5">Frequência menor que 50%</span>
+            <span className="text-[10px] text-zinc-500 block mt-0.5 group-hover:text-amber-400/70 transition">Frequência &lt; 50% (Filtrar) →</span>
           </div>
         </div>
 
-        {/* NAVEGAÇÃO DE ABAS (TOUCH-FRIENDLY & RESPONSIVO) */}
-        <div className="flex gap-2 sm:gap-3 border-b border-zinc-800 pb-3 overflow-x-auto scrollbar-none">
-          <button 
-            onClick={() => setAbaAtiva('alunos')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'alunos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
+        {/* NAVEGAÇÃO DE ABAS (IDENTIDADE VISUAL BORÜ + BARRA DE ROLAGEM CUSTOMIZADA) */}
+        <div className="relative flex items-center gap-1.5 bg-[#111114]/90 border border-zinc-800/90 rounded-2xl p-2 shadow-xl">
+          <button
+            type="button"
+            onClick={() => scrollTabs('left')}
+            title="Deslizar abas para a esquerda"
+            className="shrink-0 w-8 h-9 rounded-xl bg-[#1A1A1E] hover:bg-red-600 text-zinc-400 hover:text-white border border-zinc-700/80 hover:border-red-500 flex items-center justify-center font-black text-base transition shadow-sm"
           >
-            👥 Alunos ({alunos.length})
+            ‹
           </button>
-          <button 
-            onClick={() => {
-              setAbaAtiva('calendario_geral');
-              if (!frequenciaGeral) {
-                carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
-              }
-            }}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'calendario_geral' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
+
+          <div
+            ref={tabsScrollRef}
+            className="flex gap-2 sm:gap-2.5 pb-2 pt-0.5 px-1 overflow-x-auto boru-scrollbar scroll-smooth flex-1"
           >
-            📅 Calendário & Frequência Geral
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('presencas')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'presencas' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            📋 Chamada Rápida ({presencas.length})
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('avisos')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'avisos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            📢 Mural de Avisos ({avisos.length})
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('loja')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'loja' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            🛍️ Loja & Mercado (Beta)
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('agendamentos')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'agendamentos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
-            }`}
-          >
-            🎯 Leads & Aulas Exp.
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('gamificacao')}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-              abaAtiva === 'gamificacao' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
-            }`}
-          >
-            🏆 Gestão de Gamificação
-          </button>
-          <button 
-            onClick={() => setShowSandboxModal(true)}
-            className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-black transition whitespace-nowrap flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-red-600 text-black shadow-lg"
-          >
-            🎮 Visualizar Demo Interativa
-          </button>
-          {usuarioLogado?.cargo === 'ADMIN' && (
             <button 
-              onClick={() => setAbaAtiva('professores')}
+              onClick={() => setAbaAtiva('alunos')}
               className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
-                abaAtiva === 'professores' ? 'bg-amber-600 text-white' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-900/50'
+                abaAtiva === 'alunos' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
               }`}
             >
-              👑 Professores & Equipe
+              👥 Alunos ({alunos.length})
             </button>
-          )}
+            <button 
+              onClick={() => setAbaAtiva('chamada_diaria')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                ['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva)
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20'
+                  : 'bg-[#141416] text-emerald-400 hover:text-white border border-emerald-500/40'
+              }`}
+            >
+              ✅ Chamada & Frequência
+            </button>
+            {usuarioLogado?.cargo === 'ADMIN' && (
+              <button 
+                onClick={() => setAbaAtiva('financeiro_gestao')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  abaAtiva === 'financeiro_gestao' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-[#141416] text-emerald-300 hover:text-white border border-emerald-500/40'
+                }`}
+              >
+                💰 Gestão Financeira & Baixa
+              </button>
+            )}
+            <button 
+              onClick={() => setAbaAtiva('avisos')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                abaAtiva === 'avisos' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+              }`}
+            >
+              📢 Mural de Avisos ({avisos.length})
+            </button>
+            <button 
+              onClick={() => setAbaAtiva('loja')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                abaAtiva === 'loja' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+              }`}
+            >
+              🛍️ Loja & Mercado (Beta)
+            </button>
+            <button 
+              onClick={() => setAbaAtiva('agendamentos')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                abaAtiva === 'agendamentos' ? 'bg-red-600 text-white shadow-md shadow-red-900/30' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+              }`}
+            >
+              🎯 Leads & Aulas Exp.
+            </button>
+            <button 
+              onClick={() => setAbaAtiva('gamificacao')}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                abaAtiva === 'gamificacao' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
+              }`}
+            >
+              🏆 Gestão de Gamificação
+            </button>
+            {usuarioLogado?.cargo === 'ADMIN' && (
+              <button 
+                onClick={() => setAbaAtiva('professores')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                  abaAtiva === 'professores' ? 'bg-amber-600 text-white' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-900/50'
+                }`}
+              >
+                👑 Professores & Equipe
+              </button>
+            )}
+            {(usuarioLogado?.is_dev || usuarioLogado?.email === 'brgadmin@boru.com') && (
+              <button 
+                onClick={() => setAbaAtiva('dev_dashboard')}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-black transition whitespace-nowrap flex items-center gap-1.5 ${
+                  abaAtiva === 'dev_dashboard' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-red-950/40 text-red-400 hover:text-white border border-red-500/50'
+                }`}
+              >
+                💻 Dev Dashboard
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => scrollTabs('right')}
+            title="Deslizar abas para a direita"
+            className="shrink-0 w-8 h-9 rounded-xl bg-[#1A1A1E] hover:bg-red-600 text-zinc-400 hover:text-white border border-zinc-700/80 hover:border-red-500 flex items-center justify-center font-black text-base transition shadow-sm"
+          >
+            ›
+          </button>
         </div>
+
+        {/* SUB-BARRA UNIFICADA DE CHAMADA & FREQUÊNCIA (ELIMINA REDUNDÂNCIAS) */}
+        {['chamada_diaria', 'calendario_geral', 'presencas'].includes(abaAtiva) && (
+          <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-2.5 sm:p-3 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto boru-scrollbar w-full sm:w-auto pb-1 sm:pb-0">
+              <span className="text-xs font-black text-zinc-300 hidden sm:inline mr-1">Visão:</span>
+              <button
+                type="button"
+                onClick={() => setAbaAtiva('chamada_diaria')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+                  abaAtiva === 'chamada_diaria'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/30'
+                    : 'bg-[#1A1A1E] text-zinc-400 hover:text-white border border-zinc-800'
+                }`}
+              >
+                <span>✅ Chamada de Hoje (Split-List)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAbaAtiva('calendario_geral');
+                  if (!frequenciaGeral) {
+                    carregarFrequenciaGeral(mesFrequenciaGeral, anoFrequenciaGeral);
+                  }
+                }}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+                  abaAtiva === 'calendario_geral'
+                    ? 'bg-red-600 text-white shadow-md shadow-red-900/30'
+                    : 'bg-[#1A1A1E] text-zinc-400 hover:text-white border border-zinc-800'
+                }`}
+              >
+                <span>📅 Calendário Geral Mensal</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAbaAtiva('presencas')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+                  abaAtiva === 'presencas'
+                    ? 'bg-red-600 text-white shadow-md shadow-red-900/30'
+                    : 'bg-[#1A1A1E] text-zinc-400 hover:text-white border border-zinc-800'
+                }`}
+              >
+                <span>📋 Histórico de Check-ins ({presencas.length})</span>
+              </button>
+            </div>
+
+            <span className="text-[11px] text-zinc-500 font-medium hidden md:inline">
+              {abaAtiva === 'chamada_diaria' && 'Lista rápida: quem já treinou hoje e quem falta'}
+              {abaAtiva === 'calendario_geral' && 'Frequência da academia dia a dia com roster completo'}
+              {abaAtiva === 'presencas' && 'Tabela detalhada com filtros e ações em lote'}
+            </span>
+          </div>
+        )}
+
+        {/* MÓDULO 6: CHAMADA DIÁRIA SPLIT-LIST */}
+        {abaAtiva === 'chamada_diaria' && (
+          <SplitRollCallTab onRefreshDashboard={carregarDashboard} />
+        )}
+
+        {/* MÓDULO 5: GESTÃO FINANCEIRA & BAIXA MANUAL COM CALENDÁRIO */}
+        {abaAtiva === 'financeiro_gestao' && usuarioLogado?.cargo === 'ADMIN' && (
+          <FinancialDashboardTab
+            onRefreshGlobal={carregarDashboard}
+            usuarioLogadoNome={usuarioLogado?.nome || 'Administração'}
+          />
+        )}
+
+        {/* MÓDULO 1: DEV DASHBOARD (EXCLUSIVO ADMINDEV / BRGADMIN) */}
+        {abaAtiva === 'dev_dashboard' && (usuarioLogado?.is_dev || usuarioLogado?.email === 'brgadmin@boru.com') && (
+          <DevDashboardTab usuarioLogado={usuarioLogado} />
+        )}
 
         {/* CONTEÚDO DA ABA: ALUNOS */}
         {abaAtiva === 'alunos' && (
@@ -1119,8 +1516,13 @@ export default function AdminDashboard() {
                     alunosFiltrados.map(aluno => (
                       <tr key={aluno.id} className="hover:bg-zinc-800/30 transition">
                         <td className="p-3 sm:p-4 font-bold text-white">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span>{aluno.nome}</span>
+                            {aluno.is_bolsista && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-purple-950 text-purple-300 border border-purple-500/40" title="Aluno Bolsista (Isento de mensalidades)">
+                                🎓 BOLSISTA
+                              </span>
+                            )}
                             {aluno.statusAssiduidade === 'RISCO' && !isDiariaOuConvenio(aluno.plano) && (
                               <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-red-950 text-red-400 border border-red-500/40" title="Aluno com frequência menor que 50%">
                                 RISCO
@@ -1161,7 +1563,16 @@ export default function AdminDashboard() {
                           </select>
                         </td>
                         <td className="p-3 sm:p-4">
-                          {isDiariaOuConvenio(aluno.plano) ? (
+                          {aluno.is_bolsista ? (
+                            <>
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                🎓 BOLSISTA
+                              </span>
+                              <span className="block text-[10px] text-zinc-400 mt-0.5 font-medium">
+                                Isento • Acesso Liberado
+                              </span>
+                            </>
+                          ) : isDiariaOuConvenio(aluno.plano) ? (
                             <>
                               <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
                                 ⚡ Diária / Convênio
@@ -1239,9 +1650,20 @@ export default function AdminDashboard() {
                             <button 
                               onClick={() => handleRegistrarPagamento(aluno)}
                               className="px-2.5 py-1 rounded bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 text-xs font-bold transition"
-                              title="Confirmar pagamento presencial (balcão)"
+                              title="Confirmar pagamento presencial (balcão) com escolha de data no Calendário"
                             >
                               💵 Pago (+30d)
+                            </button>
+                            <button
+                              onClick={() => handleToggleBolsista(aluno)}
+                              className={`px-2 py-1 rounded border text-[11px] font-bold transition ${
+                                aluno.is_bolsista
+                                  ? 'bg-purple-600 text-white border-purple-400'
+                                  : 'bg-purple-950/30 text-purple-300 border-purple-500/30 hover:bg-purple-600 hover:text-white'
+                              }`}
+                              title="Alternar status de Aluno Bolsista (Isento de cobranças)"
+                            >
+                              🎓 {aluno.is_bolsista ? 'Bolsista ✓' : 'Bolsista'}
                             </button>
                             {aluno.statusAssiduidade === 'RISCO' && !isDiariaOuConvenio(aluno.plano) ? (
                               <button 
@@ -1311,10 +1733,23 @@ export default function AdminDashboard() {
                 </div>
 
                 <button 
-                  onClick={() => setModalLancarDia(true)}
+                  onClick={() => {
+                    setModoLancarDia('LOTE');
+                    setModalLancarDia(true);
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-emerald-900/30"
+                >
+                  <span>📋 Abrir Tabela em Lote (+ Alunos)</span>
+                </button>
+
+                <button 
+                  onClick={() => {
+                    setModoLancarDia('INDIVIDUAL');
+                    setModalLancarDia(true);
+                  }}
                   className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
                 >
-                  <span>➕ Lançar Aluno neste Dia</span>
+                  <span>➕ Lançar Individual</span>
                 </button>
               </div>
             </div>
@@ -1393,10 +1828,10 @@ export default function AdminDashboard() {
                         const estaSelecionado = diaSelecionadoGeral === dataIso;
 
                         return (
-                          <button
+                          <div
                             key={`dia-g-${dia}`}
                             onClick={() => setDiaSelecionadoGeral(dataIso)}
-                            className={`min-h-[78px] p-2 rounded-lg border text-left flex flex-col justify-between transition group relative ${
+                            className={`min-h-[86px] p-2 rounded-lg border text-left flex flex-col justify-between transition group relative cursor-pointer ${
                               estaSelecionado
                                 ? 'bg-red-950/40 border-red-500 shadow-md shadow-red-950/50 ring-1 ring-red-500'
                                 : diaInfo?.total && diaInfo.total > 0
@@ -1404,17 +1839,36 @@ export default function AdminDashboard() {
                                   : 'bg-[#141416] border-zinc-800/80 hover:border-zinc-700 text-zinc-600'
                             }`}
                           >
-                            <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center justify-between w-full gap-1">
                               <span className={`text-xs font-black ${
                                 estaSelecionado ? 'text-white' : ehHoje ? 'text-red-400' : 'text-zinc-300'
                               }`}>
                                 {dia}
                               </span>
-                              {ehHoje && (
-                                <span className="text-[9px] font-black bg-red-600 text-white px-1 py-0.2 rounded">
-                                  Hoje
-                                </span>
-                              )}
+                              <div className="flex items-center gap-1">
+                                {ehHoje && (
+                                  <span className="text-[8px] font-black bg-red-600 text-white px-1 py-0.2 rounded">
+                                    Hoje
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDiaSelecionadoGeral(dataIso);
+                                    setModoLancarDia('LOTE');
+                                    setModalLancarDia(true);
+                                  }}
+                                  title={`Abrir tabela completa para adicionar alunos em ${dia}/${mesFrequenciaGeral}`}
+                                  className={`px-1.5 py-0.5 rounded text-[9px] font-black transition flex items-center gap-0.5 ${
+                                    estaSelecionado
+                                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow'
+                                      : 'bg-zinc-800/90 hover:bg-emerald-600 text-zinc-300 hover:text-white opacity-85 group-hover:opacity-100'
+                                  }`}
+                                >
+                                  <span>+Tabela</span>
+                                </button>
+                              </div>
                             </div>
 
                             {diaInfo?.total && diaInfo.total > 0 ? (
@@ -1433,7 +1887,7 @@ export default function AdminDashboard() {
                                 Sem registros
                               </div>
                             )}
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -1455,12 +1909,27 @@ export default function AdminDashboard() {
                     </h3>
                   </div>
 
-                  <button 
-                    onClick={() => setModalLancarDia(true)}
-                    className="px-2.5 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-sm"
-                  >
-                    <span>➕ Lançar Aluno</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button 
+                      onClick={() => {
+                        setModoLancarDia('LOTE');
+                        setModalLancarDia(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black transition flex items-center gap-1 shadow-sm"
+                      title="Abrir tabela completa para adicionar vários alunos presentes de uma vez"
+                    >
+                      <span>📋 Tabela em Lote</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setModoLancarDia('INDIVIDUAL');
+                        setModalLancarDia(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold transition flex items-center gap-1 shadow-sm"
+                    >
+                      <span>➕ Lançar Aluno</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* RESUMO DO DIA */}
@@ -1481,8 +1950,36 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto max-h-[420px] space-y-2 pr-1">
-                      {frequenciaGeral.mapaDias[diaSelecionadoGeral].alunos.map((item: any) => (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={buscaAlunoDiaGeral}
+                        onChange={(e) => setBuscaAlunoDiaGeral(e.target.value)}
+                        placeholder="🔍 Filtrar aluno neste dia por nome..."
+                        className="w-full bg-[#1A1A1E] border border-zinc-800 focus:border-red-500 rounded-lg pl-3 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 outline-none"
+                      />
+                      {buscaAlunoDiaGeral && (
+                        <button
+                          type="button"
+                          onClick={() => setBuscaAlunoDiaGeral('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto max-h-[420px] space-y-2 pr-1 boru-scrollbar">
+                      {frequenciaGeral.mapaDias[diaSelecionadoGeral].alunos
+                        .filter((item: any) => {
+                          if (!buscaAlunoDiaGeral.trim()) return true;
+                          const t = buscaAlunoDiaGeral.trim().toLowerCase();
+                          return (
+                            (item.nome && item.nome.toLowerCase().includes(t)) ||
+                            (item.plano && item.plano.toLowerCase().includes(t))
+                          );
+                        })
+                        .map((item: any) => (
                         <div 
                           key={item.id}
                           className="bg-[#1A1A1E] border border-zinc-800 hover:border-zinc-700 rounded-lg p-3 transition"
@@ -1536,7 +2033,7 @@ export default function AdminDashboard() {
 
                             {item.telefone && (
                               <button
-                                onClick={() => window.open(formatarWhatsUrl(item.telefone, `Olá ${item.nome}, equipe da ${ACADEMY_CONFIG.nome} entrando em contato sobre o treino do dia ${diaSelecionadoGeral}.`), '_blank')}
+                                onClick={() => window.open(formatarWhatsUrl(item.telefone, `Olá ${item.nome}, equipe CENTRO DE COMBATE entrando em contato sobre o treino do dia ${diaSelecionadoGeral}.`), '_blank')}
                                 className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px]"
                                 title="Enviar WhatsApp"
                               >
@@ -1555,12 +2052,26 @@ export default function AdminDashboard() {
                     <p className="text-[11px] text-zinc-500 mt-1 max-w-xs">
                       Clique no botão abaixo para adicionar a presença de um aluno ou registrar check-ins.
                     </p>
-                    <button
-                      onClick={() => setModalLancarDia(true)}
-                      className="mt-4 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition"
-                    >
-                      ➕ Lançar Primeiro Check-in
-                    </button>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        onClick={() => {
+                          setModoLancarDia('LOTE');
+                          setModalLancarDia(true);
+                        }}
+                        className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-md shadow-emerald-900/30"
+                      >
+                        📋 Abrir Tabela de Alunos (Em Lote)
+                      </button>
+                      <button
+                        onClick={() => {
+                          setModoLancarDia('INDIVIDUAL');
+                          setModalLancarDia(true);
+                        }}
+                        className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition"
+                      >
+                        ➕ Lançar 1 Aluno
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1604,7 +2115,26 @@ export default function AdminDashboard() {
             </div>
 
             {/* FILTROS DE STATUS E AÇÕES EM LOTE SELECIONADOS */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-1 border-t border-zinc-800/80">
+            <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 pt-1 border-t border-zinc-800/80">
+              <div className="relative flex-1 max-w-sm">
+                <input
+                  type="text"
+                  value={buscaPresenca}
+                  onChange={(e) => setBuscaPresenca(e.target.value)}
+                  placeholder="🔍 Buscar aluno por nome na chamada..."
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 focus:border-red-500 rounded-lg pl-3 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 outline-none"
+                />
+                {buscaPresenca && (
+                  <button
+                    type="button"
+                    onClick={() => setBuscaPresenca('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
                 {['TODOS', 'AGENDADO', 'PRESENTE', 'DOENCA', 'FALTA'].map(st => (
                   <button
@@ -1771,8 +2301,8 @@ export default function AdminDashboard() {
             cargoUsuario={usuarioLogado?.cargo || 'ADMIN'}
             professorId={usuarioLogado?.id}
             alunosLista={alunos}
-            isCombatHub={true}
-            onOpenSandbox={() => setShowSandboxModal(true)}
+            isCombatHub={false}
+            
             onRefreshDashboard={carregarDashboard}
           />
         )}
@@ -1812,23 +2342,37 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center flex-wrap gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white">Loja & Estoque da Academia</h2>
+                  <h2 className="text-xl font-bold text-white">Mercado & Loja do CT</h2>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     VERSÃO BETA
                   </span>
                 </div>
                 <p className="text-xs text-zinc-400">Controle de estoque dos itens físicos vendidos presencialmente na recepção.</p>
               </div>
-              <button 
-                onClick={() => setShowModalProduto(true)}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
-              >
-                <span>➕ Adicionar Produto</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                {usuarioLogado?.cargo === 'ADMIN' && (
+                  <button
+                    onClick={() => setAbaAtiva('financeiro_gestao')}
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-900/30"
+                  >
+                    <span>🛍️ Registrar Venda no Caixa (PDV)</span>
+                  </button>
+                )}
+                <button 
+                  onClick={() => {
+                    setProdutoEditandoId(null);
+                    setNovoProduto({ nome: '', categoria: 'PROTETOR_BUCAL', preco: '', estoque: '10', descricao: '', imagemUrl: '' });
+                    setShowModalProduto(true);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-900/30"
+                >
+                  <span>➕ Adicionar Produto</span>
+                </button>
+              </div>
             </div>
 
             {/* Categorias */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+            <div className="flex gap-2 overflow-x-auto pb-2 boru-scrollbar">
               {['TODOS', 'PROTETOR_BUCAL', 'LUVAS', 'CANELEIRAS', 'BANDAGENS', 'ALIMENTOS'].map(cat => (
                 <button
                   key={cat}
@@ -1851,16 +2395,23 @@ export default function AdminDashboard() {
               {produtos
                 .filter(p => categoriaFiltroLoja === 'TODOS' || p.categoria === categoriaFiltroLoja)
                 .map(prod => (
-                  <div key={prod.id} className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden flex flex-col justify-between hover:border-zinc-700 transition">
-                    <div className="h-40 bg-zinc-900 relative overflow-hidden">
+                  <div key={prod.id} className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden flex flex-col justify-between hover:border-zinc-700 transition group">
+                    <div className="h-44 bg-zinc-900 relative overflow-hidden">
                       <img 
                         src={prod.imagemUrl || 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=500&q=80'} 
                         alt={prod.nome} 
-                        className="w-full h-full object-cover" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
                       />
-                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-black/80 text-white">
+                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-black/80 text-white border border-zinc-700">
                         Estoque: {prod.estoque}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => abrirEditarProduto(prod)}
+                        className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-black/85 hover:bg-red-600 text-white border border-zinc-700 hover:border-red-500 transition flex items-center gap-1 shadow"
+                      >
+                        <span>📷 Trocar Foto / Editar</span>
+                      </button>
                     </div>
 
                     <div className="p-4 flex-1 flex flex-col justify-between">
@@ -1878,12 +2429,21 @@ export default function AdminDashboard() {
                         <span className="text-base font-black text-white">
                           R$ {prod.preco.toFixed(2).replace('.', ',')}
                         </span>
-                        <button 
-                          onClick={() => removerProduto(prod.id)}
-                          className="text-xs text-red-500 hover:text-red-400 transition font-semibold"
-                        >
-                          Remover
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => abrirEditarProduto(prod)}
+                            className="text-xs text-amber-400 hover:text-amber-300 transition font-semibold"
+                          >
+                            Editar
+                          </button>
+                          <button 
+                            onClick={() => removerProduto(prod.id)}
+                            className="text-xs text-red-500 hover:text-red-400 transition font-semibold"
+                          >
+                            Remover
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1926,9 +2486,13 @@ export default function AdminDashboard() {
                     <tr key={prof.id} className="hover:bg-zinc-800/30 transition">
                       <td className="p-3 sm:p-4 font-bold text-white">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-black text-xs text-amber-400">
-                            {prof.nome.charAt(0).toUpperCase()}
-                          </div>
+                          {prof.fotoPerfilUrl ? (
+                            <img src={prof.fotoPerfilUrl} alt={prof.nome} className="w-9 h-9 rounded-full object-cover border border-amber-500/60 shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-black text-xs text-amber-400">
+                              {prof.nome.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                           <div>
                             <span className="text-white font-bold">{prof.nome}</span>
                             <span className="block text-[11px] text-amber-400 font-bold">
@@ -1942,28 +2506,30 @@ export default function AdminDashboard() {
                       </td>
                       <td className="p-3 sm:p-4">
                         <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase border ${
+                          prof.is_dev || prof.modalidade?.includes('DEV') ? 'bg-purple-950/40 text-purple-300 border-purple-500/50 shadow-sm shadow-purple-950/50' :
+                          prof.modalidade?.toLowerCase().includes('administra') ? 'bg-rose-950/40 text-rose-300 border-rose-800/50' :
                           prof.modalidade === 'Jiu-Jitsu' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' :
                           prof.modalidade === 'Boxe' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30' :
                           prof.modalidade === 'MMA' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
                           prof.modalidade === 'Taekwondo' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' :
                           'bg-red-500/10 text-red-400 border-red-500/30'
                         }`}>
-                          {prof.modalidade || 'Muay Thai'}
+                          {prof.is_dev || prof.modalidade?.includes('DEV') ? '💻 [DEV-SYSTEM]' : (prof.modalidade || 'Muay Thai')}
                         </span>
                       </td>
                       <td className="p-3 sm:p-4 text-zinc-200">
                         <div className="font-semibold text-xs text-white">
-                          {prof.graduacao || prof.prajied || 'Sem faixa'}
+                          {prof.graduacao || prof.prajied || (prof.is_dev ? 'Desenvolvedor do Sistema [DEV-SYSTEM]' : 'Sem faixa')}
                         </div>
                         {prof.tempoPratica && (
                           <div className="text-[11px] text-zinc-400 mt-0.5">
-                            🥋 Treino: {prof.tempoPratica}
+                            {prof.is_dev ? `💻 ${prof.tempoPratica}` : `🥋 Treino: ${prof.tempoPratica}`}
                           </div>
                         )}
                       </td>
                       <td className="p-3 sm:p-4">
                         <div className="text-xs font-bold text-amber-300">
-                          {prof.tempoDocencia || 'Tempo de docência não informado'}
+                          {prof.tempoDocencia || (prof.is_dev ? 'Engenharia & Arquitetura de Software' : 'Tempo de docência não informado')}
                         </div>
                         {prof.cargaHorariaSemanal && (
                           <div className="text-[11px] text-zinc-400 mt-0.5">
@@ -1973,7 +2539,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="p-3 sm:p-4">
                         <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-700/80">
-                          <span>⏱️ {prof.tempoAula || '60 min'}</span>
+                          <span>⏱️ {prof.is_dev ? 'Disponibilidade Dev' : (prof.tempoAula || '60 min')}</span>
                         </div>
                         {prof.horariosAula && (
                           <div className="text-[11px] text-zinc-400 mt-1 max-w-[200px] leading-tight line-clamp-2" title={prof.horariosAula}>
@@ -1982,11 +2548,19 @@ export default function AdminDashboard() {
                         )}
                       </td>
                       <td className="p-3 sm:p-4">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                          prof.cargo === 'ADMIN' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        }`}>
-                          {prof.cargo}
-                        </span>
+                        {prof.is_dev || prof.email === 'brgadmin@boru.com' ? (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1 w-fit shadow-sm">
+                            💻 DEV-SYSTEM
+                          </span>
+                        ) : prof.cargo === 'ADMIN' ? (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                            ADMIN
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                            PROFESSOR
+                          </span>
+                        )}
                       </td>
                       <td className="p-3 sm:p-4 text-right">
                         <div className="flex items-center justify-end gap-1.5 flex-wrap">
@@ -2026,23 +2600,44 @@ export default function AdminDashboard() {
         {/* CONTEÚDO DA ABA: LEADS & AGENDAMENTOS EXPERIMENTAIS */}
         {abaAtiva === 'agendamentos' && (
           <div className="bg-[#141416] border border-zinc-800 rounded-xl overflow-hidden shadow-xl p-4 sm:p-6 space-y-4">
-            <div className="flex gap-2 border-b border-zinc-800 pb-3">
-              <button 
-                onClick={() => setSubAbaExperimental('pendentes')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  subAbaExperimental === 'pendentes' ? 'bg-red-600 text-white' : 'bg-[#1A1A1E] text-zinc-400'
-                }`}
-              >
-                Aulas Agendadas ({agendamentos.pendentes?.length || 0})
-              </button>
-              <button 
-                onClick={() => setSubAbaExperimental('posAula')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  subAbaExperimental === 'posAula' ? 'bg-red-600 text-white' : 'bg-[#1A1A1E] text-zinc-400'
-                }`}
-              >
-                Pós-Aula / Fechar Contrato ({agendamentos.posAula?.length || 0})
-              </button>
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-b border-zinc-800 pb-3">
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setSubAbaExperimental('pendentes')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                    subAbaExperimental === 'pendentes' ? 'bg-red-600 text-white' : 'bg-[#1A1A1E] text-zinc-400'
+                  }`}
+                >
+                  Aulas Agendadas ({agendamentos.pendentes?.length || 0})
+                </button>
+                <button 
+                  onClick={() => setSubAbaExperimental('posAula')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                    subAbaExperimental === 'posAula' ? 'bg-red-600 text-white' : 'bg-[#1A1A1E] text-zinc-400'
+                  }`}
+                >
+                  Pós-Aula / Fechar Contrato ({agendamentos.posAula?.length || 0})
+                </button>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  value={buscaAgendamento}
+                  onChange={(e) => setBuscaAgendamento(e.target.value)}
+                  placeholder="🔍 Buscar por nome ou telefone..."
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 focus:border-red-500 rounded-lg pl-3 pr-8 py-1.5 text-xs text-white placeholder-zinc-500 outline-none"
+                />
+                {buscaAgendamento && (
+                  <button
+                    type="button"
+                    onClick={() => setBuscaAgendamento('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             {subAbaExperimental === 'pendentes' ? (
@@ -2057,18 +2652,35 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/60">
-                    {agendamentos.pendentes?.map((ag: any) => (
+                    {agendamentos.pendentes
+                      ?.filter((ag: any) => {
+                        if (!buscaAgendamento.trim()) return true;
+                        const t = buscaAgendamento.trim().toLowerCase();
+                        return (ag.nome && ag.nome.toLowerCase().includes(t)) || (ag.telefone && ag.telefone.includes(t));
+                      })
+                      .map((ag: any) => (
                       <tr key={ag.id} className="hover:bg-zinc-800/30">
                         <td className="p-3 font-bold text-white">{ag.nome}</td>
                         <td className="p-3 text-zinc-300">{ag.telefone}</td>
                         <td className="p-3 text-zinc-300">{ag.data} às {ag.horario}</td>
                         <td className="p-3 text-right">
-                          <button 
-                            onClick={() => marcarAulaRealizada(ag.id)}
-                            className="px-2.5 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition"
-                          >
-                            ✓ Fez a Aula
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            {/* MÓDULO 4: BOTÃO AVISAR NO WHATSAPP */}
+                            <button
+                              type="button"
+                              onClick={() => handleAvisarExperimentalWhatsApp(ag)}
+                              className="px-2.5 py-1 rounded bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1"
+                              title="Enviar confirmação de agendamento experimental via WhatsApp"
+                            >
+                              <span>📲 Avisar no WhatsApp</span>
+                            </button>
+                            <button 
+                              onClick={() => marcarAulaRealizada(ag.id)}
+                              className="px-2.5 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition"
+                            >
+                              ✓ Fez a Aula
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -2087,7 +2699,13 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/60">
-                    {agendamentos.posAula?.map((ag: any) => (
+                    {agendamentos.posAula
+                      ?.filter((ag: any) => {
+                        if (!buscaAgendamento.trim()) return true;
+                        const t = buscaAgendamento.trim().toLowerCase();
+                        return (ag.nome && ag.nome.toLowerCase().includes(t)) || (ag.telefone && ag.telefone.includes(t));
+                      })
+                      .map((ag: any) => (
                       <tr key={ag.id} className="hover:bg-zinc-800/30">
                         <td className="p-3 font-bold text-white">
                           {ag.nome}
@@ -2122,8 +2740,13 @@ export default function AdminDashboard() {
 
       {/* MODAL NOVO ALUNO */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
-          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] overflow-y-auto boru-scrollbar"
+        >
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl my-auto">
             <h3 className="text-xl font-bold text-white mb-4">Matricular Novo Aluno</h3>
             <form onSubmit={criarAluno} className="space-y-3">
               <div>
@@ -2151,6 +2774,21 @@ export default function AdminDashboard() {
                   </select>
                 </div>
               </div>
+              {/* MÓDULO 1: FLAG BOLSISTA */}
+              <div className="pt-2">
+                <label className="flex items-center gap-2.5 cursor-pointer bg-purple-950/20 border border-purple-500/30 rounded-lg p-2.5">
+                  <input
+                    type="checkbox"
+                    checked={novoAluno.is_bolsista}
+                    onChange={(e) => setNovoAluno({...novoAluno, is_bolsista: e.target.checked})}
+                    className="w-4 h-4 rounded accent-purple-500"
+                  />
+                  <div>
+                    <span className="text-xs font-black text-purple-300 block">🎓 Aluno Bolsista Integral (is_bolsista)</span>
+                    <span className="text-[10px] text-zinc-400">Não gera faturas mensais automáticas e nunca perde acesso por inadimplência.</span>
+                  </div>
+                </label>
+              </div>
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold">Salvar Matrícula</button>
@@ -2160,17 +2798,108 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* MÓDULO 5: MODAL DE BAIXA MANUAL COM DATEPICKER (CALENDÁRIO) */}
+      {alunoBaixaModal && (
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setAlunoBaixaModal(null);
+          }}
+          className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] overflow-y-auto boru-scrollbar"
+        >
+          <div className="bg-[#141416] border border-emerald-500/40 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4 my-auto">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div>
+                <span className="text-[10px] uppercase font-black tracking-widest text-emerald-400 block">
+                  Baixa Manual de Mensalidade (+30 dias)
+                </span>
+                <h3 className="text-lg font-black text-white">{alunoBaixaModal.nome}</h3>
+              </div>
+              <button
+                onClick={() => setAlunoBaixaModal(null)}
+                className="text-zinc-500 hover:text-white font-bold text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={confirmarBaixaComCalendario} className="space-y-4">
+              <div>
+                <label className="block text-emerald-300 text-xs font-black mb-1 uppercase tracking-wider">
+                  📅 Data Real do Pagamento (Calendário Obrigatório)
+                </label>
+                <p className="text-[11px] text-zinc-400 mb-2">
+                  Selecione no calendário em qual data (passada ou presente) este pagamento ocorreu:
+                </p>
+                <input
+                  type="date"
+                  required
+                  value={dataPagamentoBaixa}
+                  onChange={(e) => setDataPagamentoBaixa(e.target.value)}
+                  className="w-full bg-[#1A1A1E] border-2 border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-xs font-bold mb-1">Método de Recebimento</label>
+                <select
+                  value={metodoPagamentoBaixa}
+                  onChange={(e) => setMetodoPagamentoBaixa(e.target.value)}
+                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-xl px-3 py-2.5 text-xs text-white font-semibold"
+                >
+                  <option value="PIX / Presencial">PIX Presencial</option>
+                  <option value="Dinheiro em Espécie">Dinheiro em Espécie</option>
+                  <option value="Cartão Débito/Crédito">Cartão de Débito / Crédito</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setAlunoBaixaModal(null)}
+                  className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvandoBaixaRapida}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-900/30"
+                >
+                  {salvandoBaixaRapida ? 'Confirmando...' : '✓ Confirmar Baixa (+30d)'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MODAL NOVO PROFESSOR (EXCLUSIVO ADMIN) */}
       {showModalProf && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-4 z-[99999] overflow-y-auto">
-          <div className="bg-[#141416] border border-zinc-800 p-5 sm:p-6 rounded-2xl w-full max-w-xl shadow-2xl my-6">
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModalProf(false);
+          }}
+          className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-4 z-[99999] overflow-y-auto boru-scrollbar"
+        >
+          <div className="bg-[#141416] border border-zinc-800 p-5 sm:p-6 rounded-2xl w-full max-w-xl shadow-2xl my-auto">
             <h3 className="text-xl font-bold text-amber-400 mb-1">Cadastrar Professor / Usuário</h3>
             <p className="text-zinc-400 text-xs mb-4">Adicione um novo instrutor com permissão de lançar chamadas, gerenciar horários e graduar alunos.</p>
             
             <form onSubmit={criarProfessor} className="space-y-3">
               <div>
                 <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome Completo</label>
-                <input required type="text" value={novoProfessor.nome} onChange={(e) => setNovoProfessor({...novoProfessor, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Mestre Carlos Silva" />
+                <input required type="text" value={novoProfessor.nome} onChange={(e) => setNovoProfessor({...novoProfessor, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Coordenação Técnica" />
+              </div>
+
+              {/* DIRETRIZ 3 & MÓDULO 1: UPLOAD REAL DE FOTO DE PERFIL DO PROFESSOR */}
+              <div className="pt-1">
+                <FileUploadInput
+                  label="Foto de Perfil do Professor (Storage Local / Sem URL Externa)"
+                  value={novoProfessor.fotoPerfilUrl}
+                  onChange={(url) => setNovoProfessor({ ...novoProfessor, fotoPerfilUrl: url })}
+                  folder="professores"
+                  helperText="Faça upload da foto oficial do professor (PNG, JPG ou WEBP)"
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2180,14 +2909,14 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
-                  <input type="text" value={novoProfessor.telefone} onChange={(e) => setNovoProfessor({...novoProfessor, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="(11) 98765-4321" />
+                  <input type="text" value={novoProfessor.telefone} onChange={(e) => setNovoProfessor({...novoProfessor, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="(69) 99999-9999" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail (Contato / Opcional)</label>
-                  <input type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="professor@academia.com" />
+                  <input type="email" value={novoProfessor.email} onChange={(e) => setNovoProfessor({...novoProfessor, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="professor@boru.com" />
                 </div>
                 <div>
                   <label className="block text-amber-400 text-xs font-bold mb-1">Senha Inicial (Registrada pelo Admin)</label>
@@ -2226,6 +2955,8 @@ export default function AdminDashboard() {
                     <option value="Boxe">🥊 Boxe</option>
                     <option value="MMA">🤼 MMA</option>
                     <option value="Taekwondo">🥋 Taekwondo</option>
+                    <option value="[DEV-SYSTEM]">💻 [DEV-SYSTEM] - Desenvolvimento de Software</option>
+                    <option value="Administração Geral">🏢 Administração Geral</option>
                   </select>
                 </div>
 
@@ -2246,7 +2977,11 @@ export default function AdminDashboard() {
               {/* GRADUAÇÃO DINÂMICA OU TEMPO DE PRÁTICA */}
               <div>
                 <label className="block text-zinc-300 text-xs font-semibold mb-1">
-                  {novoProfessor.modalidade === 'Boxe' || novoProfessor.modalidade === 'MMA'
+                  {novoProfessor.modalidade === '[DEV-SYSTEM]'
+                    ? 'Função & Nível Técnico / Atuação ([DEV-SYSTEM])'
+                    : novoProfessor.modalidade === 'Administração Geral'
+                    ? 'Função Administrativa & Gestão'
+                    : novoProfessor.modalidade === 'Boxe' || novoProfessor.modalidade === 'MMA'
                     ? `Tempo de Prática / Experiência (${novoProfessor.modalidade})`
                     : `Graduação de Faixa / Prajied (${novoProfessor.modalidade})`}
                 </label>
@@ -2332,12 +3067,23 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* MODAL EDITAR PROFESSOR (EXCLUSIVO ADMIN) */}
+      {/* MODAL EDITAR PROFESSOR (EXCLUSIVO ADMIN & MEU PERFIL) */}
       {showModalEditarProf && professorParaEditar && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-4 z-[99999] overflow-y-auto">
-          <div className="bg-[#141416] border border-zinc-800 p-5 sm:p-6 rounded-2xl w-full max-w-xl shadow-2xl my-6">
-            <h3 className="text-xl font-bold text-white mb-1">Editar Dados do Professor</h3>
-            <p className="text-zinc-400 text-xs mb-4">Altere modalidade, faixa, tempo de aulas/docência e horários de {professorParaEditar.nome}.</p>
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModalEditarProf(false);
+          }}
+          className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-4 z-[99999] overflow-y-auto boru-scrollbar"
+        >
+          <div className="bg-[#141416] border border-zinc-800 p-5 sm:p-6 rounded-2xl w-full max-w-xl shadow-2xl my-auto">
+            <h3 className="text-xl font-bold text-white mb-1">
+              {professorParaEditar.id === usuarioLogado?.id ? '👤 Editar Meus Dados de Perfil' : 'Editar Dados do Professor'}
+            </h3>
+            <p className="text-zinc-400 text-xs mb-4">
+              {professorParaEditar.id === usuarioLogado?.id 
+                ? 'Atualize seu nome, foto de perfil oficial, CPF, telefone, e-mail e dados de graduação.' 
+                : `Altere modalidade, faixa, tempo de aulas/docência e horários de ${professorParaEditar.nome}.`}
+            </p>
             
             <form onSubmit={salvarEdicaoProfessor} className="space-y-3">
               <div>
@@ -2345,23 +3091,40 @@ export default function AdminDashboard() {
                 <input required type="text" value={professorParaEditar.nome} onChange={(e) => setProfessorParaEditar({...professorParaEditar, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
               </div>
 
+              {/* DIRETRIZ 3 & MÓDULO 1: UPLOAD REAL DE FOTO DE PERFIL DO PROFESSOR */}
+              <div className="pt-1">
+                <FileUploadInput
+                  label="Foto de Perfil (Storage Local / Sem URL Externa)"
+                  value={professorParaEditar.fotoPerfilUrl || ''}
+                  onChange={(url) => setProfessorParaEditar({ ...professorParaEditar, fotoPerfilUrl: url })}
+                  folder="professores"
+                  helperText="Faça upload da foto oficial (PNG, JPG ou WEBP)"
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-amber-400 text-xs font-bold mb-1">CPF (Login do Professor - Obrigatório)</label>
+                  <label className="block text-amber-400 text-xs font-bold mb-1">CPF (Login Principal - Obrigatório)</label>
                   <input required type="text" value={professorParaEditar.cpf || ''} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cpf: e.target.value})} className="w-full bg-[#1A1A1E] border border-amber-500/50 rounded-lg p-2.5 text-sm text-white font-mono" placeholder="000.000.000-00" />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
-                  <input type="text" value={professorParaEditar.telefone} onChange={(e) => setProfessorParaEditar({...professorParaEditar, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail (Login Alternativo)</label>
+                  <input type="email" value={professorParaEditar.email || ''} onChange={(e) => setProfessorParaEditar({...professorParaEditar, email: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="email@boru.com" />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
-                <select value={professorParaEditar.cargo} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
-                  <option value="PROFESSOR">Professor / Instrutor</option>
-                  <option value="ADMIN">Administrador Geral</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">WhatsApp / Telefone</label>
+                  <input type="text" value={professorParaEditar.telefone || ''} onChange={(e) => setProfessorParaEditar({...professorParaEditar, telefone: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="(69) 99999-9999" />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Cargo</label>
+                  <select value={professorParaEditar.cargo} onChange={(e) => setProfessorParaEditar({...professorParaEditar, cargo: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                    <option value="PROFESSOR">Professor / Instrutor</option>
+                    <option value="ADMIN">Administrador Geral</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-zinc-800">
@@ -2386,6 +3149,8 @@ export default function AdminDashboard() {
                     <option value="Boxe">🥊 Boxe</option>
                     <option value="MMA">🤼 MMA</option>
                     <option value="Taekwondo">🥋 Taekwondo</option>
+                    <option value="[DEV-SYSTEM]">💻 [DEV-SYSTEM] - Desenvolvimento de Software</option>
+                    <option value="Administração Geral">🏢 Administração Geral</option>
                   </select>
                 </div>
 
@@ -2405,7 +3170,11 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block text-zinc-300 text-xs font-semibold mb-1">
-                  {professorParaEditar.modalidade === 'Boxe' || professorParaEditar.modalidade === 'MMA'
+                  {professorParaEditar.modalidade === '[DEV-SYSTEM]'
+                    ? 'Função & Nível Técnico / Atuação ([DEV-SYSTEM])'
+                    : professorParaEditar.modalidade === 'Administração Geral'
+                    ? 'Função Administrativa & Gestão'
+                    : professorParaEditar.modalidade === 'Boxe' || professorParaEditar.modalidade === 'MMA'
                     ? `Tempo de Prática / Experiência (${professorParaEditar.modalidade})`
                     : `Graduação de Faixa / Prajied (${professorParaEditar.modalidade})`}
                 </label>
@@ -2424,13 +3193,13 @@ export default function AdminDashboard() {
                   ))}
                 </select>
 
-                {(professorParaEditar.modalidade === 'Boxe' || professorParaEditar.modalidade === 'MMA') && (
+                {(professorParaEditar.modalidade === 'Boxe' || professorParaEditar.modalidade === 'MMA' || professorParaEditar.modalidade === '[DEV-SYSTEM]' || professorParaEditar.modalidade === 'Administração Geral') && (
                   <div className="mt-2">
                     <input 
                       type="text" 
-                      value={professorParaEditar.tempoPratica || ''} 
-                      onChange={(e) => setProfessorParaEditar({...professorParaEditar, tempoPratica: e.target.value, graduacao: e.target.value})} 
-                      placeholder="Ou digite o cartel / tempo personalizado"
+                      value={professorParaEditar.graduacao || ''} 
+                      onChange={(e) => setProfessorParaEditar({...professorParaEditar, graduacao: e.target.value, prajied_faixa: e.target.value})} 
+                      placeholder="Ou digite o título / cargo personalizado (Ex: Desenvolvedor do Sistema [DEV-SYSTEM])"
                       className="w-full bg-[#1A1A1E] border border-zinc-700/80 rounded-lg p-2 text-xs text-zinc-300 placeholder-zinc-500"
                     />
                   </div>
@@ -2539,20 +3308,47 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* MODAL NOVO PRODUTO NA LOJA */}
+      {/* MODAL NOVO / EDITAR PRODUTO NA LOJA (COM UPLOAD DE IMAGEM LOCAL DO PC OU CELULAR) */}
       {showModalProduto && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999]">
-          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-3">Adicionar Produto na Loja</h3>
-            <form onSubmit={criarProduto} className="space-y-3">
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowModalProduto(false);
+              setProdutoEditandoId(null);
+            }
+          }}
+          className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[99999] overflow-y-auto boru-scrollbar"
+        >
+          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl my-auto">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  {produtoEditandoId ? 'Editar Produto na Loja' : 'Adicionar Produto na Loja'}
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Envie uma foto baixada no seu computador ou direto da galeria/câmera do celular.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowModalProduto(false);
+                  setProdutoEditandoId(null);
+                }}
+                className="text-zinc-500 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={criarProduto} className="space-y-3.5">
               <div>
                 <label className="block text-zinc-400 text-xs font-semibold mb-1">Nome do Produto</label>
                 <input required type="text" value={novoProduto.nome} onChange={(e) => setNovoProduto({...novoProduto, nome: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: Luva Muay Thai 14oz" />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">Categoria</label>
-                  <select value={novoProduto.categoria} onChange={(e) => setNovoProduto({...novoProduto, categoria: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white">
+                  <select value={novoProduto.categoria} onChange={(e) => setNovoProduto({...novoProduto, categoria: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs sm:text-sm text-white">
                     <option value="PROTETOR_BUCAL">Protetor Bucal</option>
                     <option value="LUVAS">Luvas</option>
                     <option value="CANELEIRAS">Caneleiras</option>
@@ -2564,20 +3360,67 @@ export default function AdminDashboard() {
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">Preço (R$)</label>
                   <input required type="number" step="0.5" value={novoProduto.preco} onChange={(e) => setNovoProduto({...novoProduto, preco: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ex: 45.00" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-zinc-400 text-xs font-semibold mb-1">Estoque</label>
                   <input type="number" value={novoProduto.estoque} onChange={(e) => setNovoProduto({...novoProduto, estoque: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" />
                 </div>
+              </div>
+
+              {/* UPLOAD DE ARQUIVO DO COMPUTADOR OU CELULAR */}
+              <div className="pt-2 border-t border-zinc-800 space-y-2.5">
+                <FileUploadInput
+                  label="📸 Foto do Produto (Baixada no Computador ou Galeria do Celular)"
+                  value={novoProduto.imagemUrl}
+                  onChange={(uploadedUrl) => setNovoProduto({ ...novoProduto, imagemUrl: uploadedUrl })}
+                  folder="produtos_loja"
+                  helperText="Clique em 'Escolher Arquivo Local' para enviar foto do PC ou Celular (PNG, JPG, WEBP)"
+                />
+
+                {novoProduto.imagemUrl && (
+                  <div className="relative h-36 w-full rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900">
+                    <img
+                      src={novoProduto.imagemUrl}
+                      alt="Pré-visualização do Produto"
+                      className="w-full h-full object-contain bg-black/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNovoProduto({ ...novoProduto, imagemUrl: '' })}
+                      className="absolute top-2 right-2 px-2 py-1 rounded bg-black/80 hover:bg-red-600 text-white text-[10px] font-bold transition"
+                    >
+                      ✕ Remover Foto
+                    </button>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-zinc-400 text-xs font-semibold mb-1">URL Imagem</label>
-                  <input type="text" value={novoProduto.imagemUrl} onChange={(e) => setNovoProduto({...novoProduto, imagemUrl: e.target.value})} className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-sm text-white" placeholder="Opcional" />
+                  <label className="block text-zinc-500 text-[11px] font-semibold mb-1">
+                    Ou cole uma URL de Imagem externa (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={novoProduto.imagemUrl?.startsWith('data:') ? '' : novoProduto.imagemUrl}
+                    onChange={(e) => setNovoProduto({ ...novoProduto, imagemUrl: e.target.value })}
+                    className="w-full bg-[#1A1A1E] border border-zinc-800 rounded-lg p-2 text-xs text-zinc-300"
+                    placeholder="https://... (opcional se você já escolheu uma foto acima)"
+                  />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => setShowModalProduto(false)} className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold">Cadastrar</button>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModalProduto(false);
+                    setProdutoEditandoId(null);
+                  }}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-red-900/30">
+                  {produtoEditandoId ? 'Salvar Alterações' : 'Cadastrar Produto'}
+                </button>
               </div>
             </form>
           </div>
@@ -2585,9 +3428,30 @@ export default function AdminDashboard() {
       )}
 
       {/* MODAL CALENDÁRIO & FREQUÊNCIA DETALHADA COM PORCENTAGENS */}
-      {alunoSelecionado && calendarioDados && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-6 z-[99999] overflow-y-auto">
-          <div className="bg-[#141416] border border-zinc-800 rounded-2xl w-full max-w-3xl p-5 sm:p-7 shadow-2xl my-8">
+      {alunoSelecionado && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setAlunoSelecionado(null);
+          }}
+          className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 z-[999999] overflow-y-auto boru-scrollbar"
+        >
+          {loadingCalendario || !calendarioDados ? (
+            <div className="bg-[#141416] border border-zinc-800 rounded-2xl w-full max-w-sm p-7 shadow-2xl flex flex-col items-center justify-center gap-4 text-center my-auto">
+              <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+              <div>
+                <h4 className="text-base font-black text-white">Carregando Calendário...</h4>
+                <p className="text-xs text-zinc-400 mt-1">{alunoSelecionado.nome}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAlunoSelecionado(null)}
+                className="px-4 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <div className="bg-[#141416] border border-zinc-800 rounded-2xl w-full max-w-3xl p-4 sm:p-6 md:p-7 shadow-2xl my-auto max-h-[92vh] overflow-y-auto boru-scrollbar">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
@@ -2701,15 +3565,21 @@ export default function AdminDashboard() {
                   </button>
                 );
               })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* MODAL AÇÃO DO DIA (PRESENÇA / FALTA / DOENÇA) */}
       {modalAcaoDia && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[999999]">
-          <div className="bg-[#141416] border border-zinc-800 p-5 rounded-2xl w-full max-w-sm shadow-2xl">
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setModalAcaoDia(false);
+          }}
+          className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[999999] overflow-y-auto boru-scrollbar"
+        >
+          <div className="bg-[#141416] border border-zinc-800 p-5 rounded-2xl w-full max-w-sm shadow-2xl my-auto">
             <h4 className="text-base font-bold text-white mb-2">Lançar Registro para {diaSelecionadoAcao}</h4>
             
             <div className="space-y-3">
@@ -2787,91 +3657,493 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* MODAL LANÇAR ALUNO NO DIA DO CALENDÁRIO GERAL */}
-      {modalLancarDia && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[999999] overflow-y-auto">
-          <div className="bg-[#141416] border border-zinc-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white">Lançar Presença na Turma</h3>
-                <p className="text-xs text-zinc-400">
-                  Data: <strong className="text-red-400">
-                    {new Date(diaSelecionadoGeral + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-                  </strong>
-                </p>
+      {/* MODAL LANÇAR ALUNO NO DIA DO CALENDÁRIO GERAL (EM LOTE COM TABELA COMPLETA OU INDIVIDUAL) */}
+      {modalLancarDia && (() => {
+        const registrosDoDiaMap = new Map<string, any>();
+        const listaDiaAtual = frequenciaGeral?.mapaDias?.[diaSelecionadoGeral]?.alunos || [];
+        listaDiaAtual.forEach((item: any) => {
+          if (item.alunoId) registrosDoDiaMap.set(item.alunoId, item);
+        });
+
+        const alunosTabelaDiaFiltrados = alunos.filter((a) => {
+          const termo = buscaLancarDia.trim().toLowerCase();
+          const bateBusca =
+            !termo ||
+            (a.nome && a.nome.toLowerCase().includes(termo)) ||
+            (a.cpf && a.cpf.toLowerCase().includes(termo));
+          if (!bateBusca) return false;
+
+          if (filtroPlanoLancarDia !== 'TODOS') {
+            if (filtroPlanoLancarDia === 'BOLSISTA' && !a.is_bolsista) return false;
+            if (filtroPlanoLancarDia === 'CONVENIO_DIARIA' && !isDiariaOuConvenio(a.plano)) return false;
+            if (
+              filtroPlanoLancarDia !== 'BOLSISTA' &&
+              filtroPlanoLancarDia !== 'CONVENIO_DIARIA' &&
+              (a.plano || '') !== filtroPlanoLancarDia
+            ) {
+              return false;
+            }
+          }
+
+          if (apenasNaoLancadosDia && registrosDoDiaMap.has(a.id)) {
+            return false;
+          }
+
+          return true;
+        });
+
+        const todosFiltradosMarcados =
+          alunosTabelaDiaFiltrados.length > 0 &&
+          alunosTabelaDiaFiltrados.every((a) => alunosSelecionadosDia.includes(a.id));
+
+        return (
+          <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-3 sm:p-5 z-[999999] overflow-y-auto">
+            <div
+              className={`bg-[#141416] border border-zinc-800 p-5 sm:p-6 rounded-2xl w-full shadow-2xl my-6 transition-all ${
+                modoLancarDia === 'LOTE' ? 'max-w-4xl' : 'max-w-md'
+              }`}
+            >
+              {/* CABEÇALHO DO MODAL + SELETOR DE MODO (EM LOTE vs INDIVIDUAL) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-800 mb-4">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                    <span>Lançar Presença na Turma</span>
+                    {modoLancarDia === 'LOTE' && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
+                        Modo Tabela em Lote
+                      </span>
+                    )}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <span className="text-xs text-zinc-400">Data:</span>
+                    <input
+                      type="date"
+                      value={diaSelecionadoGeral}
+                      onChange={(e) => {
+                        if (e.target.value) setDiaSelecionadoGeral(e.target.value);
+                      }}
+                      className="bg-[#1A1A1E] border border-red-500/50 rounded-lg px-2.5 py-1 text-xs font-bold text-red-400 focus:outline-none focus:border-red-500"
+                    />
+                    <span className="text-xs text-zinc-300 font-semibold">
+                      ({new Date(diaSelecionadoGeral + 'T12:00:00').toLocaleDateString('pt-BR', {
+                        weekday: 'long',
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  <div className="flex bg-[#1A1A1E] p-1 rounded-xl border border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setModoLancarDia('LOTE')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${
+                        modoLancarDia === 'LOTE'
+                          ? 'bg-emerald-600 text-white shadow'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      📋 Em Lote (Tabela)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setModoLancarDia('INDIVIDUAL')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                        modoLancarDia === 'INDIVIDUAL'
+                          ? 'bg-red-600 text-white shadow'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      👤 Individual (1 Aluno)
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setModalLancarDia(false)}
+                    className="text-zinc-500 hover:text-white text-lg font-bold px-2"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-              <button 
-                onClick={() => setModalLancarDia(false)}
-                className="text-zinc-500 hover:text-white text-lg font-bold"
-              >
-                ✕
-              </button>
+
+              {/* MODO 1: TABELA COMPLETA PARA LANÇAR NOVOS ALUNOS PRESENTES EM LOTE */}
+              {modoLancarDia === 'LOTE' ? (
+                <div className="space-y-4">
+                  {/* CONFIGURAÇÃO DE STATUS E OBSERVAÇÃO DO LOTE */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#1A1A1E]/80 border border-zinc-800 rounded-xl p-3.5">
+                    <div>
+                      <label className="block text-zinc-300 text-xs font-bold mb-1">
+                        Status da Presença para os Selecionados
+                      </label>
+                      <select
+                        value={statusLancarDia}
+                        onChange={(e) => setStatusLancarDia(e.target.value)}
+                        className="w-full bg-[#141416] border border-zinc-700 rounded-lg p-2.5 text-xs text-white font-bold"
+                      >
+                        <option value="PRESENTE">🟢 PRESENTE (Treinou normalmente)</option>
+                        <option value="DOENCA">🔵 FALTA POR DOENÇA (Com atestado)</option>
+                        <option value="FALTA">🔴 FALTA NÃO JUSTIFICADA</option>
+                        <option value="JUSTIFICADO">ℹ️ OUTRA JUSTIFICATIVA (Trabalho/Viagem)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-300 text-xs font-bold mb-1">
+                        Observação / Justificativa (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={justificativaLancarDia}
+                        onChange={(e) => setJustificativaLancarDia(e.target.value)}
+                        placeholder="Ex: Turma das 19h30, Treino coletivo, Atestado..."
+                        className="w-full bg-[#141416] border border-zinc-700 rounded-lg p-2.5 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* BARRA DE BUSCA, FILTROS E SELEÇÃO EM MASSA */}
+                  <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2 flex-1">
+                      <input
+                        type="text"
+                        value={buscaLancarDia}
+                        onChange={(e) => setBuscaLancarDia(e.target.value)}
+                        placeholder="🔍 Buscar aluno por nome ou CPF..."
+                        className="flex-1 min-w-[200px] bg-[#1A1A1E] border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500"
+                      />
+
+                      <select
+                        value={filtroPlanoLancarDia}
+                        onChange={(e) => setFiltroPlanoLancarDia(e.target.value)}
+                        className="bg-[#1A1A1E] border border-zinc-700 rounded-lg px-2.5 py-2 text-xs text-zinc-200 font-semibold"
+                      >
+                        <option value="TODOS">Todos os Planos ({alunos.length})</option>
+                        <option value="2x na semana">2x na semana</option>
+                        <option value="3x na semana">3x na semana</option>
+                        <option value="Todos os Horários">Todos os Horários</option>
+                        <option value="CONVENIO_DIARIA">Wellhub / TotalPass / Diária</option>
+                        <option value="BOLSISTA">Alunos Bolsistas</option>
+                      </select>
+
+                      <label className="flex items-center gap-1.5 text-xs text-zinc-300 bg-[#1A1A1E] border border-zinc-800 px-2.5 py-2 rounded-lg cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={apenasNaoLancadosDia}
+                          onChange={(e) => setApenasNaoLancadosDia(e.target.checked)}
+                          className="rounded bg-zinc-800 border-zinc-700 text-red-600"
+                        />
+                        <span>Ocultar já lançados no dia</span>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (todosFiltradosMarcados) {
+                            const idsFiltrados = new Set(alunosTabelaDiaFiltrados.map((a) => a.id));
+                            setAlunosSelecionadosDia((prev) => prev.filter((id) => !idsFiltrados.has(id)));
+                          } else {
+                            const novos = new Set([
+                              ...alunosSelecionadosDia,
+                              ...alunosTabelaDiaFiltrados.map((a) => a.id),
+                            ]);
+                            setAlunosSelecionadosDia(Array.from(novos));
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition whitespace-nowrap"
+                      >
+                        {todosFiltradosMarcados
+                          ? 'Desmarcar Filtrados'
+                          : `☑️ Selecionar Todos (${alunosTabelaDiaFiltrados.length})`}
+                      </button>
+
+                      {alunosSelecionadosDia.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setAlunosSelecionadosDia([])}
+                          className="px-2.5 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 text-xs font-bold transition"
+                        >
+                          Limpar ({alunosSelecionadosDia.length})
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* TABELA COMPLETA DE ALUNOS */}
+                  <div className="border border-zinc-800 rounded-xl overflow-hidden bg-[#101012]">
+                    <div className="max-h-[360px] overflow-y-auto boru-scrollbar">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-[#1A1A1E] text-zinc-400 uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-zinc-800">
+                          <tr>
+                            <th className="p-3 w-10 text-center">
+                              <input
+                                type="checkbox"
+                                checked={todosFiltradosMarcados}
+                                onChange={() => {
+                                  if (todosFiltradosMarcados) {
+                                    const idsFiltrados = new Set(alunosTabelaDiaFiltrados.map((a) => a.id));
+                                    setAlunosSelecionadosDia((prev) => prev.filter((id) => !idsFiltrados.has(id)));
+                                  } else {
+                                    const novos = new Set([
+                                      ...alunosSelecionadosDia,
+                                      ...alunosTabelaDiaFiltrados.map((a) => a.id),
+                                    ]);
+                                    setAlunosSelecionadosDia(Array.from(novos));
+                                  }
+                                }}
+                                className="rounded bg-zinc-800 border-zinc-700 text-red-600"
+                              />
+                            </th>
+                            <th className="p-3">Aluno</th>
+                            <th className="p-3">Plano</th>
+                            <th className="p-3">Graduação</th>
+                            <th className="p-3">Status neste Dia</th>
+                            <th className="p-3 text-right">1-Clique Rápido</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/60">
+                          {alunosTabelaDiaFiltrados.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="p-8 text-center text-zinc-500">
+                                Nenhum aluno encontrado para este filtro.
+                              </td>
+                            </tr>
+                          ) : (
+                            alunosTabelaDiaFiltrados.map((aluno) => {
+                              const selecionado = alunosSelecionadosDia.includes(aluno.id);
+                              const regHoje = registrosDoDiaMap.get(aluno.id);
+
+                              return (
+                                <tr
+                                  key={aluno.id}
+                                  onClick={() => {
+                                    if (selecionado) {
+                                      setAlunosSelecionadosDia((prev) => prev.filter((id) => id !== aluno.id));
+                                    } else {
+                                      setAlunosSelecionadosDia((prev) => [...prev, aluno.id]);
+                                    }
+                                  }}
+                                  className={`cursor-pointer transition ${
+                                    selecionado
+                                      ? 'bg-emerald-950/30 hover:bg-emerald-950/40'
+                                      : 'hover:bg-zinc-800/40'
+                                  }`}
+                                >
+                                  <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                      type="checkbox"
+                                      checked={selecionado}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setAlunosSelecionadosDia((prev) => [...prev, aluno.id]);
+                                        } else {
+                                          setAlunosSelecionadosDia((prev) => prev.filter((id) => id !== aluno.id));
+                                        }
+                                      }}
+                                      className="rounded bg-zinc-800 border-zinc-700 text-emerald-500"
+                                    />
+                                  </td>
+                                  <td className="p-3">
+                                    <div className="font-bold text-white flex items-center gap-1.5">
+                                      <span>{aluno.nome}</span>
+                                      {aluno.is_bolsista && (
+                                        <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                          BOLSISTA
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] text-zinc-500">CPF: {aluno.cpf}</span>
+                                  </td>
+                                  <td className="p-3 text-zinc-300 font-medium">{aluno.plano || '2x na semana'}</td>
+                                  <td className="p-3 text-zinc-400">{aluno.prajied || 'Branco'}</td>
+                                  <td className="p-3">
+                                    {regHoje ? (
+                                      <span
+                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                          regHoje.status === 'PRESENTE'
+                                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                            : regHoje.status === 'DOENCA'
+                                              ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                        }`}
+                                      >
+                                        ✓ Já lançado ({regHoje.status})
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] text-zinc-500 italic">Sem registro no dia</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
+                                    <div className="inline-flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleLancarAlunoRapidoNaTabela(aluno.id, 'PRESENTE')}
+                                        className="px-2.5 py-1 rounded bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-[10px] font-black transition"
+                                        title="Adicionar este aluno como Presente imediatamente"
+                                      >
+                                        + Presente
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleLancarAlunoRapidoNaTabela(aluno.id, 'FALTA')}
+                                        className="px-2 py-1 rounded bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 text-[10px] font-bold transition"
+                                        title="Marcar Falta imediatamente"
+                                      >
+                                        ✗ Falta
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* RODAPÉ DO LOTE */}
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-zinc-800">
+                    <div className="text-xs text-zinc-400">
+                      Selecionados para lançar em lote:{' '}
+                      <strong className="text-emerald-400 text-sm">{alunosSelecionadosDia.length} aluno(s)</strong>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setModalLancarDia(false)}
+                        className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition"
+                      >
+                        Fechar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={salvandoLoteDia || alunosSelecionadosDia.length === 0}
+                        onClick={handleLancarPresencaLoteDiaGeral}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-black transition shadow-lg shadow-emerald-900/30 flex items-center gap-1.5"
+                      >
+                        <span>✅</span>
+                        <span>
+                          {salvandoLoteDia
+                            ? 'Salvando Lote...'
+                            : `Salvar Presença em Lote (${alunosSelecionadosDia.length} alunos)`}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* MODO 2: LANÇAMENTO INDIVIDUAL CLÁSSICO */
+                <form onSubmit={handleLancarPresencaDiaGeral} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-zinc-400 text-xs font-semibold">Selecione o Aluno</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={buscaAlunoLancarIndividual}
+                        onChange={(e) => setBuscaAlunoLancarIndividual(e.target.value)}
+                        placeholder="🔍 Digite para pesquisar aluno por nome..."
+                        className="w-full bg-[#141416] border border-zinc-700 focus:border-red-500 rounded-lg pl-3 pr-8 py-2 text-xs text-white placeholder-zinc-500 outline-none"
+                      />
+                      {buscaAlunoLancarIndividual && (
+                        <button
+                          type="button"
+                          onClick={() => setBuscaAlunoLancarIndividual('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    {(() => {
+                      const filtrados = alunos.filter((a) => {
+                        if (!buscaAlunoLancarIndividual.trim()) return true;
+                        const t = buscaAlunoLancarIndividual.trim().toLowerCase();
+                        return a.nome.toLowerCase().includes(t) || (a.cpf && a.cpf.includes(t));
+                      });
+                      return (
+                        <select
+                          required
+                          value={alunoLancarDia}
+                          onChange={(e) => setAlunoLancarDia(e.target.value)}
+                          className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white font-medium"
+                        >
+                          <option value="">-- Escolha um aluno ({filtrados.length} encontrados) --</option>
+                          {filtrados.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.nome} ({a.plano || 'Geral'}) - Prajied {a.prajied || 'Branco'}
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    })()}
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-400 text-xs font-semibold mb-1">Status da Presença</label>
+                    <select
+                      value={statusLancarDia}
+                      onChange={(e) => setStatusLancarDia(e.target.value)}
+                      className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white font-medium"
+                    >
+                      <option value="PRESENTE">🟢 PRESENTE (Treinou normalmente)</option>
+                      <option value="DOENCA">🔵 FALTA POR DOENÇA (Com atestado)</option>
+                      <option value="FALTA">🔴 FALTA NÃO JUSTIFICADA</option>
+                      <option value="JUSTIFICADO">ℹ️ OUTRA JUSTIFICATIVA (Trabalho/Viagem)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-400 text-xs font-semibold mb-1">
+                      Observação / Justificativa (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={justificativaLancarDia}
+                      onChange={(e) => setJustificativaLancarDia(e.target.value)}
+                      placeholder="Ex: Treino das 18h, Atestado de 2 dias, etc."
+                      className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white"
+                    />
+                  </div>
+
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setModoLancarDia('LOTE')}
+                      className="w-full py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition"
+                    >
+                      📋 Quer selecionar vários alunos de uma vez? Abrir Tabela em Lote →
+                    </button>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setModalLancarDia(false)}
+                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition"
+                    >
+                      Salvar Presença
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
-
-            <form onSubmit={handleLancarPresencaDiaGeral} className="space-y-4">
-              <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">Selecione o Aluno</label>
-                <select
-                  required
-                  value={alunoLancarDia}
-                  onChange={(e) => setAlunoLancarDia(e.target.value)}
-                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white font-medium"
-                >
-                  <option value="">-- Escolha um aluno --</option>
-                  {alunos.map(a => (
-                    <option key={a.id} value={a.id}>
-                      {a.nome} ({a.plano || 'Geral'}) - {a.prajied || 'Branco'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">Status da Presença</label>
-                <select
-                  value={statusLancarDia}
-                  onChange={(e) => setStatusLancarDia(e.target.value)}
-                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white font-medium"
-                >
-                  <option value="PRESENTE">🟢 PRESENTE (Treinou normalmente)</option>
-                  <option value="DOENCA">🔵 FALTA POR DOENÇA (Com atestado)</option>
-                  <option value="FALTA">🔴 FALTA NÃO JUSTIFICADA</option>
-                  <option value="JUSTIFICADO">ℹ️ OUTRA JUSTIFICATIVA (Trabalho/Viagem)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-zinc-400 text-xs font-semibold mb-1">Observação / Justificativa (Opcional)</label>
-                <input
-                  type="text"
-                  value={justificativaLancarDia}
-                  onChange={(e) => setJustificativaLancarDia(e.target.value)}
-                  placeholder="Ex: Treino das 18h, Atestado de 2 dias, etc."
-                  className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg p-2.5 text-xs text-white"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setModalLancarDia(false)}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition"
-                >
-                  Salvar Presença
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      <CombatHubSandboxModal isOpen={showSandboxModal} onClose={() => setShowSandboxModal(false)} />
     </div>
   );
 }

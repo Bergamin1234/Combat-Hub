@@ -4,22 +4,40 @@ import { PrismaClient } from '@prisma/client';
 import path from 'path';
 import { evaluateStudentGamification } from './gamificationService';
 import { registerGamificationRoutes } from './gamificationRoutes';
+import { registerAddonRoutes, calcularProximoVencimentoPorAdesao } from './addonRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(cors());
-app.use(express.json());
-registerGamificationRoutes(app, prisma);
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(url => url.trim()) : [])
+];
 
-// Servir arquivos estáticos do frontend (modo portátil / produção)
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || !process.env.FRONTEND_URL) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por CORS'));
+    }
+  },
+  credentials: true
+}));
+app.use(express.json({ limit: '15mb' }));
+registerGamificationRoutes(app, prisma);
+registerAddonRoutes(app, prisma);
+
+// Servir arquivos estáticos do frontend e uploads (modo portátil / produção)
 app.use(express.static(path.join(__dirname, '../public')));
 
 // ==========================================
-// AUTENTICAÇÃO RBAC (ADMIN & PROFESSORES)
+// AUTENTICAÇÃO RBAC (ADMIN DEV, ADMIN GERAL & PROFESSORES)
 // ==========================================
 
-// Login unificado de equipe (Administrador e Professores)
+// Login unificado de equipe (AdminDev, Administrador Geral e Professores)
 app.post('/api/auth/login', async (req, res) => {
   const { emailOuUsuario, senha } = req.body;
 
@@ -31,44 +49,65 @@ app.post('/api/auth/login', async (req, res) => {
   const termoLower = termo.toLowerCase();
   const cpfLimpo = termo.replace(/\D/g, '');
 
-  // 1. Verificação do Administrador Master (Acesso: BrgAdmin | Senha: CentroDeCombateModelTotallity984490@!)
-  const isAdminLogin = (termoLower === 'brgadmin' || termoLower === 'admin' || termoLower === 'admin@academia.com' || termoLower === 'brgadmin@academia.com' || termoLower === 'brgadmin@boru.com' || termoLower === 'admin@boru.com');
+  // 1. Verificação do AdminDev / BrgAdmin (Ítalo Bergamin | Acesso: BrgAdmin)
+  const isAdminLogin = (
+    termoLower === 'brgadmin' ||
+    termoLower === 'brgadmin@boru.com' ||
+    termoLower === 'admin@boru.com' ||
+    termoLower === 'admin@academia.com' ||
+    termoLower === 'brgadmin@academia.com' ||
+    termoLower === 'admin'
+  );
 
   if (isAdminLogin) {
-    if (senha !== 'CentroDeCombateModelTotallity984490@!') {
-      return res.status(401).json({ erro: 'Senha incorreta para o Administrador.' });
-    }
-
-    // Garante que o registro no banco exista e esteja com as credenciais oficiais
     let adminDb = await prisma.usuario.findFirst({
       where: {
         OR: [
-          { email: 'admin@academia.com' },
-          { email: 'brgadmin@academia.com' },
           { email: 'brgadmin@boru.com' },
+          { email: 'admin@academia.com' },
           { email: 'admin@boru.com' },
-          { cargo: 'ADMIN' }
+          { is_dev: true }
         ]
       }
     });
 
+    const senhasMasterValidas = [
+      'BoruCentroDeCombate98490@!',
+      'CentroDeCombateModelTotallity984490@!',
+      ...(adminDb?.senha ? [adminDb.senha] : [])
+    ];
+
+    if (!senhasMasterValidas.includes(senha)) {
+      return res.status(401).json({ erro: 'Senha incorreta para o Administrador.' });
+    }
+
     if (!adminDb) {
       adminDb = await prisma.usuario.create({
         data: {
-          nome: 'Administrador Master',
-          email: 'admin@academia.com',
-          senha: 'CentroDeCombateModelTotallity984490@!',
+          nome: 'Ítalo Bergamin (BrgAdmin)',
+          email: 'brgadmin@boru.com',
+          cpf: '02555331280',
+          senha: 'BoruCentroDeCombate98490@!',
           cargo: 'ADMIN',
-          telefone: '(11) 98765-4321',
-          prajied: 'Prajied Preto'
+          is_dev: true,
+          modalidade: '[DEV-SYSTEM]',
+          graduacao: 'Desenvolvedor do Sistema [DEV-SYSTEM]',
+          prajied: 'Desenvolvedor do Sistema [DEV-SYSTEM]',
+          prajied_faixa: 'Desenvolvedor do Sistema [DEV-SYSTEM]',
+          tempoDocencia: 'Engenharia & Arquitetura de Software',
+          tempoPratica: 'Desenvolvimento Full-Stack',
+          tempoAula: 'Disponibilidade Dev',
+          horariosAula: 'Suporte & Atualizações Contínuas',
+          horarios_aula: 'Suporte & Atualizações Contínuas',
+          cargaHorariaSemanal: 'Manutenção e Evolução do Sistema',
+          telefone: '(69) 99238-4491'
         }
       });
-    } else if (adminDb.senha !== 'CentroDeCombateModelTotallity984490@!') {
+    } else if (!adminDb.is_dev) {
       adminDb = await prisma.usuario.update({
         where: { id: adminDb.id },
         data: {
-          email: 'admin@academia.com',
-          senha: 'CentroDeCombateModelTotallity984490@!'
+          is_dev: true
         }
       });
     }
@@ -78,15 +117,28 @@ app.post('/api/auth/login', async (req, res) => {
         id: adminDb.id,
         nome: adminDb.nome,
         email: adminDb.email,
+        cpf: adminDb.cpf,
         cargo: 'ADMIN',
+        is_dev: true,
+        role_level: 'ADMIN_DEV',
         telefone: adminDb.telefone,
-        prajied: adminDb.prajied || 'Prajied Preto'
+        modalidade: adminDb.modalidade || '[DEV-SYSTEM]',
+        graduacao: adminDb.graduacao || adminDb.prajied_faixa || adminDb.prajied || 'Desenvolvedor do Sistema [DEV-SYSTEM]',
+        tempoPratica: adminDb.tempoPratica,
+        tempoDocencia: adminDb.tempoDocencia || 'Engenharia & Arquitetura de Software',
+        tempoAula: adminDb.tempoAula || 'Disponibilidade Dev',
+        horariosAula: adminDb.horariosAula || adminDb.horarios_aula || 'Suporte & Atualizações Contínuas',
+        horarios_aula: adminDb.horarios_aula || adminDb.horariosAula || 'Suporte & Atualizações Contínuas',
+        cargaHorariaSemanal: adminDb.cargaHorariaSemanal || 'Manutenção e Evolução do Sistema',
+        prajied: adminDb.prajied || 'Desenvolvedor do Sistema [DEV-SYSTEM]',
+        prajied_faixa: adminDb.prajied_faixa || adminDb.prajied || 'Desenvolvedor do Sistema [DEV-SYSTEM]',
+        fotoPerfilUrl: adminDb.fotoPerfilUrl || null
       }
     });
   }
 
   try {
-    // 2. Busca do usuário (Professor através do CPF ou E-mail)
+    // 2. Busca do usuário (Admin Geral Amanda / Felipe ou Professor através do CPF ou E-mail)
     const condicoes: any[] = [
       { email: termoLower }
     ];
@@ -105,13 +157,13 @@ app.post('/api/auth/login', async (req, res) => {
 
     if (!usuario) {
       return res.status(401).json({
-        erro: 'Usuário não localizado. Professores devem acessar informando o seu CPF e senha cadastrados pelo Administrador.'
+        erro: 'Usuário não localizado. Professores e Administradores devem acessar informando o seu CPF ou E-mail e senha cadastrados.'
       });
     }
 
     if (usuario.senha !== senha) {
       return res.status(401).json({
-        erro: 'Senha incorreta. A troca de senha de professores é realizada exclusivamente pelo Administrador.'
+        erro: 'Senha incorreta. A troca de senha de equipe é realizada pelo Administrador.'
       });
     }
 
@@ -122,15 +174,20 @@ app.post('/api/auth/login', async (req, res) => {
         email: usuario.email,
         cpf: usuario.cpf,
         cargo: usuario.cargo,
+        is_dev: Boolean(usuario.is_dev),
+        role_level: usuario.is_dev ? 'ADMIN_DEV' : usuario.cargo,
         telefone: usuario.telefone,
         modalidade: usuario.modalidade || 'Muay Thai',
         graduacao: usuario.graduacao || usuario.prajied,
         tempoPratica: usuario.tempoPratica,
         tempoDocencia: usuario.tempoDocencia,
         tempoAula: usuario.tempoAula || '60 min',
-        horariosAula: usuario.horariosAula,
+        horariosAula: usuario.horariosAula || usuario.horarios_aula,
+        horarios_aula: usuario.horarios_aula || usuario.horariosAula,
         cargaHorariaSemanal: usuario.cargaHorariaSemanal,
-        prajied: usuario.prajied
+        prajied: usuario.prajied,
+        prajied_faixa: usuario.prajied_faixa || usuario.prajied || usuario.graduacao,
+        fotoPerfilUrl: usuario.fotoPerfilUrl || null
       }
     });
   } catch (error) {
@@ -169,9 +226,12 @@ app.post('/api/admin/professores', async (req, res) => {
     tempoPratica, 
     tempoDocencia, 
     tempoAula, 
-    horariosAula, 
+    horariosAula,
+    horarios_aula,
     cargaHorariaSemanal, 
-    prajied 
+    prajied,
+    prajied_faixa,
+    fotoPerfilUrl
   } = req.body;
 
   if (!nome || !senha) {
@@ -180,7 +240,7 @@ app.post('/api/admin/professores', async (req, res) => {
 
   const cargoFinal = cargo === 'ADMIN' ? 'ADMIN' : 'PROFESSOR';
   const cpfLimpo = cpf ? cpf.replace(/\D/g, '') : null;
-  const emailFinal = email ? email.trim().toLowerCase() : (cpfLimpo ? `${cpfLimpo}@academia.com` : `professor_${Date.now()}@academia.com`);
+  const emailFinal = email ? email.trim().toLowerCase() : (cpfLimpo ? `${cpfLimpo}@boru.com` : `professor_${Date.now()}@boru.com`);
 
   if (cargoFinal === 'PROFESSOR' && (!cpfLimpo || cpfLimpo.length < 11)) {
     return res.status(400).json({ erro: 'CPF válido (11 dígitos) é obrigatório para cadastrar o professor. O professor usará este CPF para fazer login no sistema.' });
@@ -207,7 +267,8 @@ app.post('/api/admin/professores', async (req, res) => {
     }
 
     const modalidadeFinal = modalidade || 'Muay Thai';
-    const graduacaoFinal = graduacao || prajied || 'Prajied Azul Escuro e Preto';
+    const graduacaoFinal = prajied_faixa || graduacao || prajied || 'Prajied Azul Escuro e Preto';
+    const horariosFinal = horarios_aula || horariosAula || null;
 
     const novo = await prisma.usuario.create({
       data: {
@@ -222,9 +283,12 @@ app.post('/api/admin/professores', async (req, res) => {
         tempoPratica: tempoPratica ? tempoPratica.trim() : null,
         tempoDocencia: tempoDocencia ? tempoDocencia.trim() : null,
         tempoAula: tempoAula || '60 min',
-        horariosAula: horariosAula ? horariosAula.trim() : null,
+        horariosAula: horariosFinal ? String(horariosFinal).trim() : null,
+        horarios_aula: horariosFinal ? String(horariosFinal).trim() : null,
         cargaHorariaSemanal: cargaHorariaSemanal ? cargaHorariaSemanal.trim() : null,
         prajied: graduacaoFinal,
+        prajied_faixa: graduacaoFinal,
+        fotoPerfilUrl: fotoPerfilUrl || null,
         ativo: true
       }
     });
@@ -265,7 +329,8 @@ app.patch('/api/admin/professores/:id', async (req, res) => {
     email,
     cpf,
     telefone, 
-    prajied, 
+    prajied,
+    prajied_faixa,
     cargo, 
     senha,
     modalidade,
@@ -274,32 +339,80 @@ app.patch('/api/admin/professores/:id', async (req, res) => {
     tempoDocencia,
     tempoAula,
     horariosAula,
+    horarios_aula,
     cargaHorariaSemanal,
-    ativo
+    fotoPerfilUrl,
+    ativo,
+    is_dev
   } = req.body;
 
   try {
+    const userExistente = await prisma.usuario.findUnique({ where: { id } });
+    if (!userExistente) {
+      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    }
+
     const dataUpdate: any = {};
     if (nome) dataUpdate.nome = nome.trim();
-    if (email) dataUpdate.email = email.trim().toLowerCase();
-    if (cpf !== undefined) dataUpdate.cpf = cpf ? cpf.replace(/\D/g, '') : null;
-    if (telefone !== undefined) dataUpdate.telefone = telefone;
-    if (cargo) dataUpdate.cargo = cargo;
-    if (senha && senha.trim()) dataUpdate.senha = senha.trim();
-    if (modalidade) dataUpdate.modalidade = modalidade;
-    if (graduacao) {
-      dataUpdate.graduacao = graduacao;
-      dataUpdate.prajied = graduacao;
-    } else if (prajied) {
-      dataUpdate.prajied = prajied;
-      dataUpdate.graduacao = prajied;
+    
+    if (email) {
+      const emailLimpo = email.trim().toLowerCase();
+      const existingEmail = await prisma.usuario.findFirst({
+        where: { email: emailLimpo, id: { not: id } }
+      });
+      if (existingEmail) {
+        return res.status(400).json({ erro: 'Este e-mail já está sendo utilizado por outro usuário.' });
+      }
+      dataUpdate.email = emailLimpo;
     }
-    if (tempoPratica !== undefined) dataUpdate.tempoPratica = tempoPratica;
-    if (tempoDocencia !== undefined) dataUpdate.tempoDocencia = tempoDocencia;
-    if (tempoAula !== undefined) dataUpdate.tempoAula = tempoAula;
-    if (horariosAula !== undefined) dataUpdate.horariosAula = horariosAula;
-    if (cargaHorariaSemanal !== undefined) dataUpdate.cargaHorariaSemanal = cargaHorariaSemanal;
-    if (ativo !== undefined) dataUpdate.ativo = ativo;
+
+    if (cpf !== undefined) {
+      const cpfLimpo = cpf ? String(cpf).replace(/\D/g, '') : null;
+      if (cpfLimpo) {
+        const existingCpf = await prisma.usuario.findFirst({
+          where: { cpf: cpfLimpo, id: { not: id } }
+        });
+        if (existingCpf) {
+          return res.status(400).json({ erro: `O CPF ${cpf} já está em uso por outro usuário (${existingCpf.nome}).` });
+        }
+      }
+      dataUpdate.cpf = cpfLimpo;
+    }
+
+    if (telefone !== undefined) dataUpdate.telefone = telefone ? String(telefone).trim() : null;
+    if (cargo) dataUpdate.cargo = cargo;
+    if (senha && String(senha).trim()) dataUpdate.senha = String(senha).trim();
+    if (modalidade) dataUpdate.modalidade = modalidade;
+    
+    const faixaFinal = prajied_faixa || graduacao || prajied;
+    if (faixaFinal) {
+      dataUpdate.graduacao = faixaFinal;
+      dataUpdate.prajied = faixaFinal;
+      dataUpdate.prajied_faixa = faixaFinal;
+    }
+
+    if (tempoPratica !== undefined) dataUpdate.tempoPratica = tempoPratica ? String(tempoPratica) : null;
+    if (tempoDocencia !== undefined) dataUpdate.tempoDocencia = tempoDocencia ? String(tempoDocencia) : null;
+    if (tempoAula !== undefined) dataUpdate.tempoAula = tempoAula ? String(tempoAula) : '60 min';
+    
+    if (horariosAula !== undefined || horarios_aula !== undefined) {
+      const hRaw = horarios_aula !== undefined ? horarios_aula : horariosAula;
+      let hVal: string | null = null;
+      if (Array.isArray(hRaw)) {
+        hVal = hRaw.filter(Boolean).map((s: any) => String(s).trim()).join(', ');
+      } else if (typeof hRaw === 'string') {
+        hVal = hRaw.trim();
+      } else if (hRaw) {
+        hVal = String(hRaw);
+      }
+      dataUpdate.horariosAula = hVal || null;
+      dataUpdate.horarios_aula = hVal || null;
+    }
+
+    if (cargaHorariaSemanal !== undefined) dataUpdate.cargaHorariaSemanal = cargaHorariaSemanal ? String(cargaHorariaSemanal) : null;
+    if (fotoPerfilUrl !== undefined) dataUpdate.fotoPerfilUrl = fotoPerfilUrl || null;
+    if (ativo !== undefined) dataUpdate.ativo = Boolean(ativo);
+    if (is_dev !== undefined) dataUpdate.is_dev = Boolean(is_dev);
 
     const atualizado = await prisma.usuario.update({
       where: { id },
@@ -307,8 +420,9 @@ app.patch('/api/admin/professores/:id', async (req, res) => {
     });
 
     res.json({ mensagem: 'Dados do professor atualizados com sucesso!', professor: atualizado });
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao atualizar professor.' });
+  } catch (error: any) {
+    console.error('Erro ao atualizar professor:', error);
+    res.status(500).json({ erro: error?.message || 'Erro ao atualizar dados do professor.' });
   }
 });
 
@@ -356,7 +470,7 @@ app.post('/api/admin/avisos', async (req, res) => {
         titulo: titulo.trim(),
         conteudo: conteudo.trim(),
         tipo: tipo || 'GERAL',
-        autorNome: autorNome || 'Coordenação Técnica',
+        autorNome: autorNome || 'Felipe Borü',
         autorCargo: autorCargo || 'Professor',
         fixado: Boolean(fixado)
       }
@@ -380,7 +494,7 @@ app.delete('/api/admin/avisos/:id', async (req, res) => {
 });
 
 // ==========================================
-// LOJA & MERCADO COMBAT HUB (BETA)
+// LOJA & MERCADO BORÜ (BETA)
 // ==========================================
 
 // Listar produtos da loja (com filtro opcional por categoria)
@@ -499,7 +613,7 @@ app.post('/api/alunos/recuperar-senha', async (req, res) => {
       return res.status(404).json({ erro: 'Nenhum aluno encontrado com este contato.' });
     }
 
-    const senhaTemporaria = 'senha123';
+    const senhaTemporaria = 'boru123';
     
     await prisma.aluno.update({
       where: { id: aluno.id },
@@ -509,7 +623,7 @@ app.post('/api/alunos/recuperar-senha', async (req, res) => {
       }
     });
 
-    res.json({ mensagem: 'Sua senha foi redefinida para "senha123". Faça o login com essa senha e crie uma nova em seguida!' });
+    res.json({ mensagem: 'Sua senha foi redefinida para "boru123". Faça o login com essa senha e crie uma nova em seguida!' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro interno ao recuperar senha.' });
@@ -551,7 +665,7 @@ app.post('/api/alunos/login', async (req, res) => {
     res.json({
       ...aluno,
       isDiariaOuConvenio,
-      tipoCobranca: isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE'
+      tipoCobranca: aluno.is_bolsista ? 'BOLSISTA' : isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE'
     });
   } catch (error) {
     res.status(500).json({ erro: 'Erro interno no servidor.' });
@@ -718,11 +832,12 @@ app.post('/api/checkin', async (req, res) => {
       }
     });
 
-    evaluateStudentGamification(prisma, alunoId).catch(() => {});
+    const gamificacao = await evaluateStudentGamification(prisma, alunoId).catch(() => null);
 
     res.json({ 
       mensagem: 'Oss! Check-in registrado com sucesso! Mostre sua determinação no tatame.', 
-      checkin 
+      checkin,
+      gamificacao
     });
   } catch (error: any) {
     res.status(500).json({ erro: 'Erro ao realizar check-in.' });
@@ -735,7 +850,7 @@ app.post('/api/checkin', async (req, res) => {
 
 // Criar Aluno
 app.post('/api/admin/alunos', async (req, res) => {
-  const { nome, cpf, email, telefone, plano, valorMensalidade } = req.body;
+  const { nome, cpf, email, telefone, plano, valorMensalidade, is_bolsista, data_de_adesao } = req.body;
   
   if (!nome || !cpf) {
     return res.status(400).json({ erro: 'Nome e CPF são obrigatórios.' });
@@ -757,6 +872,8 @@ app.post('/api/admin/alunos', async (req, res) => {
 
   const emailSanitizado = email && typeof email === 'string' && email.trim() !== '' ? email.trim().toLowerCase() : null;
   const telefoneSanitizado = telefone && typeof telefone === 'string' ? telefone.trim() : null;
+  const flagBolsista = Boolean(is_bolsista);
+  const dataAdesao = data_de_adesao ? new Date(data_de_adesao + 'T12:00:00') : new Date();
 
   try {
     const alunoExistente = await prisma.aluno.findFirst({
@@ -780,6 +897,8 @@ app.post('/api/admin/alunos', async (req, res) => {
     const planoLower = (plano || '').toLowerCase();
     const isDiariaOuConvenio = planoLower.includes('diária') || planoLower.includes('diaria') || planoLower.includes('wellhub') || planoLower.includes('totalpass') || planoLower.includes('gympass');
 
+    const proximoVencimento = calcularProximoVencimentoPorAdesao(dataAdesao, dataAdesao);
+
     const novoAluno = await prisma.aluno.create({
       data: {
         nome: nome.trim(),
@@ -789,11 +908,14 @@ app.post('/api/admin/alunos', async (req, res) => {
         plano: plano || '2x na semana',
         senha: senhaTemporaria,
         primeiroAcesso: true,
-        ...(!isDiariaOuConvenio ? {
+        is_bolsista: flagBolsista,
+        data_de_adesao: dataAdesao,
+        // Regra Módulo 1: Aluno bolsista não gera fatura mensal automática
+        ...(!isDiariaOuConvenio && !flagBolsista ? {
           mensalidades: {
             create: {
               valor: valorFinal,
-              dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
+              dataVencimento: proximoVencimento,
               status: 'PENDENTE'
             }
           }
@@ -814,10 +936,12 @@ app.get('/api/admin/dashboard', async (req, res) => {
     const totalAlunos = await prisma.aluno.count();
     const agora = new Date();
 
+    // Regra Módulo 1: Ignorar alunos com is_bolsista == true na contagem de inadimplência
     const inadimplentesCount = await prisma.mensalidade.count({
       where: {
         status: 'ATRASADO',
-        dataVencimento: { lt: agora }
+        dataVencimento: { lt: agora },
+        aluno: { is_bolsista: false }
       }
     });
 
@@ -855,10 +979,13 @@ app.get('/api/admin/dashboard', async (req, res) => {
 
     const alunosFormatados = alunos.map(aluno => {
       const ultimaMensalidade = aluno.mensalidades[0];
-      let diasVencimento = null;
+      let diasVencimento: number | null = null;
       let statusMensalidade = 'PAGO';
 
-      if (ultimaMensalidade) {
+      if (aluno.is_bolsista) {
+        statusMensalidade = 'BOLSISTA';
+        diasVencimento = null;
+      } else if (ultimaMensalidade) {
         statusMensalidade = ultimaMensalidade.status;
         const diferencaTempo = ultimaMensalidade.dataVencimento.getTime() - agora.getTime();
         diasVencimento = Math.ceil(diferencaTempo / (1000 * 3600 * 24));
@@ -909,8 +1036,12 @@ app.get('/api/admin/dashboard', async (req, res) => {
         cpf: aluno.cpf,
         email: aluno.email,
         telefone: aluno.telefone,
-        status: isDiariaOuConvenio ? 'LIBERADO' : statusMensalidade,
-        diasVencimento: isDiariaOuConvenio ? null : diasVencimento,
+        is_bolsista: aluno.is_bolsista,
+        has_signed_contract: aluno.has_signed_contract,
+        data_de_adesao: aluno.data_de_adesao,
+        contract_signed_at: aluno.contract_signed_at,
+        status: aluno.is_bolsista ? 'BOLSISTA' : isDiariaOuConvenio ? 'LIBERADO' : statusMensalidade,
+        diasVencimento: (aluno.is_bolsista || isDiariaOuConvenio) ? null : diasVencimento,
         prajied: aluno.prajied,
         modalidade: aluno.modalidade || 'Muay Thai',
         isDiariaOuConvenio,
@@ -964,10 +1095,10 @@ app.patch('/api/admin/alunos/:id/prajied', async (req, res) => {
   }
 });
 
-// Atualizar Dados Gerais do Aluno (Plano, Prajied, Nome, etc.)
+// Atualizar Dados Gerais do Aluno (Plano, Prajied, Nome, is_bolsista, etc.)
 app.patch('/api/admin/alunos/:id', async (req, res) => {
   const { id } = req.params;
-  const { plano, prajied, nome, telefone, email } = req.body;
+  const { plano, prajied, nome, telefone, email, is_bolsista, data_de_adesao } = req.body;
   try {
     const dadosAtualizar: any = {};
     if (plano !== undefined) dadosAtualizar.plano = plano;
@@ -975,6 +1106,8 @@ app.patch('/api/admin/alunos/:id', async (req, res) => {
     if (nome !== undefined) dadosAtualizar.nome = nome.trim();
     if (telefone !== undefined) dadosAtualizar.telefone = telefone ? telefone.trim() : null;
     if (email !== undefined) dadosAtualizar.email = email ? email.trim().toLowerCase() : null;
+    if (is_bolsista !== undefined) dadosAtualizar.is_bolsista = Boolean(is_bolsista);
+    if (data_de_adesao !== undefined) dadosAtualizar.data_de_adesao = data_de_adesao ? new Date(data_de_adesao) : null;
 
     const aluno = await prisma.aluno.update({
       where: { id },
@@ -986,9 +1119,11 @@ app.patch('/api/admin/alunos/:id', async (req, res) => {
   }
 });
 
-// Registrar pagamento manual (Presencial na recepção - Dinheiro/Pix/Cartão)
+// Registrar pagamento manual com DatePicker (Módulo 5)
 app.post('/api/admin/alunos/:id/pagar', async (req, res) => {
   const { id } = req.params;
+  const { dataPagamento, valor, metodoPagamento, registradoPor, observacao } = req.body || {};
+
   try {
     const aluno = await prisma.aluno.findUnique({
       where: { id },
@@ -997,26 +1132,60 @@ app.post('/api/admin/alunos/:id/pagar', async (req, res) => {
 
     if (!aluno) return res.status(404).json({ erro: 'Aluno não encontrado' });
 
-    let novoVencimento = new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000);
+    // Data escolhida no componente DatePicker (passada ou presente), não forçando new Date() se enviada
+    const dataPagamentoEscolhida = dataPagamento
+      ? new Date(String(dataPagamento).includes('T') ? dataPagamento : `${dataPagamento}T12:00:00`)
+      : new Date();
 
+    let baseCalculoVencimento = dataPagamentoEscolhida;
     if (aluno.mensalidades.length > 0) {
       const ultima = aluno.mensalidades[0];
-      if (new Date(ultima.dataVencimento) > new Date()) {
-        novoVencimento = new Date(new Date(ultima.dataVencimento).getTime() + 30 * 24 * 60 * 60 * 1000);
+      if (new Date(ultima.dataVencimento) > dataPagamentoEscolhida) {
+        baseCalculoVencimento = new Date(ultima.dataVencimento);
       }
     }
+
+    const novoVencimento = calcularProximoVencimentoPorAdesao(
+      baseCalculoVencimento,
+      aluno.data_de_adesao
+    );
+
+    const valorFinal =
+      valor !== undefined && valor !== '' && !isNaN(Number(valor))
+        ? Number(valor)
+        : aluno.mensalidades[0]?.valor || 160.00;
 
     const mensalidade = await prisma.mensalidade.create({
       data: {
         alunoId: id,
-        valor: aluno.mensalidades[0]?.valor || 160.00,
+        valor: valorFinal,
         dataVencimento: novoVencimento,
-        dataPagamento: new Date(),
+        dataPagamento: dataPagamentoEscolhida,
         status: 'PAGO'
       }
     });
 
-    res.json({ mensagem: 'Pagamento presencial confirmado com sucesso! Vencimento renovado.', mensalidade });
+    // Registra automaticamente no Livro-Caixa Geral (TransacaoFinanceira)
+    await prisma.transacaoFinanceira.create({
+      data: {
+        tipo: 'ENTRADA',
+        categoria: 'MENSALIDADE',
+        descricao: `Mensalidade (${aluno.plano || 'Plano Regular'}) — ${aluno.nome}`,
+        valor: valorFinal,
+        data: dataPagamentoEscolhida,
+        metodoPagamento: metodoPagamento || 'PIX',
+        status: 'CONFIRMADO',
+        alunoId: aluno.id,
+        alunoNome: aluno.nome,
+        registradoPor: registradoPor || 'Administração',
+        observacao: observacao || `Renovado até ${novoVencimento.toLocaleDateString('pt-BR')}`
+      }
+    }).catch(() => {});
+
+    res.json({
+      mensagem: `Pagamento registrado com sucesso na data ${dataPagamentoEscolhida.toLocaleDateString('pt-BR')}! Próximo vencimento: ${novoVencimento.toLocaleDateString('pt-BR')}.`,
+      mensalidade
+    });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao registrar pagamento manual.' });
   }
@@ -1256,7 +1425,7 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
 
     // Frequência da semana atual (Segunda-feira a Domingo)
     const agoraHoje = new Date();
-    const diaDaSemanaHoje = agoraHoje.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+    const diaDaSemanaHoje = agoraHoje.getDay();
     const diffSegunda = agoraHoje.getDate() - (diaDaSemanaHoje === 0 ? 6 : diaDaSemanaHoje - 1);
     const inicioSemanaAtual = new Date(agoraHoje);
     inicioSemanaAtual.setDate(diffSegunda);
@@ -1297,10 +1466,8 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
         : 'Nenhum treino registrado nesta semana'
     };
 
-    // Presenças Efetivas (Presença física + Doença/Atestado que não prejudica a graduação)
     const presencasEfetivas = presentesCount + doencaCount + outrasJustificadasCount;
     
-    // Porcentagens exatas
     const baseCalculo = Math.max(aulasEsperadasNoMes, presencas.length || 1);
     const pctPresenca = Math.min(100, Math.round((presentesCount / baseCalculo) * 100));
     const pctDoenca = Math.min(100, Math.round((doencaCount / baseCalculo) * 100));
@@ -1309,9 +1476,9 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
 
     const ultimaMensalidade = aluno.mensalidades[0];
     let diasParaVencer: number | null = null;
-    let statusMensalidade = isDiariaOuConvenio ? 'LIBERADO' : 'PAGO';
+    let statusMensalidade = aluno.is_bolsista ? 'BOLSISTA' : isDiariaOuConvenio ? 'LIBERADO' : 'PAGO';
 
-    if (!isDiariaOuConvenio && ultimaMensalidade) {
+    if (!aluno.is_bolsista && !isDiariaOuConvenio && ultimaMensalidade) {
       statusMensalidade = ultimaMensalidade.status;
       const diffTime = new Date(ultimaMensalidade.dataVencimento).getTime() - agora.getTime();
       diasParaVencer = Math.ceil(diffTime / (1000 * 3600 * 24));
@@ -1329,8 +1496,13 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
         email: aluno.email,
         plano: aluno.plano || '2x na semana',
         prajied: aluno.prajied,
+        is_bolsista: aluno.is_bolsista,
+        has_signed_contract: aluno.has_signed_contract,
+        data_de_adesao: aluno.data_de_adesao,
+        contract_signed_at: aluno.contract_signed_at,
+        contract_signature_payload: aluno.contract_signature_payload,
         isDiariaOuConvenio,
-        tipoCobranca: isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE'
+        tipoCobranca: aluno.is_bolsista ? 'BOLSISTA' : isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE'
       },
       periodo: { mes, ano },
       estatisticas: {
@@ -1351,11 +1523,12 @@ app.get('/api/admin/alunos/:id/calendario', async (req, res) => {
       },
       mensalidade: {
         isDiariaOuConvenio,
-        tipoCobranca: isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE',
-        status: isDiariaOuConvenio ? 'LIBERADO' : statusMensalidade,
-        diasParaVencer: isDiariaOuConvenio ? null : diasParaVencer,
-        dataVencimento: isDiariaOuConvenio ? null : (ultimaMensalidade?.dataVencimento || null),
-        valor: isDiariaOuConvenio ? 40.00 : (ultimaMensalidade?.valor || 160.00)
+        is_bolsista: aluno.is_bolsista,
+        tipoCobranca: aluno.is_bolsista ? 'BOLSISTA' : isDiariaOuConvenio ? 'DIARIA_CONVENIO' : 'MENSALIDADE',
+        status: aluno.is_bolsista ? 'BOLSISTA' : isDiariaOuConvenio ? 'LIBERADO' : statusMensalidade,
+        diasParaVencer: (aluno.is_bolsista || isDiariaOuConvenio) ? null : diasParaVencer,
+        dataVencimento: (aluno.is_bolsista || isDiariaOuConvenio) ? null : (ultimaMensalidade?.dataVencimento || null),
+        valor: aluno.is_bolsista ? 0.00 : isDiariaOuConvenio ? 40.00 : (ultimaMensalidade?.valor || 160.00)
       },
       presencas,
       presencasPorDia
@@ -1454,10 +1627,17 @@ app.delete('/api/admin/alunos/:id/presenca', async (req, res) => {
 
 // Criar Agendamento Experimental
 app.post('/api/agendamentos', async (req, res) => {
-  const { nome, telefone, data, horario } = req.body;
+  const { nome, telefone, data, horario, professorNome } = req.body;
   try {
     const agendamento = await prisma.agendamentoExperimental.create({
-      data: { nome, telefone, data, horario, status: 'PENDENTE' }
+      data: {
+        nome,
+        telefone,
+        data,
+        horario,
+        professorNome: professorNome || 'Felipe Borü',
+        status: 'PENDENTE'
+      }
     });
     res.json({ mensagem: 'Aula experimental agendada!', agendamento });
   } catch (error) {
@@ -1499,12 +1679,13 @@ app.get('/api/admin/agendamentos', async (req, res) => {
 // Atualizar status de aula experimental
 app.patch('/api/admin/agendamentos/:id', async (req, res) => {
   const { id } = req.params;
-  const { status, observacao, dataRealizada } = req.body;
+  const { status, observacao, dataRealizada, professorNome } = req.body;
 
   try {
     const dataUpdate: any = {};
     if (status) dataUpdate.status = status;
     if (observacao !== undefined) dataUpdate.observacao = observacao;
+    if (professorNome !== undefined) dataUpdate.professorNome = professorNome;
     if (status === 'REALIZADA') {
       dataUpdate.dataRealizada = dataRealizada ? new Date(dataRealizada) : new Date();
     } else if (dataRealizada) {
@@ -1525,7 +1706,7 @@ app.patch('/api/admin/agendamentos/:id', async (req, res) => {
 // Converter experimental em Aluno Matriculado
 app.post('/api/admin/agendamentos/:id/converter', async (req, res) => {
   const { id } = req.params;
-  const { plano, valorMensalidade, cpf, email } = req.body;
+  const { plano, valorMensalidade, cpf, email, is_bolsista } = req.body;
 
   try {
     const agendamento = await prisma.agendamentoExperimental.findUnique({ where: { id } });
@@ -1533,6 +1714,8 @@ app.post('/api/admin/agendamentos/:id/converter', async (req, res) => {
 
     const cpfFinal = cpf ? cpf.replace(/[^\d]+/g, '') : Math.floor(10000000000 + Math.random() * 90000000000).toString();
     const senhaTemporaria = Math.floor(100000 + Math.random() * 900000).toString();
+    const flagBolsista = Boolean(is_bolsista);
+    const agora = new Date();
 
     const novoAluno = await prisma.aluno.create({
       data: {
@@ -1543,13 +1726,17 @@ app.post('/api/admin/agendamentos/:id/converter', async (req, res) => {
         plano: plano || '2x na semana',
         senha: senhaTemporaria,
         primeiroAcesso: true,
-        mensalidades: {
-          create: {
-            valor: parseFloat(valorMensalidade) || 160.00,
-            dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
-            status: 'PENDENTE'
+        is_bolsista: flagBolsista,
+        data_de_adesao: agora,
+        ...(!flagBolsista ? {
+          mensalidades: {
+            create: {
+              valor: parseFloat(valorMensalidade) || 160.00,
+              dataVencimento: calcularProximoVencimentoPorAdesao(agora, agora),
+              status: 'PENDENTE'
+            }
           }
-        }
+        } : {})
       }
     });
 
@@ -1580,6 +1767,7 @@ app.post('/api/checkout', async (req, res) => {
   }
 
   const cpfLimpo = cpf.replace(/[^\d]+/g, '');
+  const agora = new Date();
   
   try {
     const novoAluno = await prisma.aluno.create({
@@ -1591,10 +1779,11 @@ app.post('/api/checkout', async (req, res) => {
         senha: senha.trim(),
         primeiroAcesso: false,
         plano: plano || '2x na semana',
+        data_de_adesao: agora,
         mensalidades: {
           create: {
             valor: parseFloat(valor) || 160,
-            dataVencimento: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
+            dataVencimento: calcularProximoVencimentoPorAdesao(agora, agora),
             status: 'PENDENTE' // Pagamento é feito presencialmente no balcão
           }
         }
@@ -1613,12 +1802,21 @@ app.post('/api/checkout', async (req, res) => {
   }
 });
 
-// Fallback SPA
+// Healthcheck & Fallback API
+app.get('/', (req, res) => {
+  res.json({ status: 'online', service: 'Borü Centro de Combate API', version: '2.0.0' });
+});
+
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  const indexPath = path.join(__dirname, '../public/index.html');
+  const fs = require('fs');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  res.status(200).json({ status: 'online', service: 'Borü Centro de Combate API' });
 });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server Combat API rodando em http://localhost:${PORT}`);
+  console.log(`Server Borü API rodando em http://localhost:${PORT}`);
 });

@@ -4,7 +4,9 @@ import NoticeCard from '../components/NoticeCard';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { publicApi, studentApi } from '../services/api';
 import { StudentGamificationTab } from '../components/StudentGamificationTab';
-import { CombatHubSandboxModal } from '../components/CombatHubSandboxModal';
+import { ContractBlockingModal, MyContractsTab } from '../components/ContractModalAndTab';
+import { PublicQuickCheckinCard, LoggedQuickCheckinBanner } from '../components/QuickCheckinWidget';
+import { isImageSource } from '../components/FileUploadInput';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
 
 export default function PortalAluno() {
@@ -25,9 +27,8 @@ export default function PortalAluno() {
   const [showRecuperarSenha, setShowRecuperarSenha] = useState(false);
   const [contatoRecuperacao, setContatoRecuperacao] = useState('');
 
-  // Abas do Portal: 'treinos' | 'frequencia' | 'avisos' | 'mercado' | 'financeiro'
+  // Abas do Portal: 'treinos' | 'frequencia' | 'conquistas' | 'contratos' | 'avisos' | 'mercado' | 'financeiro'
   const [abaAtiva, setAbaAtiva] = useState('treinos');
-  const [showSandboxModal, setShowSandboxModal] = useState(false);
   
   // Frequência & Calendário
   const [dadosFrequencia, setDadosFrequencia] = useState<any>(null);
@@ -47,9 +48,12 @@ export default function PortalAluno() {
   // Mural de Avisos
   const [avisos, setAvisos] = useState<any[]>([]);
 
-  // Loja / Mercado da Academia (Combat Store)
+  // Loja / Mercado do CT (Beta)
   const [produtos, setProdutos] = useState<any[]>([]);
   const [filtroCategoria, setFiltroCategoria] = useState('TODOS');
+
+  // Módulo 1: Horários e Graduações dos Professores
+  const [professoresHorarios, setProfessoresHorarios] = useState<any[]>([]);
 
   const validarCPF = (cpf: string) => {
     cpf = cpf.replace(/[^\d]+/g, '');
@@ -151,6 +155,16 @@ export default function PortalAluno() {
     carregarGamificacao(idDoAluno);
     carregarAvisos();
     carregarProdutos();
+    carregarProfessoresHorarios();
+  };
+
+  const carregarProfessoresHorarios = async () => {
+    try {
+      const res = await studentApi.getTeacherSchedules();
+      setProfessoresHorarios(res.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar horários dos professores:', error);
+    }
   };
 
   const carregarAulas = async (idDoAluno?: string) => {
@@ -282,6 +296,7 @@ export default function PortalAluno() {
   };
 
   const calcularDiasVencimento = () => {
+    if (alunoLogado?.is_bolsista) return 999;
     if (isDiariaOuConvenio(alunoLogado?.plano)) return null;
     if (!alunoLogado?.mensalidades || alunoLogado.mensalidades.length === 0) return null;
     const ultima = alunoLogado.mensalidades[0];
@@ -293,94 +308,102 @@ export default function PortalAluno() {
 
   const dias = calcularDiasVencimento();
 
-  // TELA DE LOGIN DO ALUNO
+  // TELA DE LOGIN DO ALUNO + MÓDULO 3: CHECK-IN RÁPIDO PÚBLICO
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 bg-[var(--color-bg-main)]/85 backdrop-blur-sm flex items-center justify-center z-[9999] px-4 relative overflow-hidden">
-        <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] p-7 sm:p-8 rounded-2xl w-full max-w-sm shadow-2xl relative z-10 text-[var(--color-text-main)] transition-colors">
-          <div className="flex justify-end mb-2">
-            <ThemeSwitcher compact />
-          </div>
-          <div className="text-center mb-6">
-            <img 
-              src={ACADEMY_CONFIG.logoUrl} 
-              alt={ACADEMY_CONFIG.nome} 
-              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-[var(--color-primary-border)] shadow-xl object-contain bg-[var(--color-bg-main)] p-2" 
-            />
-            <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-main)] tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
-            <p className="text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">
-              {showRecuperarSenha ? 'Recuperar Acesso' : 'Portal do Aluno'}
-            </p>
-          </div>
-          
-          {showRecuperarSenha ? (
-            <form onSubmit={handleRecuperarSenha} className="space-y-4">
-              <div>
-                <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">E-mail, CPF ou Telefone</label>
-                <input 
-                  type="text" 
-                  value={contatoRecuperacao}
-                  onChange={(e) => setContatoRecuperacao(e.target.value)}
-                  className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
-                  placeholder="Insira seu contato"
-                  required
-                />
-              </div>
-              <button type="submit" disabled={loading} className="w-full theme-btn-primary disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg text-sm">
-                {loading ? 'Buscando...' : 'Recuperar Acesso'}
-              </button>
-              <button 
-                type="button" 
-                onClick={() => setShowRecuperarSenha(false)} 
-                className="w-full text-[var(--color-text-muted)] hover:text-[var(--color-primary)] text-xs transition font-semibold"
-              >
-                Voltar para Login
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-[var(--color-text-muted)] text-xs font-semibold mb-1">Seu CPF</label>
-                <input 
-                  type="text" 
-                  value={cpf}
-                  onChange={(e) => formatarCpf(e.target.value)}
-                  maxLength={14}
-                  className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
-                  placeholder="000.000.000-00"
-                  required
-                />
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-[var(--color-text-muted)] text-xs font-semibold">Senha</label>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowRecuperarSenha(true)} 
-                    className="text-xs text-[var(--color-primary)] hover:underline font-bold transition"
-                  >
-                    Esqueci a senha
-                  </button>
+      <div className="fixed inset-0 bg-[#0B0B0C]/75 backdrop-blur-[2px] flex items-center justify-center z-[9999] px-4 py-6 relative overflow-y-auto">
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 items-start my-auto relative z-10">
+          {/* Card de Login */}
+          <div className="bg-[#141416]/95 backdrop-blur-md border border-zinc-800 p-7 sm:p-8 rounded-2xl w-full shadow-2xl">
+            <div className="flex justify-end mb-2">
+              <ThemeSwitcher compact />
+            </div>
+            <div className="text-center mb-6">
+              <img 
+                src={ACADEMY_CONFIG.logoUrl} 
+                alt={ACADEMY_CONFIG.nome} 
+                className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-contain bg-[#1A1A1E] p-1.5" 
+              />
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
+              <p className="text-red-500 font-bold text-xs uppercase tracking-widest">
+                {showRecuperarSenha ? 'Recuperar Acesso' : 'Portal do Aluno'}
+              </p>
+            </div>
+            
+            {showRecuperarSenha ? (
+              <form onSubmit={handleRecuperarSenha} className="space-y-4">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">E-mail, CPF ou Telefone</label>
+                  <input 
+                    type="text" 
+                    value={contatoRecuperacao}
+                    onChange={(e) => setContatoRecuperacao(e.target.value)}
+                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                    placeholder="Insira seu contato"
+                    required
+                  />
                 </div>
-                <input 
-                  type="password" 
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  className="w-full bg-[var(--color-bg-card-alt)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-main)] focus:outline-none focus:border-[var(--color-primary)] transition text-sm"
-                  placeholder="Sua senha"
-                  required
-                />
-                {erroCpf && <p className="text-[var(--color-primary)] text-xs mt-2 font-semibold">{erroCpf}</p>}
-              </div>
-              <button type="submit" disabled={loading} className="w-full theme-btn-primary disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg text-sm uppercase tracking-wider">
-                {loading ? 'Entrando...' : 'Acessar Portal'}
-              </button>
-            </form>
-          )}
+                <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm">
+                  {loading ? 'Buscando...' : 'Recuperar Acesso'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowRecuperarSenha(false)} 
+                  className="w-full text-zinc-500 hover:text-white text-xs transition font-semibold"
+                >
+                  Voltar para Login
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-zinc-400 text-xs font-semibold mb-1">Seu CPF</label>
+                  <input 
+                    type="text" 
+                    value={cpf}
+                    onChange={(e) => formatarCpf(e.target.value)}
+                    maxLength={14}
+                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                    placeholder="000.000.000-00"
+                    required
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-zinc-400 text-xs font-semibold">Senha</label>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowRecuperarSenha(true)} 
+                      className="text-xs text-red-500 hover:text-red-400 font-bold transition"
+                    >
+                      Esqueci a senha
+                    </button>
+                  </div>
+                  <input 
+                    type="password" 
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    className="w-full bg-[#1A1A1E] border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition text-sm"
+                    placeholder="Sua senha"
+                    required
+                  />
+                  {erroCpf && <p className="text-red-500 text-xs mt-2 font-semibold">{erroCpf}</p>}
+                </div>
+                <button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition transform active:scale-95 shadow-lg shadow-red-600/30 text-sm uppercase tracking-wider">
+                  {loading ? 'Entrando...' : 'Acessar Portal'}
+                </button>
+              </form>
+            )}
 
-          <Link to="/" className="block text-center mt-6 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] text-xs transition">
-            ← Voltar ao site principal
-          </Link>
+            <Link to="/" className="block text-center mt-6 text-zinc-500 hover:text-white text-xs transition">
+              ← Voltar ao site principal
+            </Link>
+          </div>
+
+          {/* MÓDULO 3: CHECK-IN RÁPIDO NA TELA DE LOGIN (PÚBLICO) */}
+          <div className="w-full">
+            <PublicQuickCheckinCard />
+          </div>
         </div>
       </div>
     );
@@ -432,6 +455,14 @@ export default function PortalAluno() {
   // ==========================================
   return (
     <div className="min-h-screen bg-[#0B0B0C]/80 backdrop-blur-[1px] text-zinc-100 font-sans p-3 sm:p-6 pb-28 sm:pb-12 relative z-10">
+      {/* MÓDULO 2: MIDDLEWARE DE BLOQUEIO DO CONTRATO ELETRÔNICO */}
+      <ContractBlockingModal
+        aluno={alunoLogado}
+        onContractSigned={(alunoAtualizado) => {
+          setAlunoLogado({ ...alunoLogado, ...alunoAtualizado, has_signed_contract: true });
+        }}
+      />
+
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* FEEDBACK DE CHECK-IN COM SUCESSO (ESTÍMULO VISUAL) */}
@@ -449,19 +480,24 @@ export default function PortalAluno() {
         )}
 
         {/* HEADER SUPERIOR */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--color-border)] pb-5">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-5">
           <div className="flex items-center gap-3">
-            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-[var(--color-primary-border)] shadow-md object-contain flex-shrink-0 bg-[var(--color-bg-card)] p-1" />
+            <img src={ACADEMY_CONFIG.logoUrl} alt={ACADEMY_CONFIG.nome} className="w-12 h-12 rounded-full border-2 border-red-600 shadow-md object-contain flex-shrink-0 bg-[#141416] p-1" />
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-[var(--color-text-main)]">
-                  ÁREA DO <span className="text-[var(--color-primary)]">ALUNO</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
+                  ÁREA DO <span className="text-red-600">ALUNO</span>
                 </h1>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary-border)] font-bold">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
                   {ACADEMY_CONFIG.nome}
                 </span>
+                {alunoLogado?.is_bolsista && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black uppercase">
+                    🎓 Aluno Bolsista
+                  </span>
+                )}
               </div>
-              <p className="text-[var(--color-text-muted)] text-xs sm:text-sm mt-0.5">Bem-vindo(a), <strong className="text-[var(--color-text-main)]">{alunoLogado?.nome}</strong>!</p>
+              <p className="text-zinc-400 text-xs sm:text-sm mt-0.5">Sawasdee Krap, <strong className="text-white">{alunoLogado?.nome}</strong>!</p>
             </div>
           </div>
 
@@ -485,7 +521,7 @@ export default function PortalAluno() {
         </header>
 
         {/* NAVEGAÇÃO DE ABAS NO DESKTOP */}
-        <div className="hidden sm:flex gap-2 border-b border-zinc-800 pb-3 overflow-x-auto scrollbar-none">
+        <div className="hidden sm:flex gap-2 border-b border-zinc-800 pb-3 overflow-x-auto boru-scrollbar">
           <button 
             onClick={() => setAbaAtiva('treinos')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
@@ -508,13 +544,15 @@ export default function PortalAluno() {
               abaAtiva === 'conquistas' ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/40'
             }`}
           >
-            🏆 Minhas Conquistas {gamificacao?.rankAtual ? `(${gamificacao.rankAtual.badge_icon_url} ${gamificacao.rankAtual.name})` : ''}
+            🏆 Minhas Conquistas {gamificacao?.rankAtual ? `(${isImageSource(gamificacao.rankAtual.badge_icon_url) ? '🥇' : gamificacao.rankAtual.badge_icon_url} ${gamificacao.rankAtual.name})` : ''}
           </button>
           <button 
-            onClick={() => setShowSandboxModal(true)}
-            className="px-4 py-2 rounded-lg text-xs font-black transition whitespace-nowrap flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-red-600 text-black shadow-lg"
+            onClick={() => setAbaAtiva('contratos')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'contratos' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
+            }`}
           >
-            🎮 Visualizar Demo Interativa
+            📄 Meus Contratos
           </button>
           <button 
             onClick={() => setAbaAtiva('avisos')}
@@ -538,13 +576,91 @@ export default function PortalAluno() {
               abaAtiva === 'financeiro' ? 'bg-red-600 text-white' : 'bg-[#141416] text-zinc-400 hover:text-white border border-zinc-800'
             }`}
           >
-            {isDiariaOuConvenio(alunoLogado?.plano) ? '🎫 Status do Acesso (Diária/Convênio)' : '💳 Mensalidade'}
+            {alunoLogado?.is_bolsista ? '🎓 Bolsa & Acesso' : isDiariaOuConvenio(alunoLogado?.plano) ? '🎫 Status do Acesso (Diária/Convênio)' : '💳 Mensalidade'}
+          </button>
+        </div>
+
+        {/* BARRA DE ATALHOS RÁPIDOS NO MOBILE (ACESSO DIRETO AO CALENDÁRIO E CONQUISTAS) */}
+        <div className="flex sm:hidden items-center gap-2 overflow-x-auto boru-scrollbar pb-1">
+          <button
+            type="button"
+            onClick={() => {
+              setAbaAtiva('frequencia');
+              setTimeout(() => {
+                document.getElementById('calendario-mensal-aluno')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 120);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shadow-sm shrink-0 ${
+              abaAtiva === 'frequencia'
+                ? 'bg-red-600 text-white shadow-red-900/40'
+                : 'bg-[#141416] text-red-400 hover:text-white border border-red-500/30'
+            }`}
+          >
+            <span>📅</span>
+            <span>Meu Calendário</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAbaAtiva('conquistas');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shadow-sm shrink-0 ${
+              abaAtiva === 'conquistas'
+                ? 'bg-amber-500 text-black shadow-amber-500/40'
+                : 'bg-[#141416] text-amber-400 hover:text-white border border-amber-500/30'
+            }`}
+          >
+            <span>🏆</span>
+            <span>Minhas Conquistas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAbaAtiva('treinos');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shadow-sm shrink-0 ${
+              abaAtiva === 'treinos'
+                ? 'bg-red-600 text-white'
+                : 'bg-[#141416] text-zinc-300 hover:text-white border border-zinc-800'
+            }`}
+          >
+            <span>🥊</span>
+            <span>Check-in & Treinos</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAbaAtiva('contratos');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shadow-sm shrink-0 ${
+              abaAtiva === 'contratos'
+                ? 'bg-red-600 text-white'
+                : 'bg-[#141416] text-zinc-300 hover:text-white border border-zinc-800'
+            }`}
+          >
+            <span>📄</span>
+            <span>Contrato</span>
           </button>
         </div>
 
         {/* CONTEÚDO DA ABA: TREINOS & CHECK-IN (ESTÍMULO / GAMIFICAÇÃO) */}
         {abaAtiva === 'treinos' && (
           <div className="space-y-6">
+
+            {/* MÓDULO 3: BOTÃO EM DESTAQUE DE CHECK-IN DE HOJE (LOGADO) */}
+            <LoggedQuickCheckinBanner
+              aluno={alunoLogado}
+              onCheckinSuccess={() => {
+                if (alunoLogado?.id) {
+                  carregarAulas(alunoLogado.id);
+                  carregarFrequencia(alunoLogado.id, mesAtual, anoAtual);
+                  carregarGamificacao(alunoLogado.id);
+                }
+              }}
+            />
 
             {/* CARDS DE GRADUAÇÃO & PLANO */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -565,7 +681,7 @@ export default function PortalAluno() {
                 <div>
                   <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Sua Graduação</span>
                   <h3 className="text-lg font-black text-white">{alunoLogado?.prajied || 'Branco'}</h3>
-                  <p className="text-[11px] text-zinc-500">Reconhecida pela Coordenação Técnica</p>
+                  <p className="text-[11px] text-zinc-500">Reconhecida pelo Mestre Coordenação Técnica</p>
                 </div>
               </div>
 
@@ -573,11 +689,15 @@ export default function PortalAluno() {
               <div className="bg-[#141416] border border-zinc-800 rounded-xl p-5 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    {isDiariaOuConvenio(alunoLogado?.plano) ? 'Tipo de Acesso' : 'Plano Atual'}
+                    {alunoLogado?.is_bolsista ? 'Modalidade Bolsista' : isDiariaOuConvenio(alunoLogado?.plano) ? 'Tipo de Acesso' : 'Plano Atual'}
                   </span>
-                  <h3 className="text-lg font-black text-red-500">{alunoLogado?.plano || '2x na semana'}</h3>
+                  <h3 className="text-lg font-black text-red-500">
+                    {alunoLogado?.is_bolsista ? 'Bolsista Integral' : (alunoLogado?.plano || '2x na semana')}
+                  </h3>
                   <p className="text-[11px] text-zinc-400 mt-0.5">
-                    {isDiariaOuConvenio(alunoLogado?.plano)
+                    {alunoLogado?.is_bolsista
+                      ? 'Isento de faturas mensais • Acesso garantido'
+                      : isDiariaOuConvenio(alunoLogado?.plano)
                       ? (alunoLogado?.plano?.toLowerCase().includes('wellhub') || alunoLogado?.plano?.toLowerCase().includes('gympass')
                           ? 'Validação de check-in via app parceiro'
                           : alunoLogado?.plano?.toLowerCase().includes('totalpass')
@@ -587,10 +707,44 @@ export default function PortalAluno() {
                   </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30">
-                  {isDiariaOuConvenio(alunoLogado?.plano) ? '⚡ Acesso Liberado' : 'Matrícula Ativa'}
+                  {alunoLogado?.is_bolsista ? '🎓 Bolsista Ativo' : isDiariaOuConvenio(alunoLogado?.plano) ? '⚡ Acesso Liberado' : 'Matrícula Ativa'}
                 </span>
               </div>
             </div>
+
+            {/* MÓDULO 1: QUADRO DE PROFESSORES, PRAJIED E HORÁRIOS DE AULA */}
+            {professoresHorarios.length > 0 && (
+              <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    🥋 Corpo Docente & Horários de Aula
+                  </h3>
+                  <span className="text-[11px] text-zinc-500">Centro de Combate (Combat-Hub)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {professoresHorarios.map((prof: any) => (
+                    <div key={prof.id} className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-3.5 flex items-center gap-3">
+                      <img
+                        src={prof.fotoPerfilUrl || '/logo-combat.svg'}
+                        alt={prof.nome}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-red-600 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm font-black text-white truncate">{prof.nome}</h4>
+                          <span className="px-2 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/30 text-[10px] font-bold">
+                            {prof.prajied_faixa || 'Kruang Preto'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 mt-1">
+                          🕒 Horários: <strong className="text-zinc-200">{Array.isArray(prof.horarios_aula) ? prof.horarios_aula.join(' • ') : prof.horarios_aula}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* GAMIFICAÇÃO & ESTÍMULO AO CHECK-IN */}
             {gamificacao && (
@@ -652,7 +806,7 @@ export default function PortalAluno() {
                 <div className="pt-3 border-t border-zinc-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div className="text-xs text-zinc-300">
                     <span className="font-black text-amber-400">
-                      {gamificacao.rankAtual?.badge_icon_url || '🥊'} Rank Atual: {gamificacao.rankAtual?.name || 'Iniciante do Tatame'}
+                      🥊 Rank Atual: {gamificacao.rankAtual?.name || 'Iniciante do Tatame'}
                     </span>
                     <span className="text-zinc-400 ml-2">
                       • {gamificacao.resumoConquistas?.desbloqueadas ?? 0}/{gamificacao.resumoConquistas?.total ?? 30} Conquistas Desbloqueadas • ⚡ {gamificacao.xpTotal ?? 0} XP
@@ -695,7 +849,7 @@ export default function PortalAluno() {
                         </div>
                         <h4 className="text-sm font-bold text-zinc-200">{aula.titulo}</h4>
                         <p className="text-xs text-zinc-400 mt-1">Dia: <strong className="text-zinc-200">{aula.diaDaSemana}</strong></p>
-                        <p className="text-[11px] text-zinc-500">Instrutor: {aula.professor?.nome || 'Mestre Responsável'}</p>
+                        <p className="text-[11px] text-zinc-500">Instrutor: Coordenação Técnica</p>
                       </div>
 
                       <div className="space-y-2">
@@ -747,9 +901,13 @@ export default function PortalAluno() {
             alunoNome={alunoLogado?.nome || 'Guerreiro(a)'}
             gamificacaoData={gamificacao}
             onRefresh={() => alunoLogado?.id && carregarGamificacao(alunoLogado.id)}
-            isCombatHub={true}
-            onOpenSandbox={() => setShowSandboxModal(true)}
+            isCombatHub={false}
           />
+        )}
+
+        {/* MÓDULO 2: CONTEÚDO DA ABA MEUS CONTRATOS */}
+        {abaAtiva === 'contratos' && (
+          <MyContractsTab aluno={alunoLogado} />
         )}
 
         {/* CONTEÚDO DA ABA: MINHA FREQUÊNCIA & CALENDÁRIO */}
@@ -757,6 +915,22 @@ export default function PortalAluno() {
           <div className="space-y-6">
             {dadosFrequencia && (
               <>
+                {/* BOTÃO DE SALTO RÁPIDO PARA O CALENDÁRIO NO MOBILE */}
+                <div className="flex sm:hidden justify-between items-center bg-[#141416] p-3 rounded-xl border border-zinc-800 shadow-md">
+                  <div>
+                    <span className="text-xs text-zinc-200 font-bold block">Frequência Mensal</span>
+                    <span className="text-[10px] text-zinc-400">Pule as estatísticas direto para os dias:</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      document.getElementById('calendario-mensal-aluno')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-black flex items-center gap-1 shadow-md shadow-red-900/40"
+                  >
+                    <span>📅 Ver Calendário ↓</span>
+                  </button>
+                </div>
                 {/* DESTAQUE DE FREQUÊNCIA SEMANAL PARA ALUNOS DE DIÁRIA OU CONVÊNIO */}
                 {isDiariaOuConvenio(alunoLogado?.plano) ? (
                   <div className="space-y-4">
@@ -863,7 +1037,7 @@ export default function PortalAluno() {
                 )}
 
                 {/* CALENDÁRIO */}
-                <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div id="calendario-mensal-aluno" className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4 scroll-mt-24">
                   <div className="flex justify-between items-center">
                     <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                       📅 Frequência Mensal ({mesAtual}/{anoAtual})
@@ -951,8 +1125,8 @@ export default function PortalAluno() {
         {abaAtiva === 'avisos' && (
           <div className="space-y-4">
             <div className="border-b border-zinc-800 pb-3">
-              <h2 className="text-xl font-bold text-white">📢 Mural de Avisos da Academia</h2>
-              <p className="text-xs text-zinc-400">Fique atento aos comunicados oficiais da coordenação técnica e administração.</p>
+              <h2 className="text-xl font-bold text-white">📢 Mural de Avisos do CT</h2>
+              <p className="text-xs text-zinc-400">Fique atento aos recados oficiais do Professor Coordenação Técnica e da administração.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -963,7 +1137,7 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* CONTEÚDO DA ABA: LOJA & MERCADO (BETA) */}
+        {/* CONTEÚDO DA ABA: LOJA & MERCADO BORÜ (BETA) */}
         {abaAtiva === 'mercado' && (
           <div className="space-y-4">
             
@@ -971,13 +1145,13 @@ export default function PortalAluno() {
             <div className="bg-gradient-to-r from-red-950/40 via-[#1A1A1E] to-zinc-900 border border-red-500/30 rounded-2xl p-5 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🛍️</span>
-                <h3 className="text-base font-black text-white">Loja Oficial da Academia - Versão BETA</h3>
+                <h3 className="text-base font-black text-white">Mercado do CT - Versão BETA</h3>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                   Em breve compras pelo app!
                 </span>
               </div>
               <p className="text-xs text-zinc-300 leading-relaxed">
-                Todos os equipamentos oficiais (Luvas, Protetores, Bandagens) e suplementos para o treino estão disponíveis para compra <strong>presencial no balcão da recepção</strong>!
+                Todos os equipamentos oficiais (Luvas, Protetores, Bandagens) e alimentos/suplementos para o treino estão disponíveis para retirada e compra <strong>presencial no balcão da recepção</strong> com o mestre!
               </p>
             </div>
 
@@ -1033,7 +1207,7 @@ export default function PortalAluno() {
                           R$ {prod.preco.toFixed(2).replace('.', ',')}
                         </span>
                         <a 
-                          href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, gostaria de reservar o item "${prod.nome}" na recepção da ${ACADEMY_CONFIG.nome}!`)}`}
+                          href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de reservar o item "${prod.nome}" na recepção!`)}`}
                           target="_blank"
                           rel="noreferrer"
                           className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-white transition flex items-center gap-1"
@@ -1048,9 +1222,35 @@ export default function PortalAluno() {
           </div>
         )}
 
-        {/* CONTEÚDO DA ABA: MENSALIDADE OU STATUS DE ACESSO (DIÁRIA / CONVÊNIO) */}
+        {/* CONTEÚDO DA ABA: MENSALIDADE OU STATUS DE ACESSO (BOLSISTA / DIÁRIA / CONVÊNIO) */}
         {abaAtiva === 'financeiro' && (
-          isDiariaOuConvenio(alunoLogado?.plano) ? (
+          alunoLogado?.is_bolsista ? (
+            <div className="bg-[#141416] border border-purple-500/40 rounded-2xl p-6 space-y-5 shadow-xl">
+              <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+                <span className="text-3xl">🎓</span>
+                <div>
+                  <h2 className="text-xl font-black text-white">Benefício de Aluno Bolsista</h2>
+                  <p className="text-xs text-zinc-400">Regra de Isenção Ativa — Você não gera faturas mensais automáticas.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#1A1A1E] border border-purple-500/30 rounded-xl p-5">
+                  <span className="text-xs text-zinc-400 font-semibold uppercase">Status do Portal</span>
+                  <p className="text-2xl font-black text-emerald-400 mt-2">SEMPRE LIBERADO</p>
+                  <p className="text-xs text-zinc-400 mt-2">
+                    Como aluno bolsista do Centro de Combate (Combat-Hub), seu acesso nunca é bloqueado por inadimplência.
+                  </p>
+                </div>
+                <div className="bg-[#1A1A1E] border border-zinc-800 rounded-xl p-5">
+                  <span className="text-xs text-zinc-400 font-semibold uppercase">Valor Mensal</span>
+                  <p className="text-2xl font-black text-purple-300 mt-2">ISENTO (R$ 0,00)</p>
+                  <p className="text-xs text-zinc-400 mt-2">
+                    Mantenha sua frequência exemplar e dedicação máxima nos treinos! Oss!
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : isDiariaOuConvenio(alunoLogado?.plano) ? (
             <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-6 shadow-xl">
               <div className="border-b border-zinc-800 pb-4">
                 <div className="flex items-center gap-2">
@@ -1141,7 +1341,7 @@ export default function PortalAluno() {
                 </div>
                 <div className="pt-2">
                   <a 
-                    href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, gostaria de tirar uma dúvida sobre meu acesso por diária / passe na ${ACADEMY_CONFIG.nome}!`)}`}
+                    href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de tirar uma dúvida sobre meu acesso por diária / passe no CENTRO DE COMBATE!`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-900/30"
@@ -1153,9 +1353,16 @@ export default function PortalAluno() {
             </div>
           ) : (
             <div className="bg-[#141416] border border-zinc-800 rounded-2xl p-6 space-y-6">
-              <div className="border-b border-zinc-800 pb-4">
-                <h2 className="text-xl font-bold text-white">Status da Mensalidade</h2>
-                <p className="text-xs text-zinc-400">Acompanhe sua vigência e datas de renovação.</p>
+              <div className="border-b border-zinc-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Status da Mensalidade</h2>
+                  <p className="text-xs text-zinc-400">Acompanhe sua vigência e datas de renovação.</p>
+                </div>
+                {alunoLogado?.data_de_adesao && (
+                  <span className="px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 font-bold">
+                    📅 Dia Fixo de Vencimento: Todo dia {new Date(alunoLogado.data_de_adesao).getDate()}
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1194,7 +1401,7 @@ export default function PortalAluno() {
                   <h4 className="text-sm font-bold text-white uppercase tracking-wider">Pagamento Presencial na Recepção</h4>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  As mensalidades são acertadas diretamente no balcão de atendimento da academia com a nossa recepção ou mestres antes do início do seu treino.
+                  As mensalidades são acertadas diretamente no balcão de atendimento da academia com o Professor Felipe ou com a nossa recepção antes do início do seu treino.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1 text-xs text-zinc-400">
                   <span className="px-2 py-1 rounded bg-zinc-800 border border-zinc-700">✓ PIX Presencial no Balcão</span>
@@ -1203,7 +1410,7 @@ export default function PortalAluno() {
                 </div>
                 <div className="pt-2">
                   <a 
-                    href={`https://wa.me/${ACADEMY_CONFIG.whatsappNumero}?text=${encodeURIComponent(`Olá, gostaria de tirar uma dúvida sobre a minha mensalidade na ${ACADEMY_CONFIG.nome}!`)}`}
+                    href={`https://wa.me/556992384491?text=${encodeURIComponent(`Olá Professor Felipe, gostaria de tirar uma dúvida sobre a minha mensalidade do CENTRO DE COMBATE!`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-900/30"
@@ -1264,10 +1471,10 @@ export default function PortalAluno() {
       )}
 
       {/* BARRA INFERIOR FIXA PARA CELULAR (BOTTOM NAVIGATION BAR MOBILE) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-[#141416]/95 backdrop-blur-md border-t border-zinc-800 px-2 py-2 flex justify-around items-center z-[9999]">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-[#141416]/95 backdrop-blur-md border-t border-zinc-800 px-1.5 py-2 flex justify-around items-center z-[9999]">
         <button 
           onClick={() => setAbaAtiva('treinos')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition ${
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
             abaAtiva === 'treinos' ? 'text-red-500' : 'text-zinc-500'
           }`}
         >
@@ -1276,8 +1483,13 @@ export default function PortalAluno() {
         </button>
 
         <button 
-          onClick={() => setAbaAtiva('frequencia')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition ${
+          onClick={() => {
+            setAbaAtiva('frequencia');
+            setTimeout(() => {
+              document.getElementById('calendario-mensal-aluno')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          }}
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
             abaAtiva === 'frequencia' ? 'text-red-500' : 'text-zinc-500'
           }`}
         >
@@ -1287,7 +1499,7 @@ export default function PortalAluno() {
 
         <button 
           onClick={() => setAbaAtiva('conquistas')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition ${
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
             abaAtiva === 'conquistas' ? 'text-amber-400' : 'text-zinc-500'
           }`}
         >
@@ -1296,8 +1508,18 @@ export default function PortalAluno() {
         </button>
 
         <button 
+          onClick={() => setAbaAtiva('contratos')}
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
+            abaAtiva === 'contratos' ? 'text-red-500' : 'text-zinc-500'
+          }`}
+        >
+          <span className="text-base">📄</span>
+          <span>Contrato</span>
+        </button>
+
+        <button 
           onClick={() => setAbaAtiva('avisos')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition ${
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
             abaAtiva === 'avisos' ? 'text-red-500' : 'text-zinc-500'
           }`}
         >
@@ -1307,26 +1529,25 @@ export default function PortalAluno() {
 
         <button 
           onClick={() => setAbaAtiva('mercado')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition ${
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
             abaAtiva === 'mercado' ? 'text-red-500' : 'text-zinc-500'
           }`}
         >
           <span className="text-base">🛍️</span>
-          <span>Loja Beta</span>
+          <span>Loja</span>
         </button>
 
         <button 
           onClick={() => setAbaAtiva('financeiro')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition ${
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${
             abaAtiva === 'financeiro' ? 'text-red-500' : 'text-zinc-500'
           }`}
         >
-          <span className="text-base">{isDiariaOuConvenio(alunoLogado?.plano) ? '🎫' : '💳'}</span>
-          <span>{isDiariaOuConvenio(alunoLogado?.plano) ? 'Acesso' : 'Plano'}</span>
+          <span className="text-base">{alunoLogado?.is_bolsista ? '🎓' : isDiariaOuConvenio(alunoLogado?.plano) ? '🎫' : '💳'}</span>
+          <span>{alunoLogado?.is_bolsista ? 'Bolsa' : isDiariaOuConvenio(alunoLogado?.plano) ? 'Acesso' : 'Plano'}</span>
         </button>
       </nav>
 
-      <CombatHubSandboxModal isOpen={showSandboxModal} onClose={() => setShowSandboxModal(false)} />
     </div>
   );
 }
