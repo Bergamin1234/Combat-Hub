@@ -45,7 +45,7 @@ function closeMobileMenu() {
 }
 
 function renderModalitiesGrid() {
-  const container = document.getElementById('modalities-grid');
+  const container = document.getElementById('modalidades-grid') || document.getElementById('modalities-grid');
   const combatData = window.COMBAT_DATA || window.BORU_DATA;
   if (!container || !combatData || !combatData.modalities) return;
 
@@ -54,7 +54,7 @@ function renderModalitiesGrid() {
 
   modalities.forEach(item => {
     html += `
-      <div class="group rounded-2xl overflow-hidden card-combat hover:border-[var(--color-primary)] transition duration-300 flex flex-col justify-between shadow-xl">
+      <div class="group rounded-2xl overflow-hidden card-combat hover:border-[var(--color-primary)] transition duration-300 flex flex-col justify-between shadow-xl spotlight-card tilt-card">
         <div class="relative h-56 overflow-hidden bg-[var(--color-bg-card-alt)]">
           <img src="${item.image}" 
                alt="${item.name}" 
@@ -763,4 +763,17 @@ function initTiltEffect() {
       el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
     });
   });
+}
+
+
+if (document.readyState === "complete" || document.readyState === "interactive") {
+  setTimeout(() => {
+    if (typeof renderModalitiesGrid === "function") renderModalitiesGrid();
+    if (typeof renderFacilities === "function") renderFacilities();
+    if (typeof renderInstructorsPortfolio === "function") renderInstructorsPortfolio();
+    if (typeof renderSchedule === "function") renderSchedule("all");
+    if (typeof renderFAQ === "function") renderFAQ();
+    if (typeof initSpotlightCards === "function") initSpotlightCards();
+    if (typeof initTiltEffect === "function") initTiltEffect();
+  }, 100);
 }
