@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { StudentTournamentsTab } from '../components/StudentTournamentsTab';
+import StudentGlobalRanking from '../components/StudentGlobalRanking';
+import { StudentPerformanceStatsTab } from '../components/StudentPerformanceStatsTab';
 import NoticeCard from '../components/NoticeCard';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { publicApi, studentApi } from '../services/api';
@@ -10,6 +13,7 @@ import { isImageSource } from '../components/FileUploadInput';
 import { ACADEMY_CONFIG } from '../config/academyConfig';
 
 export default function PortalAluno() {
+  const location = useLocation();
   const [aulas, setAulas] = useState<any[]>([]);
   const [alunoLogado, setAlunoLogado] = useState<any>(null);
   
@@ -27,8 +31,29 @@ export default function PortalAluno() {
   const [showRecuperarSenha, setShowRecuperarSenha] = useState(false);
   const [contatoRecuperacao, setContatoRecuperacao] = useState('');
 
-  // Abas do Portal: 'treinos' | 'frequencia' | 'conquistas' | 'contratos' | 'avisos' | 'mercado' | 'financeiro'
+  // Abas do Portal: 'treinos' | 'frequencia' | 'conquistas' | 'contratos' | 'avisos' | 'mercado' | 'financeiro' | 'torneios' | 'ranking' | 'desempenho'
   const [abaAtiva, setAbaAtiva] = useState('treinos');
+
+  // Recupera tab da URL e restaura sessão do aluno
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('combat_hub_aluno_session');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.id) {
+          setAlunoLogado(parsed);
+          setIsLoggedIn(true);
+          carregarTudo(parsed.id);
+        }
+      }
+    } catch (e) {}
+
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['treinos', 'frequencia', 'conquistas', 'contratos', 'avisos', 'mercado', 'financeiro', 'torneios', 'ranking', 'desempenho'].includes(tabParam)) {
+      setAbaAtiva(tabParam);
+    }
+  }, [location.search]);
   
   // Frequência & Calendário
   const [dadosFrequencia, setDadosFrequencia] = useState<any>(null);
@@ -82,8 +107,16 @@ export default function PortalAluno() {
     try {
       const response = await studentApi.login({ cpf, senha });
       setAlunoLogado(response.data);
+      try {
+        sessionStorage.setItem('combat_hub_aluno_session', JSON.stringify(response.data));
+      } catch (e) {}
       setErroCpf('');
       setIsLoggedIn(true);
+      const params = new URLSearchParams(location.search);
+      const targetTab = params.get('tab');
+      if (targetTab && ['treinos', 'frequencia', 'conquistas', 'contratos', 'avisos', 'mercado', 'financeiro', 'torneios', 'ranking', 'desempenho'].includes(targetTab)) {
+        setAbaAtiva(targetTab);
+      }
       if (!response.data.primeiroAcesso) {
         carregarTudo(response.data.id);
       }
@@ -325,10 +358,28 @@ export default function PortalAluno() {
                 className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-red-600 shadow-xl object-contain bg-[#1A1A1E] p-1.5" 
               />
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-widest mb-1">{ACADEMY_CONFIG.nome}</h1>
-              <p className="text-red-500 font-bold text-xs uppercase tracking-widest">
+              <p className="text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">
                 {showRecuperarSenha ? 'Recuperar Acesso' : 'Portal do Aluno'}
               </p>
             </div>
+
+            {(() => {
+              const tab = new URLSearchParams(location.search).get('tab');
+              if (!tab) return null;
+              const titles: Record<string, string> = {
+                desempenho: 'Estatísticas de Desempenho & Analytics ao Vivo',
+                ranking: 'Ranking Global & Radar de Evolução',
+                torneios: 'Próximos Torneios & Brackets Oficiais',
+                frequencia: 'Métricas de Frequência & Calendário',
+                conquistas: 'Trilha de Conquistas & Graduação'
+              };
+              return (
+                <div className="mb-4 p-3.5 rounded-xl border border-[var(--color-primary-border)] bg-[var(--color-primary-light)] text-[var(--color-primary)] text-xs font-bold flex items-center gap-2.5 shadow-sm">
+                  <span className="text-base shrink-0">🔒</span>
+                  <span>Acesso Restrito: Digite seu CPF para visualizar <u>{titles[tab] || 'este módulo restrito'}</u>.</span>
+                </div>
+              );
+            })()}
             
             {showRecuperarSenha ? (
               <form onSubmit={handleRecuperarSenha} className="space-y-4">
@@ -512,7 +563,7 @@ export default function PortalAluno() {
               <span>📲 WhatsApp Recepção</span>
             </a>
             <button 
-              onClick={() => { setIsLoggedIn(false); setAlunoLogado(null); }}
+              onClick={() => { try { sessionStorage.removeItem('combat_hub_aluno_session'); } catch(e){} setIsLoggedIn(false); setAlunoLogado(null); }}
               className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 transition"
             >
               Sair
@@ -520,8 +571,131 @@ export default function PortalAluno() {
           </div>
         </header>
 
+        {/* ========================================================
+            OS 3 PILARES COMPETITIVOS: TORNEIOS / RANKING / DESEMPENHO
+            (Sempre presentes no Portal do Aluno com as cores ativas)
+            ======================================================== */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Card 1: Próximos Torneios */}
+          <div 
+            onClick={() => setAbaAtiva('torneios')}
+            className={`group cursor-pointer rounded-2xl p-5 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
+              abaAtiva === 'torneios' 
+                ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 bg-[var(--color-bg-card-alt)]' 
+                : 'border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-primary)]/60 hover:-translate-y-1'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-3xl">🏆</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
+                  Inscrições Abertas
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">
+                🏆 Próximos Torneios
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1.5 leading-relaxed font-medium">
+                Confira o calendário oficial de brackets, eliminatórias regionais e copas de artes marciais. Inscreva-se em chaves oficiais e compita pelo pódio.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between">
+              <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1 group-hover:underline">
+                <span>{abaAtiva === 'torneios' ? 'Visualizando Módulo' : 'Saiba mais'}</span>
+                <span className="group-hover:translate-x-1 transition font-bold">{"->"}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Ranking Global */}
+          <div 
+            onClick={() => setAbaAtiva('ranking')}
+            className={`group cursor-pointer rounded-2xl p-5 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
+              abaAtiva === 'ranking' 
+                ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 bg-[var(--color-bg-card-alt)]' 
+                : 'border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-primary)]/60 hover:-translate-y-1'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-3xl">🌍</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
+                  MMR Atualizado
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">
+                🌍 Ranking Global
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1.5 leading-relaxed font-medium">
+                Classificação geral por divisão de peso, graduação e taxa de finalizações. Veja quem lidera o ranking do tatame e compare seus pontos com atletas de todo o circuito.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between">
+              <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1 group-hover:underline">
+                <span>{abaAtiva === 'ranking' ? 'Visualizando Módulo' : 'Saiba mais'}</span>
+                <span className="group-hover:translate-x-1 transition font-bold">{"->"}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Estatísticas de Desempenho */}
+          <div 
+            onClick={() => setAbaAtiva('desempenho')}
+            className={`group cursor-pointer rounded-2xl p-5 border transition-all duration-300 shadow-xl flex flex-col justify-between ${
+              abaAtiva === 'desempenho' 
+                ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 bg-[var(--color-bg-card-alt)]' 
+                : 'border-[var(--color-border)] bg-[var(--color-bg-card)] hover:border-[var(--color-primary)]/60 hover:-translate-y-1'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-3xl">📊</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
+                  Analytics Ao Vivo
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">
+                📊 Estatísticas de Desempenho
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1.5 leading-relaxed font-medium">
+                Métricas de assiduidade, aproveitamento de golpes, taxa de vitórias e frequência semanal. Dados consolidados para impulsionar sua evolução física e técnica.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between">
+              <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1 group-hover:underline">
+                <span>{abaAtiva === 'desempenho' ? 'Visualizando Módulo' : 'Saiba mais'}</span>
+                <span className="group-hover:translate-x-1 transition font-bold">{"->"}</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
         {/* NAVEGAÇÃO DE ABAS NO DESKTOP */}
         <div className="hidden sm:flex gap-2 border-b border-zinc-800 pb-3 overflow-x-auto boru-scrollbar">
+          <button 
+            onClick={() => setAbaAtiva('torneios')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'torneios' ? 'bg-[var(--color-primary)] text-[var(--color-btn-text)] shadow-md' : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] hover:text-white border border-[var(--color-border)]'
+            }`}
+          >
+            🏆 Torneios & Brackets
+          </button>
+          <button 
+            onClick={() => setAbaAtiva('ranking')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'ranking' ? 'bg-[var(--color-primary)] text-[var(--color-btn-text)] shadow-md' : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] hover:text-white border border-[var(--color-border)]'
+            }`}
+          >
+            🌍 Ranking Global
+          </button>
+          <button 
+            onClick={() => setAbaAtiva('desempenho')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+              abaAtiva === 'desempenho' ? 'bg-[var(--color-primary)] text-[var(--color-btn-text)] shadow-md' : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] hover:text-white border border-[var(--color-border)]'
+            }`}
+          >
+            📊 Desempenho & Analytics
+          </button>
           <button 
             onClick={() => setAbaAtiva('treinos')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
@@ -892,6 +1066,21 @@ export default function PortalAluno() {
             </div>
 
           </div>
+        )}
+
+        {/* CONTEÚDO DA ABA: PRÓXIMOS TORNEIOS */}
+        {abaAtiva === 'torneios' && (
+          <StudentTournamentsTab aluno={alunoLogado} />
+        )}
+
+        {/* CONTEÚDO DA ABA: RANKING GLOBAL & EVOLUÇÃO */}
+        {abaAtiva === 'ranking' && (
+          <StudentGlobalRanking aluno={alunoLogado} />
+        )}
+
+        {/* CONTEÚDO DA ABA: ESTATÍSTICAS DE DESEMPENHO */}
+        {abaAtiva === 'desempenho' && (
+          <StudentPerformanceStatsTab aluno={alunoLogado} />
         )}
 
         {/* CONTEÚDO DA ABA: MINHAS CONQUISTAS (TRILHA DO NAK MUAY) */}
@@ -1471,7 +1660,37 @@ export default function PortalAluno() {
       )}
 
       {/* BARRA INFERIOR FIXA PARA CELULAR (BOTTOM NAVIGATION BAR MOBILE) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-[#141416]/95 backdrop-blur-md border-t border-zinc-800 px-1.5 py-2 flex justify-around items-center z-[9999]">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-[var(--color-bg-card)]/95 backdrop-blur-md border-t border-[var(--color-border)] px-1.5 py-2 flex justify-around items-center z-[9999] overflow-x-auto boru-scrollbar">
+        <button 
+          onClick={() => setAbaAtiva('torneios')}
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition shrink-0 ${
+            abaAtiva === 'torneios' ? 'text-[var(--color-primary)]' : 'text-zinc-500'
+          }`}
+        >
+          <span className="text-base">🏆</span>
+          <span>Torneios</span>
+        </button>
+
+        <button 
+          onClick={() => setAbaAtiva('ranking')}
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition shrink-0 ${
+            abaAtiva === 'ranking' ? 'text-[var(--color-primary)]' : 'text-zinc-500'
+          }`}
+        >
+          <span className="text-base">🌍</span>
+          <span>Ranking</span>
+        </button>
+
+        <button 
+          onClick={() => setAbaAtiva('desempenho')}
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition shrink-0 ${
+            abaAtiva === 'desempenho' ? 'text-[var(--color-primary)]' : 'text-zinc-500'
+          }`}
+        >
+          <span className="text-base">📊</span>
+          <span>Stats</span>
+        </button>
+
         <button 
           onClick={() => setAbaAtiva('treinos')}
           className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition ${

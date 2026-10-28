@@ -1023,67 +1023,67 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
       <!-- Card 1: Próximos Torneios -->
-      <div class="group relative bg-[#141720]/90 backdrop-blur-xl border border-[#252B3B] hover:border-red-500/60 rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between">
+      <div class="group relative card-combat spotlight-card tilt-card rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between hover:border-[var(--color-primary)]">
         <div>
           <div class="flex items-center justify-between mb-4">
             <span class="text-3xl">🏆</span>
-            <span class="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-600/10 px-2.5 py-1 rounded-full border border-red-500/20">
+            <span class="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
               Inscrições Abertas
             </span>
           </div>
-          <h3 class="text-xl font-black text-white group-hover:text-red-400 transition">🏆 Próximos Torneios</h3>
-          <p class="text-xs text-gray-400 mt-2.5 leading-relaxed font-medium">
+          <h3 class="text-xl font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">🏆 Próximos Torneios</h3>
+          <p class="text-xs text-[var(--color-text-muted)] mt-2.5 leading-relaxed font-medium">
             Confira o calendário oficial de brackets, eliminatórias regionais e copas de artes marciais. Inscreva-se em chaves oficiais e compita pelo pódio.
           </p>
         </div>
-        <div class="mt-6 pt-4 border-t border-[#252B3B] flex items-center justify-between">
-          <a href="/portal" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)] bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] text-xs font-bold transition">
+        <div class="mt-6 pt-4 border-t border-[var(--color-border)] flex items-center justify-between">
+          <a href="/portal?tab=torneios" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)] bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] text-xs font-bold transition">
             <span>Saiba mais</span>
-            <span class="text-red-400 group-hover:translate-x-1 transition">-></span>
+            <span class="text-[var(--color-primary)] group-hover:translate-x-1 transition font-bold">-></span>
           </a>
         </div>
       </div>
 
       <!-- Card 2: Ranking Global -->
-      <div class="group relative bg-[#141720]/90 backdrop-blur-xl border border-[#252B3B] hover:border-pink-500/60 rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between">
+      <div class="group relative card-combat spotlight-card tilt-card rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between hover:border-[var(--color-primary)]">
         <div>
           <div class="flex items-center justify-between mb-4">
             <span class="text-3xl">🌍</span>
-            <span class="text-[10px] font-black uppercase tracking-widest text-pink-400 bg-pink-600/10 px-2.5 py-1 rounded-full border border-pink-500/20">
+            <span class="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
               MMR Atualizado
             </span>
           </div>
-          <h3 class="text-xl font-black text-white group-hover:text-pink-400 transition">🌍 Ranking Global</h3>
-          <p class="text-xs text-gray-400 mt-2.5 leading-relaxed font-medium">
+          <h3 class="text-xl font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">🌍 Ranking Global</h3>
+          <p class="text-xs text-[var(--color-text-muted)] mt-2.5 leading-relaxed font-medium">
             Classificação geral por divisão de peso, graduação e taxa de finalizações. Veja quem lidera o ranking do tatame e compare seus pontos com atletas de todo o circuito.
           </p>
         </div>
-        <div class="mt-6 pt-4 border-t border-[#252B3B] flex items-center justify-between">
-          <a href="/portal" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)] bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] text-xs font-bold transition">
+        <div class="mt-6 pt-4 border-t border-[var(--color-border)] flex items-center justify-between">
+          <a href="/portal?tab=ranking" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)] bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] text-xs font-bold transition">
             <span>Saiba mais</span>
-            <span class="text-pink-400 group-hover:translate-x-1 transition">-></span>
+            <span class="text-[var(--color-primary)] group-hover:translate-x-1 transition font-bold">-></span>
           </a>
         </div>
       </div>
 
       <!-- Card 3: Estatísticas de Desempenho -->
-      <div class="group relative bg-[#141720]/90 backdrop-blur-xl border border-[#252B3B] hover:border-yellow-500/60 rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between">
+      <div class="group relative card-combat spotlight-card tilt-card rounded-3xl p-7 sm:p-8 transition-all duration-300 shadow-2xl hover:-translate-y-1.5 flex flex-col justify-between hover:border-[var(--color-primary)]">
         <div>
           <div class="flex items-center justify-between mb-4">
             <span class="text-3xl">📊</span>
-            <span class="text-[10px] font-black uppercase tracking-widest text-yellow-400 bg-yellow-600/10 px-2.5 py-1 rounded-full border border-yellow-500/20">
+            <span class="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-1 rounded-full border border-[var(--color-primary-border)]">
               Analytics Ao Vivo
             </span>
           </div>
-          <h3 class="text-xl font-black text-white group-hover:text-yellow-400 transition">📊 Estatísticas de Desempenho</h3>
-          <p class="text-xs text-gray-400 mt-2.5 leading-relaxed font-medium">
+          <h3 class="text-xl font-black text-[var(--color-text-main)] group-hover:text-[var(--color-primary)] transition">📊 Estatísticas de Desempenho</h3>
+          <p class="text-xs text-[var(--color-text-muted)] mt-2.5 leading-relaxed font-medium">
             Métricas de assiduidade, aproveitamento de golpes, taxa de vitórias e frequência semanal. Dados consolidados para impulsionar sua evolução física e técnica.
           </p>
         </div>
-        <div class="mt-6 pt-4 border-t border-[#252B3B] flex items-center justify-between">
-          <a href="/portal?tab=frequencia" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)] bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] text-xs font-bold transition">
+        <div class="mt-6 pt-4 border-t border-[var(--color-border)] flex items-center justify-between">
+          <a href="/portal?tab=desempenho" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)] bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] text-xs font-bold transition">
             <span>Saiba mais</span>
-            <span class="text-yellow-400 group-hover:translate-x-1 transition">-></span>
+            <span class="text-[var(--color-primary)] group-hover:translate-x-1 transition font-bold">-></span>
           </a>
         </div>
       </div>

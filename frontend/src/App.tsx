@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import PortalAluno from './pages/PortalAluno';
 import AdminDashboard from './pages/AdminDashboard';
 import Checkout from './pages/Checkout';
 import AgendarAula from './pages/AgendarAula';
-import FighterDashboard from './pages/FighterDashboard';
 import FighterProfile from './pages/FighterProfile';
-import StudentGlobalRanking from './components/StudentGlobalRanking';
 
 // Componente auxiliar para interceptar cliques nos links do index.html estático
 function GlobalLinkInterceptor() {
@@ -58,9 +56,10 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/agendar" element={<AgendarAula />} />
-        <Route path="/dashboard-lutador" element={<FighterDashboard />} />
+        {/* Redirecionamentos seguros: Estatísticas e Ranking exigem autenticação de CPF no Portal do Aluno */}
+        <Route path="/dashboard-lutador" element={<Navigate to="/portal?tab=desempenho" replace />} />
+        <Route path="/ranking" element={<Navigate to="/portal?tab=ranking" replace />} />
         <Route path="/perfil-lutador" element={<FighterProfile />} />
-        <Route path="/ranking" element={<StudentGlobalRanking />} />
       </Routes>
     </Router>
   );

@@ -151,11 +151,17 @@ const mockLeaderboard: FighterRank[] = [
   },
 ];
 
-export default function StudentGlobalRanking() {
+export default function StudentGlobalRanking({ aluno }: { aluno?: any } = {}) {
   const [filterPeriod, setFilterPeriod] = useState<'semanal' | 'temporada' | 'global'>('temporada');
 
   // Identifica o usuário logado e o rival imediato acima
-  const currentUser = mockLeaderboard.find((u) => u.isCurrentUser) || mockLeaderboard[mockLeaderboard.length - 1];
+  const rawUser = mockLeaderboard.find((u) => u.isCurrentUser) || mockLeaderboard[mockLeaderboard.length - 1];
+  const currentUser = {
+    ...rawUser,
+    name: aluno?.nome || rawUser.name,
+    league: aluno?.prajied || aluno?.plano || rawUser.league,
+    streak: aluno?.diasSeguidos || rawUser.streak,
+  };
   const rivalAbove = mockLeaderboard.find((u) => u.rank === currentUser.rank - 1) || mockLeaderboard[mockLeaderboard.length - 2];
   const xpDifference = rivalAbove ? rivalAbove.xp - currentUser.xp : 120;
 
@@ -174,16 +180,16 @@ export default function StudentGlobalRanking() {
   const restOfLeaderboard = mockLeaderboard.slice(3);
 
   return (
-    <div className="min-h-screen bg-[#07080A] text-zinc-100 font-sans pb-32 selection:bg-red-600 selection:text-white">
+    <div className="min-h-screen bg-transparent text-[var(--color-text-main)] font-sans pb-32">
       {/* Container Mobile-First centralizado */}
       <div className="w-full max-w-md mx-auto px-4 py-5 flex flex-col gap-6">
 
         {/* ========================================================
             1. CABEÇALHO DE STATUS DO GUERREIRO (DAWG VIBE)
             ======================================================== */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#16181F] via-[#111218] to-[#0B0C10] border border-zinc-800/80 p-5 shadow-2xl shadow-red-950/20">
+        <section className="relative overflow-hidden rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-5 shadow-2xl">
           {/* Luz neon decorativa no canto */}
-          <div className="absolute -top-16 -right-16 w-36 h-36 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-16 -right-16 w-36 h-36 bg-[var(--color-primary-light)] rounded-full blur-3xl pointer-events-none" />
 
           <div className="flex items-center gap-4 relative z-10">
             {/* Avatar com moldura neon pulsante */}
@@ -244,11 +250,11 @@ export default function StudentGlobalRanking() {
         {/* ========================================================
             2. GRÁFICO DE RADAR: EVOLUÇÃO DE ATRIBUTOS
             ======================================================== */}
-        <section className="rounded-3xl bg-[#0E1015] border border-zinc-800/90 p-5 shadow-2xl relative overflow-hidden">
+        <section className="rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-5 shadow-2xl relative overflow-hidden">
           {/* Cabeçalho do Card */}
           <div className="flex items-center justify-between border-b border-zinc-800/70 pb-3 mb-2">
             <div>
-              <span className="text-[10px] font-mono font-black tracking-widest text-red-500 uppercase">
+              <span className="text-[10px] font-mono font-black tracking-widest text-[var(--color-primary)] uppercase">
                 FIGHT IQ & FÍSICO
               </span>
               <h2 className="text-base font-black text-white italic tracking-wide">
@@ -284,9 +290,9 @@ export default function StudentGlobalRanking() {
                 <Radar
                   name="Atributos"
                   dataKey="value"
-                  stroke="#EF4444"
+                  stroke="var(--color-primary, #EF4444)"
                   strokeWidth={2.5}
-                  fill="#DC2626"
+                  fill="var(--color-primary, #DC2626)"
                   fillOpacity={0.35}
                 />
               </RadarChart>
@@ -511,7 +517,7 @@ export default function StudentGlobalRanking() {
       {/* ========================================================
           6. BARRA FIXA DO RIVAL (RIVAL TRACKER - STICKY BOTTOM)
           ======================================================== */}
-      <aside className="fixed bottom-0 left-0 right-0 z-40 bg-[#101218]/95 backdrop-blur-xl border-t-2 border-red-600 p-3.5 shadow-2xl">
+      <aside className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--color-bg-card)]/95 backdrop-blur-xl border-t-2 border-[var(--color-primary)] p-3.5 shadow-2xl">
         <div className="max-w-md mx-auto flex items-center justify-between gap-3">
           {/* Avatar e Posição do Usuário Atual */}
           <div className="flex items-center gap-2.5 min-w-0">
@@ -543,7 +549,7 @@ export default function StudentGlobalRanking() {
           <button
             type="button"
             onClick={() => alert('Abrindo check-in rápido de treino para ganhar XP!')}
-            className="shrink-0 px-3.5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase italic tracking-wider shadow-lg shadow-red-600/40 active:scale-95 transition"
+            className="shrink-0 px-3.5 py-2.5 rounded-xl theme-btn-primary text-xs font-black uppercase italic tracking-wider shadow-lg active:scale-95 transition"
           >
             TREINAR AGORA 🥊
           </button>
