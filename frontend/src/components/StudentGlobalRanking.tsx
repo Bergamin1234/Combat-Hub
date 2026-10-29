@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { studentApi } from '../services/api';
 import {
   Radar,
   RadarChart,
@@ -153,6 +154,27 @@ const mockLeaderboard: FighterRank[] = [
 
 export default function StudentGlobalRanking({ aluno }: { aluno?: any } = {}) {
   const [filterPeriod, setFilterPeriod] = useState<'semanal' | 'temporada' | 'global'>('temporada');
+  const [atributos, setAtributos] = useState<CombatAttribute[]>(mockAttributes);
+  const [evalData, setEvalData] = useState<any>(null);
+
+  useEffect(() => {
+    if (aluno?.id) {
+      studentApi.getEvaluation(aluno.id)
+        .then((res: any) => {
+          if (res?.data) {
+            setEvalData(res.data);
+            setAtributos([
+              { attribute: 'FORÇA', value: res.data.forca ?? 88, fullMark: 100 },
+              { attribute: 'TÉCNICA', value: res.data.tecnica ?? 94, fullMark: 100 },
+              { attribute: 'RESISTÊNCIA', value: res.data.resistencia ?? 82, fullMark: 100 },
+              { attribute: 'FLEXIBILIDADE', value: res.data.flexibilidade ?? 76, fullMark: 100 },
+              { attribute: 'DISCIPLINA', value: res.data.disciplina ?? 98, fullMark: 100 },
+            ]);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [aluno?.id]);
 
   // Identifica o usuário logado e o rival imediato acima
   const rawUser = mockLeaderboard.find((u) => u.isCurrentUser) || mockLeaderboard[mockLeaderboard.length - 1];
@@ -264,7 +286,7 @@ export default function StudentGlobalRanking({ aluno }: { aluno?: any } = {}) {
             {/* Tag sutil de validação do professor */}
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-              Avaliado pelo Mestre
+              {evalData?.avaliadoPor ? `Avaliado por: ${evalData.avaliadoPor}` : 'Avaliado pelo Mestre'}
             </span>
           </div>
 
@@ -275,7 +297,7 @@ export default function StudentGlobalRanking({ aluno }: { aluno?: any } = {}) {
           {/* Gráfico Recharts Neon */}
           <div className="w-full h-64 -my-2 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={mockAttributes}>
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={atributos}>
                 <PolarGrid stroke="#262833" strokeDasharray="3 3" />
                 <PolarAngleAxis
                   dataKey="attribute"
@@ -301,7 +323,7 @@ export default function StudentGlobalRanking({ aluno }: { aluno?: any } = {}) {
 
           {/* Metadados rápidos dos Atributos */}
           <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-zinc-800/70 text-center">
-            {mockAttributes.map((attr) => (
+            {atributos.map((attr) => (
               <div key={attr.attribute} className="p-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800/60">
                 <span className="block text-[8px] font-mono font-bold text-zinc-400 truncate">
                   {attr.attribute.slice(0, 4)}
@@ -314,8 +336,20 @@ export default function StudentGlobalRanking({ aluno }: { aluno?: any } = {}) {
           </div>
 
           <p className="text-center text-[10px] text-zinc-500 font-mono mt-3">
-            Última avaliação de tatame: há 2 dias • Mestre Carlos Silva
+            Última avaliação de tatame: {evalData?.avaliadoEm ? new Date(evalData.avaliadoEm).toLocaleDateString('pt-BR') : 'há 2 dias'} • {evalData?.avaliadoPor || 'Mestre Carlos Silva'}
           </p>
+
+          {evalData?.parecerMestre && (
+            <div className="mt-3 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-200/90 italic flex items-start gap-2.5">
+              <span className="text-base not-italic">🥋</span>
+              <div>
+                <span className="font-bold font-mono text-[10px] uppercase text-yellow-400 block not-italic">
+                  Parecer do Professor:
+                </span>
+                <span>"{evalData.parecerMestre}"</span>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ========================================================
